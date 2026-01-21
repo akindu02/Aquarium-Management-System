@@ -5,7 +5,7 @@ const authRoutes = require('./routes/authRoutes');
 const { pool } = require('./config/db');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 /**
  * Middleware
@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors({
     origin: process.env.NODE_ENV === 'production'
         ? 'https://your-production-domain.com'
-        : ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:5173'],
+        : ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5174', 'http://127.0.0.1:5174'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],

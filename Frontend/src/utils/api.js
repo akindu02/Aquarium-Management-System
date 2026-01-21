@@ -1,7 +1,7 @@
 // API utility functions
 import { getAccessToken } from './auth';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'http://localhost:5001/api';
 
 /**
  * Make an authenticated API request
