@@ -1,24 +1,54 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { saveAuthData, getDashboardRoute } from '../utils/auth';
+import { loginAPI } from '../utils/api';
 import '../index.css';
 
 const SignIn = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+    // Clear error when user types
+    if (error) setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Login attempt:', formData);
-    alert(`Login successful! (This is a demo)`);
+    setError('');
+    setLoading(true);
+
+    try {
+      // Call login API
+      const response = await loginAPI(formData.email, formData.password);
+
+      if (response.success) {
+        // Save authentication data (token, refresh token, and user data)
+        saveAuthData(response.accessToken, response.refreshToken, response.user);
+
+        // Get the dashboard route based on user role
+        const dashboardRoute = getDashboardRoute(response.user.role);
+
+        // Redirect to role-specific dashboard
+        navigate(dashboardRoute, { replace: true });
+      } else {
+        setError(response.message || 'Login failed. Please try again.');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError(err.message || 'An error occurred during login. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -35,6 +65,12 @@ const SignIn = () => {
             Sign In
           </h3>
 
+          {error && (
+            <div className="error-message">
+              {error}
+            </div>
+          )}
+
           <div className="form-group">
             <label htmlFor="email" className="form-label">Email Address</label>
             <input
@@ -46,6 +82,7 @@ const SignIn = () => {
               className="form-input"
               placeholder="your@email.com"
               required
+              disabled={loading}
             />
           </div>
 
@@ -60,19 +97,20 @@ const SignIn = () => {
               className="form-input"
               placeholder="Enter your password"
               required
+              disabled={loading}
             />
           </div>
 
           <div className="form-options">
             <label className="remember-me">
-              <input type="checkbox" />
+              <input type="checkbox" disabled={loading} />
               <span>Remember me</span>
             </label>
             <a href="#" className="forgot-password">Forgot Password?</a>
           </div>
 
-          <button type="submit" className="btn btn-primary signin-btn">
-            Sign In
+          <button type="submit" className="btn btn-primary signin-btn" disabled={loading}>
+            {loading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
 
@@ -139,6 +177,17 @@ const SignIn = () => {
           font-weight: 600;
           color: var(--text-main);
           margin-bottom: 2rem;
+        }
+
+        .error-message {
+          background: rgba(255, 107, 107, 0.1);
+          border: 1px solid rgba(255, 107, 107, 0.3);
+          color: #FF6B6B;
+          padding: 1rem;
+          border-radius: 8px;
+          margin-bottom: 1.5rem;
+          font-size: 0.9rem;
+          animation: slideIn 0.3s ease;
         }
 
         .form-group {
