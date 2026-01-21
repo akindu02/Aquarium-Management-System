@@ -5,6 +5,7 @@
 -- TRUNCATE users RESTART IDENTITY CASCADE;
 -- Insert sample users
 -- Password: Password123! (hashed with bcrypt)
+-- Roles: customer, supplier, staff, admin
 INSERT INTO users (
         email,
         password,
@@ -26,22 +27,32 @@ VALUES (
         true
     ),
     (
-        'manager@aquarium.com',
+        'staff@aquarium.com',
         '$2a$10$rG7VfEKJxNCM1OqOvXfMZOx9DKmNkYVvuJkJnQGXKHXoQiHCqQCXa',
         'John',
-        'Manager',
-        'manager',
+        'Staff',
+        'staff',
         '+1234567891',
         true,
         true
     ),
     (
-        'user@aquarium.com',
+        'supplier@aquarium.com',
+        '$2a$10$rG7VfEKJxNCM1OqOvXfMZOx9DKmNkYVvuJkJnQGXKHXoQiHCqQCXa',
+        'Fish',
+        'Supplier',
+        'supplier',
+        '+1234567892',
+        true,
+        true
+    ),
+    (
+        'customer@aquarium.com',
         '$2a$10$rG7VfEKJxNCM1OqOvXfMZOx9DKmNkYVvuJkJnQGXKHXoQiHCqQCXa',
         'Jane',
-        'Doe',
-        'user',
-        '+1234567892',
+        'Customer',
+        'customer',
+        '+1234567893',
         true,
         false
     ) ON CONFLICT (email) DO NOTHING;

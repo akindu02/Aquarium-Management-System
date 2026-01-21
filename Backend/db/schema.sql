@@ -1,7 +1,8 @@
 -- Aquarium Management System - Database Schema
 -- Users Table
 -- Create enum for user roles
-DO $$ BEGIN CREATE TYPE user_role AS ENUM ('user', 'admin', 'manager');
+-- Roles: customer (default), supplier, staff, admin
+DO $$ BEGIN CREATE TYPE user_role AS ENUM ('customer', 'supplier', 'staff', 'admin');
 EXCEPTION
 WHEN duplicate_object THEN null;
 END $$;
@@ -12,7 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255) NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
-    role user_role DEFAULT 'user',
+    role user_role DEFAULT 'customer',
     phone VARCHAR(20),
     is_active BOOLEAN DEFAULT true,
     email_verified BOOLEAN DEFAULT false,

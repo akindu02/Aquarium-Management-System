@@ -51,7 +51,7 @@ const authenticate = async (req, res, next) => {
 /**
  * Authorization Middleware
  * Checks if user has required role(s)
- * @param {...string} roles - Allowed roles
+ * @param {...string} roles - Allowed roles (customer, supplier, staff, admin)
  */
 const authorize = (...roles) => {
     return (req, res, next) => {
@@ -96,10 +96,10 @@ const adminOnly = (req, res, next) => {
 };
 
 /**
- * Manager or Admin Middleware
- * Allows managers and admins
+ * Staff Only Middleware
+ * Allows only staff members
  */
-const managerOrAdmin = (req, res, next) => {
+const staffOnly = (req, res, next) => {
     if (!req.user) {
         return res.status(401).json({
             success: false,
@@ -107,10 +107,120 @@ const managerOrAdmin = (req, res, next) => {
         });
     }
 
-    if (!['admin', 'manager'].includes(req.user.role)) {
+    if (req.user.role !== 'staff') {
         return res.status(403).json({
             success: false,
-            message: 'Manager or Admin access required.',
+            message: 'Staff access required.',
+        });
+    }
+
+    next();
+};
+
+/**
+ * Staff or Admin Middleware
+ * Allows staff and admins (internal employees)
+ */
+const staffOrAdmin = (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({
+            success: false,
+            message: 'Authentication required.',
+        });
+    }
+
+    if (!['admin', 'staff'].includes(req.user.role)) {
+        return res.status(403).json({
+            success: false,
+            message: 'Staff or Admin access required.',
+        });
+    }
+
+    next();
+};
+
+/**
+ * Supplier Only Middleware
+ * Allows only suppliers
+ */
+const supplierOnly = (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({
+            success: false,
+            message: 'Authentication required.',
+        });
+    }
+
+    if (req.user.role !== 'supplier') {
+        return res.status(403).json({
+            success: false,
+            message: 'Supplier access required.',
+        });
+    }
+
+    next();
+};
+
+/**
+ * Customer Only Middleware
+ * Allows only customers
+ */
+const customerOnly = (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({
+            success: false,
+            message: 'Authentication required.',
+        });
+    }
+
+    if (req.user.role !== 'customer') {
+        return res.status(403).json({
+            success: false,
+            message: 'Customer access required.',
+        });
+    }
+
+    next();
+};
+
+/**
+ * Internal Only Middleware
+ * Allows admin and staff (employees, not customers/suppliers)
+ */
+const internalOnly = (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({
+            success: false,
+            message: 'Authentication required.',
+        });
+    }
+
+    if (!['admin', 'staff'].includes(req.user.role)) {
+        return res.status(403).json({
+            success: false,
+            message: 'Internal access required. Employees only.',
+        });
+    }
+
+    next();
+};
+
+/**
+ * External Only Middleware
+ * Allows customers and suppliers only
+ */
+const externalOnly = (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({
+            success: false,
+            message: 'Authentication required.',
+        });
+    }
+
+    if (!['customer', 'supplier'].includes(req.user.role)) {
+        return res.status(403).json({
+            success: false,
+            message: 'Access restricted to customers and suppliers.',
         });
     }
 
@@ -144,6 +254,11 @@ module.exports = {
     authenticate,
     authorize,
     adminOnly,
-    managerOrAdmin,
+    staffOnly,
+    staffOrAdmin,
+    supplierOnly,
+    customerOnly,
+    internalOnly,
+    externalOnly,
     optionalAuth,
 };

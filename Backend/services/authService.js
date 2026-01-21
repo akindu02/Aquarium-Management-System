@@ -39,10 +39,10 @@ class AuthService {
         // Hash password
         const hashedPassword = await hashPassword(password);
 
-        // Insert new user
+        // Insert new user (default role: customer)
         const result = await query(
             `INSERT INTO users (email, password, first_name, last_name, phone, role)
-       VALUES ($1, $2, $3, $4, $5, 'user')
+       VALUES ($1, $2, $3, $4, $5, 'customer')
        RETURNING id, email, first_name, last_name, role, phone, is_active, email_verified, created_at`,
             [email.toLowerCase(), hashedPassword, firstName, lastName, phone || null]
         );
