@@ -111,7 +111,7 @@ const SignUp = () => {
                                 value={formData.firstName}
                                 onChange={handleChange}
                                 className="form-input"
-                                placeholder="John"
+                                placeholder="first name"
                                 required
                                 disabled={loading}
                             />
@@ -125,7 +125,7 @@ const SignUp = () => {
                                 value={formData.lastName}
                                 onChange={handleChange}
                                 className="form-input"
-                                placeholder="Doe"
+                                placeholder="last name"
                                 required
                                 disabled={loading}
                             />
@@ -141,7 +141,7 @@ const SignUp = () => {
                             value={formData.email}
                             onChange={handleChange}
                             className="form-input"
-                            placeholder="name@example.com"
+                            placeholder="email@example.com"
                             required
                             disabled={loading}
                         />
@@ -156,7 +156,7 @@ const SignUp = () => {
                             value={formData.phone}
                             onChange={handleChange}
                             className="form-input"
-                            placeholder="011-1234567"
+                            placeholder="phone number"
                             disabled={loading}
                         />
                     </div>
