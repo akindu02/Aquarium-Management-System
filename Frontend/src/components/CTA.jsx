@@ -3,7 +3,7 @@ import '../index.css';
 
 const CTA = () => {
   return (
-    <section className="cta-section">
+    <section id="about" className="cta-section">
       <div className="container cta-container icon-bg">
         <div className="cta-content">
           <h2 className="cta-title">About Us</h2>
@@ -13,7 +13,6 @@ const CTA = () => {
             provides top-quality fish, aquarium supplies, and professional services to help you create and maintain the
             perfect aquatic environment.
           </p>
-          <button className="btn btn-primary cta-btn">Learn More</button>
         </div>
       </div>
 
@@ -23,14 +22,9 @@ const CTA = () => {
         }
 
         .cta-container {
-          background: linear-gradient(135deg, var(--color-surface), var(--color-bg));
-          border: 1px solid var(--glass-border);
-          border-radius: 30px;
           padding: 4rem 2rem;
           text-align: center;
           position: relative;
-          overflow: hidden;
-          box-shadow: 0 20px 40px rgba(0,0,0,0.3);
         }
 
         .cta-content {
@@ -57,18 +51,6 @@ const CTA = () => {
         .cta-btn {
           font-size: 1.125rem;
           padding: 1rem 2.5rem;
-        }
-
-        /* Decorative Background Glow */
-        .cta-container::before {
-          content: '';
-          position: absolute;
-          top: -50%;
-          left: -50%;
-          width: 200%;
-          height: 200%;
-          background: radial-gradient(circle, rgba(6, 182, 212, 0.15) 0%, transparent 70%);
-          pointer-events: none;
         }
       `}</style>
     </section>

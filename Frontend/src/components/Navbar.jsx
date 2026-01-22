@@ -28,7 +28,7 @@ const Navbar = () => {
         <div className={`nav-links ${mobileMenuOpen ? 'active' : ''}`}>
           <a href="#" className="nav-link">Store</a>
           <a href="#" className="nav-link">Services</a>
-          <a href="#" className="nav-link">About</a>
+          <a href="#about" className="nav-link">About</a>
           <a href="#" className="nav-link">Contact</a>
           <div className="mobile-auth">
             <Link to="/signin" style={{ width: '100%', marginBottom: '10px' }}>
