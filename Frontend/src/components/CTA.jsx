@@ -6,9 +6,14 @@ const CTA = () => {
     <section className="cta-section">
       <div className="container cta-container icon-bg">
         <div className="cta-content">
-          <h2 className="cta-title">Ready to Transform Your Space?</h2>
-          <p className="cta-desc">Join hundreds of satisfied clients who have brought the magic of the ocean into their homes.</p>
-          <button className="btn btn-primary cta-btn">Book Your Service</button>
+          <h2 className="cta-title">About Us</h2>
+          <p className="cta-desc">
+            Methu Aquarium is your premier destination for all things aquatic. With years of experience in the industry,
+            we are passionate about bringing the beauty of underwater life into your home or business. Our team of experts
+            provides top-quality fish, aquarium supplies, and professional services to help you create and maintain the
+            perfect aquatic environment.
+          </p>
+          <button className="btn btn-primary cta-btn">Learn More</button>
         </div>
       </div>
 
