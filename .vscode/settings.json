@@ -5,14 +5,10 @@
             "previewLimit": 50,
             "server": "localhost",
             "port": 5432,
-            "sshOptions": {
-                "port": 22
-            },
             "driver": "PostgreSQL",
-            "name": "PG local",
-            "database": "postgres",
+            "name": "localhost",
+            "database": "aquariumdatabase",
             "username": "postgres",
-            "password": "MIT2024aki@",
             "connectionTimeout": 30
         }
     ]
