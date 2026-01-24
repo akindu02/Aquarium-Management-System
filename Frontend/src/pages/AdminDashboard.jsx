@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Bell, Settings, LogOut, MessageSquare } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
@@ -25,13 +26,13 @@ const AdminDashboard = () => {
   };
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard' },
-    { id: 'users', label: 'Users Management' },
-    { id: 'products', label: 'Products / Inventory' },
-    { id: 'orders', label: 'Orders / Transactions' },
-    { id: 'reports', label: 'Reports & Analytics' },
-    { id: 'messages', label: 'Messages / Notifications' },
-    { id: 'settings', label: 'Settings' },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'users', label: 'Users Management', icon: Users },
+    { id: 'products', label: 'Products / Inventory', icon: Package },
+    { id: 'orders', label: 'Orders / Transactions', icon: ShoppingCart },
+    { id: 'reports', label: 'Reports & Analytics', icon: BarChart3 },
+    { id: 'messages', label: 'Messages / Notifications', icon: MessageSquare },
+    { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   const renderContent = () => {
@@ -68,23 +69,28 @@ const AdminDashboard = () => {
         <nav className="sidebar-nav">
           {!isSidebarCollapsed && <p className="nav-section-title">MAIN MENU</p>}
           <ul className="nav-menu">
-            {menuItems.map((item) => (
-              <li key={item.id}>
-                <button
-                  className={`nav-item ${activeMenu === item.id ? 'active' : ''}`}
-                  onClick={() => setActiveMenu(item.id)}
-                  title={item.label}
-                >
-                  <span className="nav-label">{item.label}</span>
-                </button>
-              </li>
-            ))}
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <li key={item.id}>
+                  <button
+                    className={`nav-item ${activeMenu === item.id ? 'active' : ''}`}
+                    onClick={() => setActiveMenu(item.id)}
+                    title={item.label}
+                  >
+                    <Icon className="nav-icon" />
+                    <span className="nav-label">{item.label}</span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </nav>
 
         {/* Logout Button */}
         <div className="sidebar-footer">
           <button className="logout-btn" onClick={handleLogout} title="Logout">
+            <LogOut className="logout-icon" />
             <span>Logout</span>
           </button>
         </div>
@@ -97,7 +103,7 @@ const AdminDashboard = () => {
           <div className="header-left"></div>
           <div className="header-right">
             <button className="notification-btn" title="Notifications">
-              <span className="notification-icon">N</span>
+              <Bell className="notification-icon" />
               <span className="notification-badge">3</span>
             </button>
             <div className="header-profile">
@@ -254,9 +260,8 @@ const AdminDashboard = () => {
                 }
 
                 .nav-icon {
-                    font-size: 1.3rem;
-                    width: 28px;
-                    text-align: center;
+                    width: 20px;
+                    height: 20px;
                 }
 
                 .nav-label {
@@ -478,9 +483,13 @@ const AdminDashboard = () => {
                 }
 
                 .card-icon {
-                    font-size: 3rem;
+                    width: 42px;
+                    height: 42px;
                     margin-bottom: 1rem;
                 }
+
+                .notification-icon { width: 18px; height: 18px; }
+                .logout-icon { width: 18px; height: 18px; }
 
                 .dashboard-card h3 {
                     font-size: 1.25rem;
@@ -593,6 +602,7 @@ const DashboardContent = () => (
 
     <div className="dashboard-grid">
       <div className="dashboard-card">
+        <Users className="card-icon" style={{ color: "var(--color-primary)" }} />
         <h3>User Management</h3>
         <p>Manage all users, roles, and permissions</p>
         <div className="card-stat">
@@ -602,6 +612,7 @@ const DashboardContent = () => (
       </div>
 
       <div className="dashboard-card">
+        <BarChart3 className="card-icon" style={{ color: "#a855f7" }} />
         <h3>Analytics</h3>
         <p>View system-wide analytics and reports</p>
         <div className="card-stat">
@@ -611,6 +622,7 @@ const DashboardContent = () => (
       </div>
 
       <div className="dashboard-card">
+        <Package className="card-icon" style={{ color: "#f59e0b" }} />
         <h3>Inventory</h3>
         <p>Manage aquarium products and stock</p>
         <div className="card-stat">
@@ -620,6 +632,7 @@ const DashboardContent = () => (
       </div>
 
       <div className="dashboard-card">
+        <ShoppingCart className="card-icon" style={{ color: "#10b981" }} />
         <h3>Orders</h3>
         <p>Track and manage customer orders</p>
         <div className="card-stat">

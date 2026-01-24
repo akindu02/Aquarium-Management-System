@@ -100,7 +100,7 @@ const SignUp = () => {
 
           {/* Name Field */}
           <div className="form-group">
-            <label htmlFor="name" className="form-label">Your Name *</label>
+            <label htmlFor="name" className="form-label">Your Name </label>
             <input
               type="text"
               id="name"
@@ -115,7 +115,7 @@ const SignUp = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="email" className="form-label">Email Address *</label>
+            <label htmlFor="email" className="form-label">Email Address </label>
             <input
               type="email"
               id="email"
@@ -130,7 +130,7 @@ const SignUp = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="role" className="form-label">I am a *</label>
+            <label htmlFor="role" className="form-label">I am a </label>
             <select
               id="role"
               name="role"
@@ -147,7 +147,7 @@ const SignUp = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="password" className="form-label">Password *</label>
+            <label htmlFor="password" className="form-label">Password </label>
             <input
               type="password"
               id="password"
@@ -163,7 +163,7 @@ const SignUp = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="confirmPassword" className="form-label">Confirm Password *</label>
+            <label htmlFor="confirmPassword" className="form-label">Confirm Password </label>
             <input
               type="password"
               id="confirmPassword"
