@@ -93,7 +93,7 @@ const CTA = () => {
             display: flex;
             flex-direction: column;
             gap: 1rem;
-            align-items: flex-start; /* Align items to the left */
+            align-items: center; /* Align items to the center */
         }
 
         .contact-row {
