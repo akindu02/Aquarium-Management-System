@@ -1,4 +1,4 @@
-import React from 'react';
+import { Link } from 'react-router-dom';
 import '../index.css';
 
 const Footer = () => {
@@ -18,7 +18,7 @@ const Footer = () => {
           <div className="footer-links">
             <h4 className="footer-title">Quick Links</h4>
             <ul className="link-list">
-              <li><a href="#">Home</a></li>
+              <li><Link to="/">Home</Link></li>
               <li><a href="#about">About Us</a></li>
               <li><a href="#">Store</a></li>
               <li><a href="#">Contact</a></li>
@@ -45,6 +45,21 @@ const Footer = () => {
 
         <div className="footer-bottom">
           <p>&copy; {new Date().getFullYear()} Methu Aquarium Management System. All rights reserved.</p>
+          <div style={{ marginTop: '1rem' }}>
+            <Link
+              to="/signin?type=admin"
+              style={{
+                fontSize: '0.8rem',
+                color: 'var(--text-muted)',
+                opacity: 0.6,
+                textDecoration: 'none'
+              }}
+              onMouseEnter={(e) => e.target.style.opacity = '1'}
+              onMouseLeave={(e) => e.target.style.opacity = '0.6'}
+            >
+              Sign in as Admin
+            </Link>
+          </div>
         </div>
       </div>
 

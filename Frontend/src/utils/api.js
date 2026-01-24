@@ -44,6 +44,16 @@ export const loginAPI = async (email, password) => {
 };
 
 /**
+ * Admin Login API call
+ */
+export const loginAdminAPI = async (email, password) => {
+    return apiRequest('/auth/admin/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+    });
+};
+
+/**
  * Register API call
  */
 export const registerAPI = async (userData) => {

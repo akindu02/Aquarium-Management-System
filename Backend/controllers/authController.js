@@ -22,14 +22,13 @@ class AuthController {
                 });
             }
 
-            const { email, password, firstName, lastName, phone } = req.body;
+            const { email, password, name, role } = req.body;
 
             const result = await authService.register({
                 email,
                 password,
-                firstName,
-                lastName,
-                phone,
+                name,
+                role,
             });
 
             if (!result.success) {
@@ -76,6 +75,40 @@ class AuthController {
             return res.status(500).json({
                 success: false,
                 message: 'An error occurred during login',
+            });
+        }
+    }
+
+    /**
+     * Admin Login
+     * POST /api/auth/admin/login
+     */
+    async adminLogin(req, res) {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Validation failed',
+                    errors: errors.array(),
+                });
+            }
+
+            const { email, password } = req.body;
+            const result = await authService.adminLogin(email, password);
+
+            if (!result.success) {
+                // Return 403 Forbidden for role mismatch, 401 for bad logic
+                const status = result.message.includes('Access Denied') ? 403 : 401;
+                return res.status(status).json(result);
+            }
+
+            return res.status(200).json(result);
+        } catch (error) {
+            console.error('Admin Login error:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'An error occurred during admin login',
             });
         }
     }
@@ -195,12 +228,10 @@ class AuthController {
                 });
             }
 
-            const { firstName, lastName, phone } = req.body;
+            const { name } = req.body;
 
             const result = await authService.updateProfile(req.user.id, {
-                firstName,
-                lastName,
-                phone,
+                name,
             });
 
             if (!result.success) {

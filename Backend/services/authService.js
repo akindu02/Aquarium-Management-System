@@ -166,6 +166,30 @@ class AuthService {
     }
 
     /**
+     * Admin Login - Strict role check
+     * @param {string} email
+     * @param {string} password
+     */
+    async adminLogin(email, password) {
+        // Reuse standard login logic
+        const result = await this.login(email, password);
+
+        if (!result.success) {
+            return result;
+        }
+
+        // STRICT CHECK: Is this user an admin?
+        if (result.user.role !== 'admin') {
+            return {
+                success: false,
+                message: 'Access Denied: You do not have administrator privileges.',
+            };
+        }
+
+        return result;
+    }
+
+    /**
      * Refresh access token using refresh token
      * @param {string} refreshToken - Refresh token
      * @returns {Object} { success, accessToken, message }

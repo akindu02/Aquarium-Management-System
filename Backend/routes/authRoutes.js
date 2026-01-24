@@ -61,6 +61,9 @@ router.post('/register', registerValidation, authController.register);
 // POST /api/auth/login - Login user
 router.post('/login', loginValidation, authController.login);
 
+// POST /api/auth/admin/login - Admin Login (Strict)
+router.post('/admin/login', loginValidation, authController.adminLogin);
+
 // POST /api/auth/refresh-token - Refresh access token
 router.post('/refresh-token', authController.refreshToken);
 

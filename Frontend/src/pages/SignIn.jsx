@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { saveAuthData, getDashboardRoute } from '../utils/auth';
-import { loginAPI } from '../utils/api';
+import { loginAPI, loginAdminAPI } from '../utils/api';
 import '../index.css';
 
 const SignIn = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isAdminLogin = searchParams.get('type') === 'admin';
+
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -28,8 +31,9 @@ const SignIn = () => {
     setLoading(true);
 
     try {
-      // Call login API
-      const response = await loginAPI(formData.email, formData.password);
+      // Choose API based on login type
+      const apiCall = isAdminLogin ? loginAdminAPI : loginAPI;
+      const response = await apiCall(formData.email, formData.password);
 
       if (response.success) {
         // Save authentication data (token, refresh token, and user data)
@@ -45,7 +49,11 @@ const SignIn = () => {
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError(err.message || 'An error occurred during login. Please try again.');
+      // Simplify error message for security
+      const msg = isAdminLogin && err.message.includes('403')
+        ? 'Access Denied: You are not an administrator.'
+        : (err.message || 'An error occurred during login. Please try again.');
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -56,13 +64,15 @@ const SignIn = () => {
       <div className="signin-container">
 
         <div className="signin-header">
-          <h2 className="section-heading">Welcome Back</h2>
-          <p className="signin-subtitle">Please sign in to continue</p>
+          <h2 className="section-heading">{isAdminLogin ? 'Admin Portal' : 'Welcome Back'}</h2>
+          <p className="signin-subtitle">
+            {isAdminLogin ? 'Secure login for administrators' : 'Please sign in to continue'}
+          </p>
         </div>
 
         <form className="signin-form glass" onSubmit={handleSubmit}>
           <h3 className="form-heading">
-            Sign In
+            {isAdminLogin ? 'Admin Sign In' : 'Sign In'}
           </h3>
 
           {error && (
