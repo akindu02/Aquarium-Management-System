@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { LayoutDashboard, Store, ShoppingBag, Fish, Heart, MessageSquare, Settings, Bell, LogOut, LifeBuoy, Star, Activity } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
@@ -25,13 +26,13 @@ const CustomerDashboard = () => {
   };
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard' },
-    { id: 'browse', label: 'Browse Products' },
-    { id: 'orders', label: 'My Orders' },
-    { id: 'aquariums', label: 'My Aquariums' },
-    { id: 'wishlist', label: 'Wishlist' },
-    { id: 'messages', label: 'Messages' },
-    { id: 'settings', label: 'Account Settings' },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'browse', label: 'Browse Products', icon: Store },
+    { id: 'orders', label: 'My Orders', icon: ShoppingBag },
+    { id: 'aquariums', label: 'My Aquariums', icon: Fish },
+    { id: 'wishlist', label: 'Wishlist', icon: Heart },
+    { id: 'messages', label: 'Messages', icon: MessageSquare },
+    { id: 'settings', label: 'Account Settings', icon: Settings },
   ];
 
   const renderContent = () => {
@@ -68,23 +69,28 @@ const CustomerDashboard = () => {
         <nav className="sidebar-nav">
           {!isSidebarCollapsed && <p className="nav-section-title">MAIN MENU</p>}
           <ul className="nav-menu">
-            {menuItems.map((item) => (
-              <li key={item.id}>
-                <button
-                  className={`nav-item ${activeMenu === item.id ? 'active' : ''}`}
-                  onClick={() => setActiveMenu(item.id)}
-                  title={item.label}
-                >
-                  <span className="nav-label">{item.label}</span>
-                </button>
-              </li>
-            ))}
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <li key={item.id}>
+                  <button
+                    className={`nav-item ${activeMenu === item.id ? 'active' : ''}`}
+                    onClick={() => setActiveMenu(item.id)}
+                    title={item.label}
+                  >
+                    <Icon className="nav-icon" />
+                    <span className="nav-label">{item.label}</span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </nav>
 
         {/* Logout Button */}
         <div className="sidebar-footer">
           <button className="logout-btn" onClick={handleLogout} title="Logout">
+            <LogOut className="logout-icon" />
             <span>Logout</span>
           </button>
         </div>
@@ -97,7 +103,7 @@ const CustomerDashboard = () => {
           <div className="header-left"></div>
           <div className="header-right">
             <button className="notification-btn" title="Notifications">
-              <span className="notification-icon">N</span>
+              <Bell className="notification-icon" />
               <span className="notification-badge">2</span>
             </button>
             <div className="header-profile">
@@ -501,7 +507,11 @@ const CustomerDashboard = () => {
                         grid-template-columns: 1fr;
                     }
                 }
-            `}</style>
+        .nav-icon { width: 20px; height: 20px; flex-shrink: 0; }
+        .notification-icon { width: 18px; height: 18px; }
+        .logout-icon { width: 18px; height: 18px; }
+        .card-icon { width: 42px; height: 42px; margin-bottom: 1rem; opacity: 0.9; }
+      `}</style>
     </div>
   );
 };
@@ -518,6 +528,7 @@ const DashboardContent = () => (
 
     <div className="dashboard-grid">
       <div className="dashboard-card">
+        <ShoppingBag className="card-icon" style={{ color: "var(--color-primary)" }} />
         <h3>My Orders</h3>
         <p>Track your recent and past orders</p>
         <div className="card-stat">
@@ -527,6 +538,7 @@ const DashboardContent = () => (
       </div>
 
       <div className="dashboard-card">
+        <Fish className="card-icon" style={{ color: "#3b82f6" }} />
         <h3>My Aquariums</h3>
         <p>Manage your aquarium setups</p>
         <div className="card-stat">
@@ -536,6 +548,7 @@ const DashboardContent = () => (
       </div>
 
       <div className="dashboard-card">
+        <Heart className="card-icon" style={{ color: "#ec4899" }} />
         <h3>Wishlist</h3>
         <p>Items you've saved for later</p>
         <div className="card-stat">
@@ -545,6 +558,7 @@ const DashboardContent = () => (
       </div>
 
       <div className="dashboard-card">
+        <Star className="card-icon" style={{ color: "#f59e0b" }} />
         <h3>Loyalty Points</h3>
         <p>Earn and redeem rewards</p>
         <div className="card-stat">
@@ -554,6 +568,7 @@ const DashboardContent = () => (
       </div>
 
       <div className="dashboard-card">
+        <Activity className="card-icon" style={{ color: "#10b981" }} />
         <h3>Recent Activity</h3>
         <p>Your latest interactions</p>
         <div className="card-stat">
@@ -563,6 +578,7 @@ const DashboardContent = () => (
       </div>
 
       <div className="dashboard-card">
+        <LifeBuoy className="card-icon" style={{ color: "#8b5cf6" }} />
         <h3>Support</h3>
         <p>Get help from our team</p>
         <div className="card-stat">
