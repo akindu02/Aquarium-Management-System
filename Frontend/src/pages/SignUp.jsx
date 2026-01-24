@@ -9,9 +9,9 @@ const SignUp = () => {
 
   // State matches database columns exactly
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    name: '',
     email: '',
+    role: 'customer',
     password: '',
     confirmPassword: ''
   });
@@ -48,9 +48,9 @@ const SignUp = () => {
     try {
       // Send data to backend
       const response = await registerAPI({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
+        name: formData.name,
         email: formData.email,
+        role: formData.role,
         password: formData.password
       });
 
@@ -98,36 +98,20 @@ const SignUp = () => {
             </div>
           )}
 
-          {/* Name Fields Row */}
-          <div className="form-row">
-            <div className="form-group half">
-              <label htmlFor="firstName" className="form-label">First Name *</label>
-              <input
-                type="text"
-                id="firstName"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                className="form-input"
-                placeholder="first name"
-                required
-                disabled={loading}
-              />
-            </div>
-            <div className="form-group half">
-              <label htmlFor="lastName" className="form-label">Last Name *</label>
-              <input
-                type="text"
-                id="lastName"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                className="form-input"
-                placeholder="last name"
-                required
-                disabled={loading}
-              />
-            </div>
+          {/* Name Field */}
+          <div className="form-group">
+            <label htmlFor="name" className="form-label">Your Name *</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              className="form-input"
+              placeholder="Enter your full name"
+              required
+              disabled={loading}
+            />
           </div>
 
           <div className="form-group">
@@ -143,6 +127,23 @@ const SignUp = () => {
               required
               disabled={loading}
             />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="role" className="form-label">I am a *</label>
+            <select
+              id="role"
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              className="form-input form-select"
+              required
+              disabled={loading}
+            >
+              <option value="customer">Customer</option>
+              <option value="staff">Staff</option>
+              <option value="supplier">Supplier</option>
+            </select>
           </div>
 
           <div className="form-group">
@@ -297,6 +298,21 @@ const SignUp = () => {
 
         .form-input::placeholder {
           color: var(--text-muted);
+        }
+
+        .form-select {
+          cursor: pointer;
+          appearance: none;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: right 1rem center;
+          padding-right: 2.5rem;
+        }
+
+        .form-select option {
+          background: #1a1a2e;
+          color: var(--text-main);
+          padding: 0.5rem;
         }
 
         .signup-btn {

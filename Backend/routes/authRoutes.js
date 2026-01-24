@@ -16,18 +16,16 @@ const registerValidation = [
     body('password')
         .isLength({ min: 8 })
         .withMessage('Password must be at least 8 characters long'),
-    body('firstName')
+    body('name')
         .trim()
         .notEmpty()
-        .withMessage('First name is required')
-        .isLength({ max: 100 })
-        .withMessage('First name cannot exceed 100 characters'),
-    body('lastName')
-        .trim()
-        .notEmpty()
-        .withMessage('Last name is required')
-        .isLength({ max: 100 })
-        .withMessage('Last name cannot exceed 100 characters'),
+        .withMessage('Name is required')
+        .isLength({ max: 200 })
+        .withMessage('Name cannot exceed 200 characters'),
+    body('role')
+        .optional()
+        .isIn(['customer', 'staff', 'supplier'])
+        .withMessage('Invalid role. Must be customer, staff, or supplier'),
 ];
 
 const loginValidation = [

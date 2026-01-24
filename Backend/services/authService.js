@@ -12,7 +12,7 @@ class AuthService {
      * @returns {Object} { success, user, token, message }
      */
     async register(userData) {
-        const { email, password, firstName, lastName, phone } = userData;
+        const { email, password, firstName, lastName, role } = userData;
 
         // Validate password strength
         const passwordValidation = validatePasswordStrength(password);
@@ -22,6 +22,10 @@ class AuthService {
                 message: passwordValidation.errors.join(', '),
             };
         }
+
+        // Validate role - only allow customer, staff, supplier (NOT admin)
+        const allowedRoles = ['customer', 'staff', 'supplier'];
+        const userRole = role && allowedRoles.includes(role) ? role : 'customer';
 
         // Check if user already exists
         const existingUser = await query(
@@ -39,12 +43,12 @@ class AuthService {
         // Hash password
         const hashedPassword = await hashPassword(password);
 
-        // Insert new user (default role: customer)
+        // Insert new user with selected role
         const result = await query(
-            `INSERT INTO users (email, password, first_name, last_name, phone, role)
-       VALUES ($1, $2, $3, $4, $5, 'customer')
-       RETURNING id, email, first_name, last_name, role, phone, is_active, email_verified, created_at`,
-            [email.toLowerCase(), hashedPassword, firstName, lastName, phone || null]
+            `INSERT INTO users (email, password, first_name, last_name, role)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, email, first_name, last_name, role, is_active, email_verified, created_at`,
+            [email.toLowerCase(), hashedPassword, firstName, lastName, userRole]
         );
 
         const user = result.rows[0];
@@ -77,7 +81,6 @@ class AuthService {
                 firstName: user.first_name,
                 lastName: user.last_name,
                 role: user.role,
-                phone: user.phone,
                 isActive: user.is_active,
                 emailVerified: user.email_verified,
                 createdAt: user.created_at,
