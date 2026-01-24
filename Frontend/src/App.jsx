@@ -11,6 +11,10 @@ import AdminDashboard from './pages/AdminDashboard';
 import StaffDashboard from './pages/StaffDashboard';
 import SupplierDashboard from './pages/SupplierDashboard';
 import CustomerDashboard from './pages/CustomerDashboard';
+import ForgotPassword from './pages/ForgotPassword';
+import VerifyOtp from './pages/VerifyOtp';
+import ResetPassword from './pages/ResetPassword';
+import PasswordResetSuccess from './pages/PasswordResetSuccess';
 import './App.css';
 
 function App() {
@@ -43,6 +47,50 @@ function App() {
               <main>
                 <RedirectIfAuthenticated>
                   <SignIn />
+                </RedirectIfAuthenticated>
+              </main>
+              <Footer />
+            </>
+          } />
+          <Route path="/forgot-password" element={
+            <>
+              <Navbar />
+              <main>
+                <RedirectIfAuthenticated>
+                  <ForgotPassword />
+                </RedirectIfAuthenticated>
+              </main>
+              <Footer />
+            </>
+          } />
+          <Route path="/verify-otp" element={
+            <>
+              <Navbar />
+              <main>
+                <RedirectIfAuthenticated>
+                  <VerifyOtp />
+                </RedirectIfAuthenticated>
+              </main>
+              <Footer />
+            </>
+          } />
+          <Route path="/reset-password" element={
+            <>
+              <Navbar />
+              <main>
+                <RedirectIfAuthenticated>
+                  <ResetPassword />
+                </RedirectIfAuthenticated>
+              </main>
+              <Footer />
+            </>
+          } />
+          <Route path="/password-reset-success" element={
+            <>
+              <Navbar />
+              <main>
+                <RedirectIfAuthenticated>
+                  <PasswordResetSuccess />
                 </RedirectIfAuthenticated>
               </main>
               <Footer />

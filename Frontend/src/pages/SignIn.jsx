@@ -116,7 +116,7 @@ const SignIn = () => {
               <input type="checkbox" disabled={loading} />
               <span>Remember me</span>
             </label>
-            <a href="#" className="forgot-password">Forgot Password?</a>
+            <Link to="/forgot-password" className="forgot-password">Forgot Password?</Link>
           </div>
 
           <button type="submit" className="btn btn-primary signin-btn" disabled={loading}>
