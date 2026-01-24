@@ -37,20 +37,11 @@ const loginValidation = [
 ];
 
 const updateProfileValidation = [
-    body('firstName')
+    body('name')
         .optional()
         .trim()
-        .isLength({ min: 1, max: 100 })
-        .withMessage('First name must be between 1 and 100 characters'),
-    body('lastName')
-        .optional()
-        .trim()
-        .isLength({ min: 1, max: 100 })
-        .withMessage('Last name must be between 1 and 100 characters'),
-    body('phone')
-        .optional()
-        .isMobilePhone()
-        .withMessage('Please provide a valid phone number'),
+        .isLength({ min: 1, max: 200 })
+        .withMessage('Name must be between 1 and 200 characters'),
 ];
 
 const changePasswordValidation = [

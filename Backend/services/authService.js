@@ -12,7 +12,7 @@ class AuthService {
      * @returns {Object} { success, user, token, message }
      */
     async register(userData) {
-        const { email, password, firstName, lastName, role } = userData;
+        const { email, password, name, role } = userData;
 
         // Validate password strength
         const passwordValidation = validatePasswordStrength(password);
@@ -45,10 +45,10 @@ class AuthService {
 
         // Insert new user with selected role
         const result = await query(
-            `INSERT INTO users (email, password, first_name, last_name, role)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING id, email, first_name, last_name, role, is_active, email_verified, created_at`,
-            [email.toLowerCase(), hashedPassword, firstName, lastName, userRole]
+            `INSERT INTO users (email, password, name, role)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, email, name, role, is_active, email_verified, created_at`,
+            [email.toLowerCase(), hashedPassword, name, userRole]
         );
 
         const user = result.rows[0];
@@ -78,8 +78,7 @@ class AuthService {
             user: {
                 id: user.id,
                 email: user.email,
-                firstName: user.first_name,
-                lastName: user.last_name,
+                name: user.name,
                 role: user.role,
                 isActive: user.is_active,
                 emailVerified: user.email_verified,
@@ -99,7 +98,7 @@ class AuthService {
     async login(email, password) {
         // Find user by email
         const result = await query(
-            `SELECT id, email, password, first_name, last_name, role, phone, is_active, email_verified, created_at
+            `SELECT id, email, password, name, role, is_active, email_verified, created_at
        FROM users WHERE email = $1`,
             [email.toLowerCase()]
         );
@@ -155,10 +154,8 @@ class AuthService {
             user: {
                 id: user.id,
                 email: user.email,
-                firstName: user.first_name,
-                lastName: user.last_name,
+                name: user.name,
                 role: user.role,
-                phone: user.phone,
                 isActive: user.is_active,
                 emailVerified: user.email_verified,
                 createdAt: user.created_at,
@@ -253,7 +250,7 @@ class AuthService {
      */
     async getUserById(userId) {
         const result = await query(
-            `SELECT id, email, first_name, last_name, role, phone, is_active, email_verified, created_at, updated_at
+            `SELECT id, email, name, role, is_active, email_verified, created_at, updated_at
        FROM users WHERE id = $1`,
             [userId]
         );
@@ -266,10 +263,8 @@ class AuthService {
         return {
             id: user.id,
             email: user.email,
-            firstName: user.first_name,
-            lastName: user.last_name,
+            name: user.name,
             role: user.role,
-            phone: user.phone,
             isActive: user.is_active,
             emailVerified: user.email_verified,
             createdAt: user.created_at,
@@ -284,16 +279,14 @@ class AuthService {
      * @returns {Object} { success, user, message }
      */
     async updateProfile(userId, updates) {
-        const { firstName, lastName, phone } = updates;
+        const { name } = updates;
 
         const result = await query(
             `UPDATE users 
-       SET first_name = COALESCE($1, first_name),
-           last_name = COALESCE($2, last_name),
-           phone = COALESCE($3, phone)
-       WHERE id = $4
-       RETURNING id, email, first_name, last_name, role, phone, is_active, email_verified, created_at, updated_at`,
-            [firstName, lastName, phone, userId]
+       SET name = COALESCE($1, name)
+       WHERE id = $2
+       RETURNING id, email, name, role, is_active, email_verified, created_at, updated_at`,
+            [name, userId]
         );
 
         if (result.rows.length === 0) {
@@ -310,10 +303,8 @@ class AuthService {
             user: {
                 id: user.id,
                 email: user.email,
-                firstName: user.first_name,
-                lastName: user.last_name,
+                name: user.name,
                 role: user.role,
-                phone: user.phone,
                 isActive: user.is_active,
                 emailVerified: user.email_verified,
                 createdAt: user.created_at,
