@@ -57,21 +57,22 @@ const Services = () => {
 
       <style>{`
         .section-padding {
-          padding: 8rem 0;
+          padding: 4rem 0;
           background-color: var(--color-bg);
           position: relative;
         }
 
         .services-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-          gap: 2.5rem;
-          margin-top: 4rem;
+          /* Force 4 columns on desktop, wrap on smaller screens */
+          grid-template-columns: repeat(4, 1fr);
+          gap: 1.5rem;
+          margin-top: 2.5rem;
         }
 
         .service-card {
-          padding: 2.5rem;
-          border-radius: 24px;
+          padding: 1.5rem;
+          border-radius: 16px;
           transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
           display: flex;
           flex-direction: column;
@@ -100,9 +101,9 @@ const Services = () => {
         }
 
         .service-card:hover {
-          transform: translateY(-8px);
+          transform: translateY(-5px);
           border-color: rgba(6, 182, 212, 0.3);
-          box-shadow: 0 20px 40px -15px rgba(0,0,0,0.5);
+          box-shadow: 0 15px 30px -10px rgba(0,0,0,0.4);
         }
         
         .service-card:hover::before {
@@ -110,14 +111,14 @@ const Services = () => {
         }
         
         .icon-wrapper {
-            width: 60px;
-            height: 60px;
+            width: 48px;
+            height: 48px;
             background: rgba(6, 182, 212, 0.1);
-            border-radius: 16px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 1.5rem; /* Gap spacing top of content */
+            margin-bottom: 1rem;
             color: var(--color-primary);
             transition: all 0.3s ease;
             position: relative;
@@ -127,29 +128,29 @@ const Services = () => {
         .service-card:hover .icon-wrapper {
             background: var(--color-primary);
             color: #fff;
-            transform: scale(1.1) rotate(-5deg);
+            transform: scale(1.05) rotate(-5deg);
         }
 
         .service-icon {
-            width: 32px;
-            height: 32px;
+            width: 24px;
+            height: 24px;
         }
 
         .service-title {
-          font-size: 1.5rem;
+          font-size: 1.15rem;
           font-weight: 700;
           color: var(--text-main);
-          margin-bottom: 1rem;
+          margin-bottom: 0.75rem;
           position: relative;
           z-index: 1;
         }
 
         .service-desc {
           color: var(--text-muted);
-          margin-bottom: 2rem;
-          line-height: 1.7;
+          margin-bottom: 1.25rem;
+          line-height: 1.5;
           flex-grow: 1;
-          font-size: 1rem;
+          font-size: 0.9rem;
           position: relative;
           z-index: 1;
         }
@@ -157,10 +158,10 @@ const Services = () => {
         .service-link {
           color: var(--color-primary);
           font-weight: 600;
-          font-size: 0.95rem;
+          font-size: 0.85rem;
           display: inline-flex;
           align-items: center;
-          gap: 0.5rem;
+          gap: 0.35rem;
           position: relative;
           z-index: 1;
         }
@@ -175,6 +176,19 @@ const Services = () => {
         
         .service-link:hover {
           color: var(--color-accent);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1024px) {
+            .services-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+             .services-grid {
+                grid-template-columns: 1fr;
+            }
         }
       `}</style>
     </section>
