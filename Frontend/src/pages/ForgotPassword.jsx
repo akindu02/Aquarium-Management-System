@@ -1,75 +1,74 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Key } from 'lucide-react';
 import '../index.css';
 
 const ForgotPassword = () => {
-    const navigate = useNavigate();
-    const [email, setEmail] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
 
-        // TODO: Integrate with backend API
-        // await apiRequest('/auth/forgot-password', { email });
+    // TODO: Integrate with backend API
+    // await apiRequest('/auth/forgot-password', { email });
 
-        // Simulating API call
-        setTimeout(() => {
-            setLoading(false);
-            // Navigate to OTP verification page
-            navigate('/verify-otp', { state: { email } });
-        }, 1000);
-    };
+    // Simulating API call
+    setTimeout(() => {
+      setLoading(false);
+      // Navigate to OTP verification page
+      navigate('/verify-otp', { state: { email } });
+    }, 1000);
+  };
 
-    return (
-        <div className="auth-page">
-            <div className="auth-container">
-                <div className="auth-header">
-                    {/* Key Icon Circle */}
-                    <div className="icon-circle">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
-                        </svg>
-                    </div>
-                    <h2 className="section-heading">Forgot Password</h2>
-                    <p className="auth-subtitle">
-                        No worries, we'll send you reset instructions.
-                    </p>
-                </div>
+  return (
+    <div className="auth-page">
+      <div className="auth-container">
+        <div className="auth-header">
+          {/* Key Icon Circle */}
+          <div className="icon-circle">
+            <Key className="w-8 h-8" strokeWidth={1.5} />
+          </div>
+          <h2 className="section-heading">Forgot Password</h2>
+          <p className="auth-subtitle">
+            No worries, we'll send you reset instructions.
+          </p>
+        </div>
 
-                <form className="auth-form glass" onSubmit={handleSubmit}>
-                    {error && <div className="error-message">{error}</div>}
+        <form className="auth-form glass" onSubmit={handleSubmit}>
+          {error && <div className="error-message">{error}</div>}
 
-                    <div className="form-group">
-                        <label htmlFor="email" className="form-label">Email Address</label>
-                        <input
-                            type="email"
-                            id="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="form-input"
-                            placeholder="Enter your email address"
-                            required
-                            disabled={loading}
-                        />
-                    </div>
+          <div className="form-group">
+            <label htmlFor="email" className="form-label">Email Address</label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="form-input"
+              placeholder="Enter your email address"
+              required
+              disabled={loading}
+            />
+          </div>
 
-                    <button type="submit" className="btn btn-primary auth-btn" disabled={loading}>
-                        {loading ? 'Sending...' : 'Reset Password'}
-                    </button>
+          <button type="submit" className="btn btn-primary auth-btn" disabled={loading}>
+            {loading ? 'Sending...' : 'Reset Password'}
+          </button>
 
-                    <div className="back-to-login">
-                        <Link to="/signin" className="back-link">
-                            ← Back to Login
-                        </Link>
-                    </div>
-                </form>
-            </div>
+          <div className="back-to-login">
+            <Link to="/signin" className="back-link">
+              ← Back to Login
+            </Link>
+          </div>
+        </form>
+      </div>
 
-            <style>{`
+      <style>{`
         .auth-page {
           min-height: 100vh;
           background: var(--color-bg);
@@ -218,8 +217,8 @@ const ForgotPassword = () => {
           }
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 };
 
 export default ForgotPassword;

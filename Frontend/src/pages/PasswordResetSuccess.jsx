@@ -1,39 +1,38 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Check } from 'lucide-react';
 import '../index.css';
 
 const PasswordResetSuccess = () => {
-    return (
-        <div className="auth-page">
-            <div className="auth-container">
+  return (
+    <div className="auth-page">
+      <div className="auth-container">
 
-                <div className="auth-form glass success-content">
-                    <div className="icon-circle success-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                        </svg>
-                    </div>
+        <div className="auth-form glass success-content">
+          <div className="icon-circle success-icon">
+            <Check className="w-10 h-10" strokeWidth={2.5} />
+          </div>
 
-                    <h2 className="section-heading">Password Reset</h2>
+          <h2 className="section-heading">Password Reset</h2>
 
-                    <p className="auth-subtitle">
-                        Your password has been successfully reset. <br />
-                        Click below to login magically.
-                    </p>
+          <p className="auth-subtitle">
+            Your password has been successfully reset. <br />
+            Click below to login magically.
+          </p>
 
-                    <Link to="/signin" className="btn btn-primary auth-btn" style={{ textDecoration: 'none' }}>
-                        Continue
-                    </Link>
+          <Link to="/signin" className="btn btn-primary auth-btn" style={{ textDecoration: 'none' }}>
+            Continue
+          </Link>
 
-                    <div className="back-to-login">
-                        <Link to="/signin" className="back-link">
-                            ← Back to Login
-                        </Link>
-                    </div>
-                </div>
-            </div>
+          <div className="back-to-login">
+            <Link to="/signin" className="back-link">
+              ← Back to Login
+            </Link>
+          </div>
+        </div>
+      </div>
 
-            <style>{`
+      <style>{`
         .auth-page {
           min-height: 100vh;
           background: var(--color-bg);
@@ -142,8 +141,8 @@ const PasswordResetSuccess = () => {
           }
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 };
 
 export default PasswordResetSuccess;
