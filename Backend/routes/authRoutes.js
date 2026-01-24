@@ -28,10 +28,6 @@ const registerValidation = [
         .withMessage('Last name is required')
         .isLength({ max: 100 })
         .withMessage('Last name cannot exceed 100 characters'),
-    body('phone')
-        .optional()
-        .isMobilePhone()
-        .withMessage('Please provide a valid phone number'),
 ];
 
 const loginValidation = [

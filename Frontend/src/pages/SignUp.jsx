@@ -5,204 +5,188 @@ import { saveAuthData, getDashboardRoute } from '../utils/auth';
 import '../index.css';
 
 const SignUp = () => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    // State matches database columns exactly
-    const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
-        email: '',
-        phone: '',
-        password: '',
-        confirmPassword: ''
+  // State matches database columns exactly
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
     });
+    // Clear errors when user types
+    if (error) setError('');
+  };
 
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
 
-    const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
-        // Clear errors when user types
-        if (error) setError('');
-    };
+    // Client-side validations
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match!');
+      return;
+    }
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters long');
+      return;
+    }
 
-        // Client-side validations
-        if (formData.password !== formData.confirmPassword) {
-            setError('Passwords do not match!');
-            return;
+    setLoading(true);
+
+    try {
+      // Send data to backend
+      const response = await registerAPI({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password
+      });
+
+      if (response.success) {
+        // Registration successful
+        // 1. Save the token and user data
+        saveAuthData(response.accessToken, response.refreshToken, response.user);
+
+        // 2. Determine where to send the user based on role
+        const dashboardRoute = getDashboardRoute(response.user.role);
+
+        // 3. Redirect to dashboard
+        navigate(dashboardRoute, { replace: true });
+      } else {
+        // Backend validation failed (e.g., email exists)
+        if (response.errors && Array.isArray(response.errors)) {
+          setError(response.errors.map(err => err.msg).join('. '));
+        } else {
+          setError(response.message || 'Registration failed');
         }
+      }
+    } catch (err) {
+      console.error('Signup error:', err);
+      // Network or server errors
+      setError(err.message || 'An error occurred during sign up. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        if (formData.password.length < 8) {
-            setError('Password must be at least 8 characters long');
-            return;
-        }
+  return (
+    <div className="signup-page">
+      <div className="signup-container">
+        <div className="signup-header">
+          <h2 className="section-heading">Create Account</h2>
+          <p className="signup-subtitle">Join our community today</p>
+        </div>
 
-        setLoading(true);
+        <form className="signup-form glass" onSubmit={handleSubmit}>
+          <h3 className="form-heading">Sign Up</h3>
 
-        try {
-            // Send data to backend
-            const response = await registerAPI({
-                firstName: formData.firstName,
-                lastName: formData.lastName,
-                email: formData.email,
-                phone: formData.phone,
-                password: formData.password
-            });
-
-            if (response.success) {
-                // Registration successful
-                // 1. Save the token and user data
-                saveAuthData(response.accessToken, response.refreshToken, response.user);
-
-                // 2. Determine where to send the user based on role
-                const dashboardRoute = getDashboardRoute(response.user.role);
-
-                // 3. Redirect to dashboard
-                navigate(dashboardRoute, { replace: true });
-            } else {
-                // Backend validation failed (e.g., email exists)
-                if (response.errors && Array.isArray(response.errors)) {
-                    setError(response.errors.map(err => err.msg).join('. '));
-                } else {
-                    setError(response.message || 'Registration failed');
-                }
-            }
-        } catch (err) {
-            console.error('Signup error:', err);
-            // Network or server errors
-            setError(err.message || 'An error occurred during sign up. Please try again.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="signup-page">
-            <div className="signup-container">
-                <div className="signup-header">
-                    <h2 className="section-heading">Create Account</h2>
-                    <p className="signup-subtitle">Join our community today</p>
-                </div>
-
-                <form className="signup-form glass" onSubmit={handleSubmit}>
-                    <h3 className="form-heading">Sign Up</h3>
-
-                    {error && (
-                        <div className="error-message">
-                            {error}
-                        </div>
-                    )}
-
-                    {/* Name Fields Row */}
-                    <div className="form-row">
-                        <div className="form-group half">
-                            <label htmlFor="firstName" className="form-label">First Name *</label>
-                            <input
-                                type="text"
-                                id="firstName"
-                                name="firstName"
-                                value={formData.firstName}
-                                onChange={handleChange}
-                                className="form-input"
-                                placeholder="first name"
-                                required
-                                disabled={loading}
-                            />
-                        </div>
-                        <div className="form-group half">
-                            <label htmlFor="lastName" className="form-label">Last Name *</label>
-                            <input
-                                type="text"
-                                id="lastName"
-                                name="lastName"
-                                value={formData.lastName}
-                                onChange={handleChange}
-                                className="form-input"
-                                placeholder="last name"
-                                required
-                                disabled={loading}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="form-group">
-                        <label htmlFor="email" className="form-label">Email Address *</label>
-                        <input
-                            type="email"
-                            id="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            className="form-input"
-                            placeholder="email@example.com"
-                            required
-                            disabled={loading}
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label htmlFor="phone" className="form-label">Phone Number</label>
-                        <input
-                            type="tel"
-                            id="phone"
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleChange}
-                            className="form-input"
-                            placeholder="phone number"
-                            disabled={loading}
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label htmlFor="password" className="form-label">Password *</label>
-                        <input
-                            type="password"
-                            id="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            className="form-input"
-                            placeholder="Min 8 characters"
-                            required
-                            minLength={8}
-                            disabled={loading}
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label htmlFor="confirmPassword" className="form-label">Confirm Password *</label>
-                        <input
-                            type="password"
-                            id="confirmPassword"
-                            name="confirmPassword"
-                            value={formData.confirmPassword}
-                            onChange={handleChange}
-                            className="form-input"
-                            placeholder="Re-enter your password"
-                            required
-                            disabled={loading}
-                        />
-                    </div>
-
-                    <button type="submit" className="btn btn-primary signup-btn" disabled={loading}>
-                        {loading ? 'Creating Account...' : 'Sign Up'}
-                    </button>
-                </form>
-
-                <p className="signin-link">
-                    Already have an account? <Link to="/signin">Sign In</Link>
-                </p>
+          {error && (
+            <div className="error-message">
+              {error}
             </div>
+          )}
 
-            <style>{`
+          {/* Name Fields Row */}
+          <div className="form-row">
+            <div className="form-group half">
+              <label htmlFor="firstName" className="form-label">First Name *</label>
+              <input
+                type="text"
+                id="firstName"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleChange}
+                className="form-input"
+                placeholder="first name"
+                required
+                disabled={loading}
+              />
+            </div>
+            <div className="form-group half">
+              <label htmlFor="lastName" className="form-label">Last Name *</label>
+              <input
+                type="text"
+                id="lastName"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+                className="form-input"
+                placeholder="last name"
+                required
+                disabled={loading}
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="email" className="form-label">Email Address *</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className="form-input"
+              placeholder="email@example.com"
+              required
+              disabled={loading}
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="password" className="form-label">Password *</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              className="form-input"
+              placeholder="Min 8 characters"
+              required
+              minLength={8}
+              disabled={loading}
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="confirmPassword" className="form-label">Confirm Password *</label>
+            <input
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              className="form-input"
+              placeholder="Re-enter your password"
+              required
+              disabled={loading}
+            />
+          </div>
+
+          <button type="submit" className="btn btn-primary signup-btn" disabled={loading}>
+            {loading ? 'Creating Account...' : 'Sign Up'}
+          </button>
+        </form>
+
+        <p className="signin-link">
+          Already have an account? <Link to="/signin">Sign In</Link>
+        </p>
+      </div>
+
+      <style>{`
         .signup-page {
           min-height: 100vh;
           background: var(--color-bg);
@@ -366,8 +350,8 @@ const SignUp = () => {
           }
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 };
 
 export default SignUp;
