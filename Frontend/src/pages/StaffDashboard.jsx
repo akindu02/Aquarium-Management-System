@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { LayoutDashboard, ClipboardList, Headset, PackageSearch, Truck, MessageSquare, Settings, Bell, LogOut, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
@@ -25,13 +26,13 @@ const StaffDashboard = () => {
   };
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard' },
-    { id: 'orders', label: 'Process Orders' },
-    { id: 'customers', label: 'Customer Support' },
-    { id: 'inventory', label: 'Inventory Check' },
-    { id: 'shipping', label: 'Shipping & Delivery' },
-    { id: 'messages', label: 'Messages' },
-    { id: 'settings', label: 'My Settings' },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'orders', label: 'Process Orders', icon: ClipboardList },
+    { id: 'customers', label: 'Customer Support', icon: Headset },
+    { id: 'inventory', label: 'Inventory Check', icon: PackageSearch },
+    { id: 'shipping', label: 'Shipping & Delivery', icon: Truck },
+    { id: 'messages', label: 'Messages', icon: MessageSquare },
+    { id: 'settings', label: 'My Settings', icon: Settings },
   ];
 
   const renderContent = () => {
@@ -68,23 +69,28 @@ const StaffDashboard = () => {
         <nav className="sidebar-nav">
           {!isSidebarCollapsed && <p className="nav-section-title">MAIN MENU</p>}
           <ul className="nav-menu">
-            {menuItems.map((item) => (
-              <li key={item.id}>
-                <button
-                  className={`nav-item ${activeMenu === item.id ? 'active' : ''}`}
-                  onClick={() => setActiveMenu(item.id)}
-                  title={item.label}
-                >
-                  <span className="nav-label">{item.label}</span>
-                </button>
-              </li>
-            ))}
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <li key={item.id}>
+                  <button
+                    className={`nav-item ${activeMenu === item.id ? 'active' : ''}`}
+                    onClick={() => setActiveMenu(item.id)}
+                    title={item.label}
+                  >
+                    <Icon className="nav-icon" />
+                    <span className="nav-label">{item.label}</span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </nav>
 
         {/* Logout Button */}
         <div className="sidebar-footer">
           <button className="logout-btn" onClick={handleLogout} title="Logout">
+            <LogOut className="logout-icon" />
             <span>Logout</span>
           </button>
         </div>
@@ -97,7 +103,7 @@ const StaffDashboard = () => {
           <div className="header-left"></div>
           <div className="header-right">
             <button className="notification-btn" title="Notifications">
-              <span className="notification-icon">N</span>
+              <Bell className="notification-icon" />
               <span className="notification-badge">7</span>
             </button>
             <div className="header-profile">
@@ -501,7 +507,11 @@ const StaffDashboard = () => {
                         grid-template-columns: 1fr;
                     }
                 }
-            `}</style>
+        .nav-icon { width: 20px; height: 20px; flex-shrink: 0; }
+        .notification-icon { width: 18px; height: 18px; }
+        .logout-icon { width: 18px; height: 18px; }
+        .card-icon { width: 42px; height: 42px; margin-bottom: 1rem; opacity: 0.9; }
+      `}</style>
     </div>
   );
 };
@@ -518,6 +528,7 @@ const DashboardContent = () => (
 
     <div className="dashboard-grid">
       <div className="dashboard-card">
+        <ClipboardList className="card-icon" style={{ color: "var(--color-primary)" }} />
         <h3>Pending Orders</h3>
         <p>Orders waiting to be processed</p>
         <div className="card-stat">
@@ -527,6 +538,7 @@ const DashboardContent = () => (
       </div>
 
       <div className="dashboard-card">
+        <Headset className="card-icon" style={{ color: "#3b82f6" }} />
         <h3>Support Tickets</h3>
         <p>Customer inquiries needing attention</p>
         <div className="card-stat">
@@ -536,6 +548,7 @@ const DashboardContent = () => (
       </div>
 
       <div className="dashboard-card">
+        <Truck className="card-icon" style={{ color: "#f59e0b" }} />
         <h3>Shipments Today</h3>
         <p>Orders ready for dispatch</p>
         <div className="card-stat">
@@ -545,6 +558,7 @@ const DashboardContent = () => (
       </div>
 
       <div className="dashboard-card">
+        <AlertTriangle className="card-icon" style={{ color: "#ef4444" }} />
         <h3>Low Stock Items</h3>
         <p>Products that need restocking</p>
         <div className="card-stat">
@@ -554,6 +568,7 @@ const DashboardContent = () => (
       </div>
 
       <div className="dashboard-card">
+        <CheckCircle2 className="card-icon" style={{ color: "#10b981" }} />
         <h3>Completed Today</h3>
         <p>Orders processed today</p>
         <div className="card-stat">
@@ -563,6 +578,7 @@ const DashboardContent = () => (
       </div>
 
       <div className="dashboard-card">
+        <MessageSquare className="card-icon" style={{ color: "#8b5cf6" }} />
         <h3>Team Messages</h3>
         <p>Internal communications</p>
         <div className="card-stat">
