@@ -29,7 +29,7 @@ const Navbar = () => {
           <a href="#" className="nav-link">Store</a>
           <a href="#" className="nav-link">Services</a>
           <a href="#about" className="nav-link">About</a>
-          <a href="#" className="nav-link">Contact</a>
+          <a href="#about" className="nav-link">Contact</a>
           <div className="mobile-auth">
             <Link to="/signin" style={{ width: '100%', marginBottom: '10px' }}>
               <button className="btn btn-outline" style={{ width: '100%' }}>Sign In</button>
