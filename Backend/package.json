@@ -7,8 +7,7 @@
         "start": "node server.js",
         "dev": "node scripts/kill_port.js && nodemon server.js",
         "db:init": "node db/init.js",
-        "db:migrate": "node db/migrations/run_migration.js",
-        "db:reseed": "node db/reseed.js"
+        "db:migrate": "node db/migrations/run_migration.js"
     },
     "dependencies": {
         "bcryptjs": "^2.4.3",

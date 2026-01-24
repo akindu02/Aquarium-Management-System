@@ -20,17 +20,7 @@ const initDatabase = async () => {
         await pool.query(schema);
         console.log('✅ Schema applied successfully');
 
-        // Ask if we should seed the database
-        const shouldSeed = process.argv.includes('--seed');
 
-        if (shouldSeed) {
-            const seedPath = path.join(__dirname, 'seed.sql');
-            const seed = fs.readFileSync(seedPath, 'utf8');
-
-            console.log('🌱 Seeding database...');
-            await pool.query(seed);
-            console.log('✅ Seed data inserted successfully');
-        }
 
         console.log('🎉 Database initialization complete!');
         process.exit(0);
