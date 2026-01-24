@@ -8,7 +8,7 @@ const { pool } = require('../config/db');
 async function viewUsers() {
     try {
         const result = await pool.query(
-            'SELECT id, first_name, last_name, email, role, phone, created_at FROM users ORDER BY created_at DESC'
+            'SELECT id, name, email, role, created_at FROM users ORDER BY created_at DESC'
         );
 
         console.log(`\nFound ${result.rows.length} users:\n`);
