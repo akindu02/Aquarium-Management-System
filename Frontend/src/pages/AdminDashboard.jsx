@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Bell, Settings, LogOut, CalendarClock } from "lucide-react";
+import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Bell, Settings, LogOut, CalendarClock, AlertTriangle, Clock, CheckCircle, Activity, Coins } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
@@ -596,103 +596,175 @@ const AdminDashboard = () => {
 };
 
 // Dashboard Content Component
-const DashboardContent = () => (
-  <>
-    <div className="dashboard-welcome">
-      <h1 className="dashboard-heading">Admin Dashboard</h1>
-      <p className="dashboard-subtitle">
-        Welcome to the admin control center. Manage your aquarium business from here.
-      </p>
-    </div>
+// Dashboard Content Component
+const DashboardContent = () => {
+  // Dummy Data for Dashboard Overview
+  const dashboardStats = [
+    { label: 'Total Revenue', value: 'LKR 450,000', sub: 'Total earnings', icon: Coins, color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' },
+    { label: 'Pending Bookings', value: '12', sub: 'Requires attention', icon: CalendarClock, color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' },
+    { label: 'Active Orders', value: '8', sub: 'Processing & Shipped', icon: ShoppingCart, color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' },
+    { label: 'Low Stock Items', value: '5', sub: 'Restock immediately', icon: AlertTriangle, color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' },
+  ];
 
-    {/* Main Management Tiles - 3 Columns */}
-    <div className="dashboard-grid">
-      <div className="dashboard-card" style={{ cursor: 'pointer' }}>
-        <Users className="card-icon" style={{ color: "var(--color-primary)" }} />
-        <h3>User Management</h3>
-        <p>Manage all users, roles, and permissions</p>
-        <div className="card-stat">
-          <span className="stat-number">334</span>
-          <span className="stat-label">Total Users</span>
-        </div>
+  const recentActivity = [
+    { id: 1, text: 'New order #ORD-5008 placed by Mahesh', time: '10 mins ago', type: 'order' },
+    { id: 2, text: 'Booking #BK-201 confirmed for Kasun', time: '1 hour ago', type: 'booking' },
+    { id: 3, text: 'Inventory alert: Goldfish Food low stock', time: '2 hours ago', type: 'alert' },
+    { id: 4, text: 'New user "Dilshan" registered', time: '5 hours ago', type: 'user' },
+  ];
+
+  const urgentTasks = [
+    { id: 1, title: 'Confirm Tank Cleaning for Nimali', type: 'Booking', priority: 'High' },
+    { id: 2, title: 'Ship Order #ORD-5002', type: 'Order', priority: 'Medium' },
+    { id: 3, title: 'Restock Neon Tetra', type: 'Inventory', priority: 'High' },
+  ];
+
+  return (
+    <>
+      <div className="dashboard-welcome">
+        <h1 className="dashboard-heading">Overview Dashboard</h1>
+        <p className="dashboard-subtitle">
+          Key metrics and daily activities at a glance.
+        </p>
       </div>
 
-      <div className="dashboard-card" style={{ cursor: 'pointer' }}>
-        <Package className="card-icon" style={{ color: "#f59e0b" }} />
-        <h3>Inventory</h3>
-        <p>Manage aquarium products and stock</p>
-        <div className="card-stat">
-          <span className="stat-number">456</span>
-          <span className="stat-label">Products</span>
-        </div>
+      {/* Key Metrics Grid */}
+      <div className="dashboard-stats-grid">
+        {dashboardStats.map((stat, index) => (
+          <div key={index} className="db-stat-card">
+            <div className="db-stat-icon" style={{ backgroundColor: stat.bg, color: stat.color }}>
+              <stat.icon size={24} />
+            </div>
+            <div>
+              <div className="db-stat-value">{stat.value}</div>
+              <div className="db-stat-label">{stat.label}</div>
+              <div className="db-stat-sub">{stat.sub}</div>
+            </div>
+          </div>
+        ))}
       </div>
 
-      <div className="dashboard-card" style={{ cursor: 'pointer' }}>
-        <ShoppingCart className="card-icon" style={{ color: "#10b981" }} />
-        <h3>Orders</h3>
-        <p>Track and manage customer orders</p>
-        <div className="card-stat">
-          <span className="stat-number">123</span>
-          <span className="stat-label">Total Orders</span>
-        </div>
-      </div>
-    </div>
-
-    {/* Order/Service Details Table */}
-    <div className="recent-orders-section" style={{ marginTop: '2rem' }}>
-      <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-main)' }}>Order/Service Details</h2>
-        <select className="month-filter" style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.05)', color: 'var(--text-main)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.5rem', cursor: 'pointer' }}>
-          <option style={{ color: 'black' }}>October</option>
-          <option style={{ color: 'black' }}>September</option>
-          <option style={{ color: 'black' }}>August</option>
-        </select>
-      </div>
-
-      <div className="table-container" style={{ overflowX: 'auto', background: 'rgba(255,255,255,0.03)', borderRadius: '1rem', padding: '1rem' }}>
-        <table className="orders-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
-          <thead>
-            <tr style={{ background: 'rgba(255,255,255,0.05)' }}>
-              <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-muted)' }}>Order/Service Name</th>
-              <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-muted)' }}>Location</th>
-              <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-muted)' }}>Date</th>
-              <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-muted)' }}>Piece</th>
-              <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-muted)' }}>Amount</th>
-              <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-muted)' }}>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[
-              { name: 'Gold Fish Pair', location: 'No 23,Hakmana Road Matara', date: '12.09.2025', piece: '1', amount: 'LKR 2300', status: 'Delivered' },
-              { name: 'Tank Maintenance', location: '234/2 New lane ,Thihagoda', date: '12.09.2025', piece: '-', amount: '-', status: 'Pending' },
-              { name: 'BOYU Water Filter', location: 'NO 50 New town ,Galle', date: '12.09.2025', piece: '2', amount: 'LKR 5600', status: 'Rejected' }
-            ].map((order, idx) => (
-              <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <td style={{ padding: '1rem', color: 'var(--text-main)' }}>{order.name}</td>
-                <td style={{ padding: '1rem', color: 'var(--text-main)' }}>{order.location}</td>
-                <td style={{ padding: '1rem', color: 'var(--text-main)' }}>{order.date}</td>
-                <td style={{ padding: '1rem', color: 'var(--text-main)' }}>{order.piece}</td>
-                <td style={{ padding: '1rem', color: 'var(--text-main)' }}>{order.amount}</td>
-                <td style={{ padding: '1rem' }}>
-                  <span style={{
-                    padding: '0.35rem 1rem',
-                    borderRadius: '99px',
-                    fontSize: '0.85rem',
-                    fontWeight: 600,
-                    color: 'white',
-                    backgroundColor: order.status === 'Delivered' ? '#10b981' : order.status === 'Pending' ? '#f59e0b' : '#ef4444'
-                  }}>
-                    {order.status}
-                  </span>
-                </td>
-              </tr>
+      {/* Main Dashboard Sections */}
+      <div className="dashboard-activity-grid">
+        {/* Recent Activity */}
+        <div className="db-section">
+          <div className="db-section-header">
+            <h3><Activity size={18} /> Recent Activity</h3>
+          </div>
+          <div className="activity-list">
+            {recentActivity.map(item => (
+              <div key={item.id} className="activity-item">
+                <div className="activity-dot"></div>
+                <div>
+                  <div className="activity-text">{item.text}</div>
+                  <div className="activity-time">{item.time}</div>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
+          </div>
+        </div>
+
+        {/* Urgent Actions */}
+        <div className="db-section">
+          <div className="db-section-header">
+            <h3><AlertTriangle size={18} /> Actions Required</h3>
+          </div>
+          <div className="task-list">
+            {urgentTasks.map(task => (
+              <div key={task.id} className="task-item">
+                <div className="task-info">
+                  <h4>{task.title}</h4>
+                  <span className={`task-badge ${task.type.toLowerCase()}`}>{task.type}</span>
+                </div>
+                <button className="btn-action-sm">View</button>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
-    </div>
-  </>
-);
+
+      <style>{`
+        .dashboard-stats-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+          gap: 1.5rem;
+          margin-bottom: 2rem;
+        }
+
+        .db-stat-card {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          padding: 1.5rem;
+          border-radius: 1rem;
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          transition: transform 0.2s;
+        }
+        .db-stat-card:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.05); }
+
+        .db-stat-icon {
+          width: 50px; height: 50px; border-radius: 12px;
+          display: flex; align-items: center; justify-content: center;
+        }
+
+        .db-stat-value { font-size: 1.5rem; font-weight: 700; color: var(--text-main); line-height: 1.2; }
+        .db-stat-label { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.25rem; }
+        .db-stat-sub { font-size: 0.75rem; color: var(--text-muted); opacity: 0.8; }
+
+        .dashboard-activity-grid {
+          display: grid;
+          grid-template-columns: 1.5fr 1fr;
+          gap: 1.5rem;
+        }
+
+        .db-section {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 1rem;
+          padding: 1.5rem;
+        }
+
+        .db-section-header {
+          display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem;
+          padding-bottom: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .db-section-header h3 { font-size: 1.1rem; margin: 0; display: flex; align-items: center; gap: 0.5rem; }
+
+        .activity-list { display: flex; flex-direction: column; gap: 1rem; }
+        .activity-item { display: flex; gap: 1rem; align-items: flex-start; }
+        .activity-dot {
+          width: 8px; height: 8px; border-radius: 50%; background: var(--color-primary);
+          margin-top: 0.4rem; flex-shrink: 0;
+        }
+        .activity-text { font-size: 0.95rem; color: var(--text-main); margin-bottom: 0.2rem; }
+        .activity-time { font-size: 0.8rem; color: var(--text-muted); }
+
+        .task-list { display: flex; flex-direction: column; gap: 1rem; }
+        .task-item {
+          display: flex; justifying-content: space-between; align-items: center;
+          background: rgba(255, 255, 255, 0.02); padding: 1rem; border-radius: 0.75rem;
+        }
+        .task-info h4 { margin: 0 0 0.25rem 0; font-size: 0.95rem; }
+        .task-badge { font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 4px; background: rgba(255,255,255,0.1); color: var(--text-muted); }
+        .task-badge.booking { color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
+        .task-badge.order { color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
+        .task-badge.inventory { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+
+        .btn-action-sm {
+          background: transparent; border: 1px solid rgba(255, 255, 255, 0.1);
+          color: var(--text-muted); padding: 0.25rem 0.75rem; border-radius: 6px;
+          cursor: pointer; font-size: 0.8rem;
+        }
+        .btn-action-sm:hover { border-color: var(--color-primary); color: var(--color-primary); }
+
+        @media (max-width: 900px) {
+          .dashboard-activity-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
+    </>
+  );
+};
 
 // Placeholder Content for other menu items
 const PlaceholderContent = ({ title, description }) => (
