@@ -62,7 +62,7 @@ const PRODUCTS = [
     {
         id: 7,
         name: 'LED Spectrum Light',
-        category: 'Tanks',
+        category: 'Accessories',
         price: 1250,
         stock: 15,
         image: '/store/LED Spectrum Light.jpg',
@@ -157,6 +157,7 @@ const Store = () => {
                         <option value="Filters">Filters</option>
                         <option value="Food">Food</option>
                         <option value="Medicine">Medicine</option>
+                        <option value="Accessories">Accessories</option>
                     </select>
                 </div>
 
