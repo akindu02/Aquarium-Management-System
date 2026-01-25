@@ -1,98 +1,80 @@
 
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Eye } from 'lucide-react';
+import { ShoppingCart, Eye, Search } from 'lucide-react';
 import './Store.css';
 
 // Initial dummy data
 const PRODUCTS = [
     {
         id: 1,
-        name: 'Neon Tetra School',
+        name: 'Goldfish (Medium)',
         category: 'Fish',
-        price: 4.50,
+        price: 4250,
         stock: 50,
-        image: 'https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?auto=format&fit=crop&q=80&w=800',
+        image: '',
         isNew: true
     },
     {
         id: 2,
-        name: 'Premium Glass Tank 50L',
+        name: 'Glass Tank 30L',
         category: 'Tanks',
-        price: 129.99,
+        price: 12000,
         stock: 5,
-        image: 'https://images.unsplash.com/photo-1516684669134-de6d7c47743d?auto=format&fit=crop&q=80&w=800',
+        image: '',
         isNew: false
     },
     {
         id: 3,
-        name: 'External Canister Filter',
+        name: 'Sponge Filter (Small)',
         category: 'Filters',
-        price: 89.95,
+        price: 2500,
         stock: 0,
-        image: 'https://plus.unsplash.com/premium_photo-1661605333857-41ab4c88e727?auto=format&fit=crop&q=80&w=800',
+        image: '',
         isNew: false
     },
     {
         id: 4,
-        name: 'Tropical Flakes Premium',
+        name: 'Goldfish Pellets 150g',
         category: 'Food',
-        price: 12.99,
+        price: 600,
         stock: 100,
-        image: 'https://images.unsplash.com/photo-1627807490013-1b9c922579df?auto=format&fit=crop&q=80&w=800',
+        image: '',
         isNew: true
     },
     {
         id: 5,
-        name: 'Betta Fish (Show Grade)',
+        name: 'Betta Fish',
         category: 'Fish',
-        price: 25.00,
+        price: 250,
         stock: 12,
-        image: 'https://images.unsplash.com/photo-1534575180408-b7d7c0136ee8?auto=format&fit=crop&q=80&w=800',
+        image: '',
         isNew: true
     },
     {
         id: 6,
         name: 'Aquatic Plant Fertilizer',
         category: 'Medicine',
-        price: 15.50,
+        price: 2300,
         stock: 30,
-        image: 'https://images.unsplash.com/photo-1596765796791-628d3493c837?auto=format&fit=crop&q=80&w=800',
+        image: '',
         isNew: false
     },
     {
         id: 7,
         name: 'LED Spectrum Light',
         category: 'Tanks',
-        price: 55.00,
+        price: 1250,
         stock: 15,
-        image: 'https://images.unsplash.com/photo-1544979590-449e798725ee?auto=format&fit=crop&q=80&w=800',
+        image: '',
         isNew: false
     },
     {
         id: 8,
         name: 'Anti-Fungal Treatment',
         category: 'Medicine',
-        price: 9.99,
+        price: 4500,
         stock: 45,
-        image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=800',
-        isNew: false
-    },
-    {
-        id: 9,
-        name: 'Goldfish Pellets',
-        category: 'Food',
-        price: 8.50,
-        stock: 60,
-        image: 'https://images.unsplash.com/photo-1599488615731-7e5c547aaea2?auto=format&fit=crop&q=80&w=800',
-        isNew: false
-    },
-    {
-        id: 10,
-        name: 'Substrate Sand 5kg',
-        category: 'Tanks',
-        price: 18.00,
-        stock: 0,
-        image: 'https://images.unsplash.com/photo-1528821128474-27f963b0bdd4?auto=format&fit=crop&q=80&w=800',
+        image: '',
         isNew: false
     }
 ];
@@ -146,52 +128,56 @@ const Store = () => {
     return (
         <div className="store-page container">
             <div className="store-header">
-                <h1 className="store-title">Methus Aquarium Store</h1>
+                <h1 className="store-title">Methu Aquarium Store</h1>
                 <p className="store-subtitle">Discover our premium selection of aquatic life and supplies.</p>
             </div>
 
-            <div className="history-glass store-toolbar glass">
-                <div className="search-container">
-                    <input
-                        type="text"
-                        placeholder="Search products..."
-                        className="search-input"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+            <div className="store-toolbar">
+                {/* Left Side */}
+                <div className="toolbar-left">
+                    <div className="search-wrapper">
+                        <Search size={18} className="search-icon" />
+                        <input
+                            type="text"
+                            placeholder="Search products..."
+                            className="search-input"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+
+                    <select
+                        className="toolbar-select"
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                    >
+                        <option value="All">All Categories</option>
+                        <option value="Fish">Fish</option>
+                        <option value="Tanks">Tanks</option>
+                        <option value="Filters">Filters</option>
+                        <option value="Food">Food</option>
+                        <option value="Medicine">Medicine</option>
+                    </select>
                 </div>
 
-                <select
-                    className="category-select"
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                >
-                    <option value="All">All Categories</option>
-                    <option value="Fish">Fish</option>
-                    <option value="Tanks">Tanks</option>
-                    <option value="Filters">Filters</option>
-                    <option value="Food">Food</option>
-                    <option value="Medicine">Medicine</option>
-                </select>
+                {/* Right Side */}
+                <div className="toolbar-right">
+                    <select
+                        className="toolbar-select"
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                    >
+                        <option value="newest">Newest</option>
+                        <option value="price-low">Price: Low → High</option>
+                        <option value="price-high">Price: High → Low</option>
+                    </select>
 
-                <button className="cart-btn-header">
-                    <ShoppingCart size={20} />
-                    <span>Cart</span>
-                    <span className="cart-badge">{cartCount}</span>
-                </button>
-            </div>
-
-            <div className="sort-container">
-                <span className="sort-label">Sort by:</span>
-                <select
-                    className="sort-select"
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                >
-                    <option value="newest">Newest</option>
-                    <option value="price-low">Price: Mid to High</option>
-                    <option value="price-high">Price: High to Low</option>
-                </select>
+                    <button className="cart-btn">
+                        <ShoppingCart size={18} />
+                        <span>Cart</span>
+                        <span className="cart-badge">{cartCount}</span>
+                    </button>
+                </div>
             </div>
 
             <div className="product-grid">
@@ -214,7 +200,7 @@ const Store = () => {
 
                         <div className="card-info">
                             <h3 className="product-name">{product.name}</h3>
-                            <div className="product-price">${product.price.toFixed(2)}</div>
+                            <div className="product-price">LKR {product.price.toFixed(2)}</div>
                         </div>
 
                         <button
