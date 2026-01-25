@@ -15,6 +15,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import VerifyOtp from './pages/VerifyOtp';
 import ResetPassword from './pages/ResetPassword';
 import PasswordResetSuccess from './pages/PasswordResetSuccess';
+import Store from './pages/Store';
 import './App.css';
 
 function App() {
@@ -27,6 +28,13 @@ function App() {
             <>
               <Navbar />
               <main><Home /></main>
+              <Footer />
+            </>
+          } />
+          <Route path="/store" element={
+            <>
+              <Navbar />
+              <main><Store /></main>
               <Footer />
             </>
           } />
