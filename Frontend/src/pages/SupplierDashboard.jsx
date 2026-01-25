@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Package, ShoppingCart, Boxes, DollarSign, MessageSquare, Settings, Bell, LogOut, Star, AlertTriangle, ClipboardList, History } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Banknote, MessageSquare, Settings, Bell, LogOut, Star, AlertTriangle, ClipboardList, History } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
 import SupplierOrderRequests from './supplier/SupplierOrderRequests';
 import SupplierOrderHistory from './supplier/SupplierOrderHistory';
+import SupplierEarnings from './supplier/SupplierEarnings';
 import '../index.css';
 
 const SupplierDashboard = () => {
@@ -31,8 +32,7 @@ const SupplierDashboard = () => {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'new_requests', label: 'New Order Request', icon: ClipboardList },
     { id: 'order_history', label: 'Order History', icon: History },
-    { id: 'inventory', label: 'Stock Management', icon: Boxes },
-    { id: 'earnings', label: 'Earnings', icon: DollarSign },
+    { id: 'earnings', label: 'Earnings', icon: Banknote },
   ];
 
   const renderContent = () => {
@@ -43,10 +43,8 @@ const SupplierDashboard = () => {
         return <SupplierOrderRequests />;
       case 'order_history':
         return <SupplierOrderHistory />;
-      case 'inventory':
-        return <PlaceholderContent title="Stock Management" description="Track inventory levels and manage stock" />;
       case 'earnings':
-        return <PlaceholderContent title="Earnings" description="View your revenue, payouts, and financial reports" />;
+        return <SupplierEarnings />;
       default:
         return <DashboardContent />;
     }
@@ -554,7 +552,7 @@ const DashboardContent = () => (
       </div>
 
       <div className="dashboard-card">
-        <DollarSign className="card-icon" style={{ color: "#10b981" }} />
+        <Banknote className="card-icon" style={{ color: "#10b981" }} />
         <h3>This Month's Earnings</h3>
         <p>Revenue from completed orders</p>
         <div className="card-stat">
