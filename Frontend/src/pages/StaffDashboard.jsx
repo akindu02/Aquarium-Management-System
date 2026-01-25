@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, ClipboardList, Headset, PackageSearch, Truck, MessageSquare, Settings, Bell, LogOut, CheckCircle2, AlertTriangle } from "lucide-react";
+import { LayoutDashboard, ClipboardList, PackageSearch, Settings, Bell, LogOut, CheckCircle2, AlertTriangle, CalendarClock, Store } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
+import BookingManagement from './admin/BookingManagement';
+import PointOfSale from './staff/PointOfSale';
 import '../index.css';
 
 const StaffDashboard = () => {
@@ -27,11 +29,10 @@ const StaffDashboard = () => {
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'pos', label: 'Point of Sale', icon: Store },
     { id: 'orders', label: 'Process Orders', icon: ClipboardList },
-    { id: 'customers', label: 'Customer Support', icon: Headset },
+    { id: 'bookings', label: 'Bookings', icon: CalendarClock },
     { id: 'inventory', label: 'Inventory Check', icon: PackageSearch },
-    { id: 'shipping', label: 'Shipping & Delivery', icon: Truck },
-    { id: 'messages', label: 'Messages', icon: MessageSquare },
     { id: 'settings', label: 'My Settings', icon: Settings },
   ];
 
@@ -39,16 +40,14 @@ const StaffDashboard = () => {
     switch (activeMenu) {
       case 'dashboard':
         return <DashboardContent />;
+      case 'pos':
+        return <PointOfSale />;
       case 'orders':
         return <PlaceholderContent title="Process Orders" description="View and process pending customer orders" />;
-      case 'customers':
-        return <PlaceholderContent title="Customer Support" description="Handle customer inquiries and support tickets" />;
+      case 'bookings':
+        return <BookingManagement />;
       case 'inventory':
         return <PlaceholderContent title="Inventory Check" description="Monitor stock levels and report discrepancies" />;
-      case 'shipping':
-        return <PlaceholderContent title="Shipping & Delivery" description="Manage shipments and track deliveries" />;
-      case 'messages':
-        return <PlaceholderContent title="Messages" description="Internal team communications" />;
       case 'settings':
         return <PlaceholderContent title="My Settings" description="Update your profile and work preferences" />;
       default:
@@ -537,25 +536,9 @@ const DashboardContent = () => (
         </div>
       </div>
 
-      <div className="dashboard-card">
-        <Headset className="card-icon" style={{ color: "#3b82f6" }} />
-        <h3>Support Tickets</h3>
-        <p>Customer inquiries needing attention</p>
-        <div className="card-stat">
-          <span className="stat-number">15</span>
-          <span className="stat-label">Open Tickets</span>
-        </div>
-      </div>
 
-      <div className="dashboard-card">
-        <Truck className="card-icon" style={{ color: "#f59e0b" }} />
-        <h3>Shipments Today</h3>
-        <p>Orders ready for dispatch</p>
-        <div className="card-stat">
-          <span className="stat-number">18</span>
-          <span className="stat-label">To Ship</span>
-        </div>
-      </div>
+
+
 
       <div className="dashboard-card">
         <AlertTriangle className="card-icon" style={{ color: "#ef4444" }} />
@@ -577,15 +560,7 @@ const DashboardContent = () => (
         </div>
       </div>
 
-      <div className="dashboard-card">
-        <MessageSquare className="card-icon" style={{ color: "#8b5cf6" }} />
-        <h3>Team Messages</h3>
-        <p>Internal communications</p>
-        <div className="card-stat">
-          <span className="stat-number">5</span>
-          <span className="stat-label">Unread</span>
-        </div>
-      </div>
+
     </div>
   </>
 );
