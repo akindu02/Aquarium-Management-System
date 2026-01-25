@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Package, ShoppingCart, Boxes, DollarSign, MessageSquare, Settings, Bell, LogOut, Star, AlertTriangle } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Boxes, DollarSign, MessageSquare, Settings, Bell, LogOut, Star, AlertTriangle, ClipboardList, History } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
+import SupplierOrderRequests from './supplier/SupplierOrderRequests';
+import SupplierOrderHistory from './supplier/SupplierOrderHistory';
 import '../index.css';
 
 const SupplierDashboard = () => {
@@ -27,30 +29,24 @@ const SupplierDashboard = () => {
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'products', label: 'My Products', icon: Package },
-    { id: 'orders', label: 'Orders Received', icon: ShoppingCart },
+    { id: 'new_requests', label: 'New Order Request', icon: ClipboardList },
+    { id: 'order_history', label: 'Order History', icon: History },
     { id: 'inventory', label: 'Stock Management', icon: Boxes },
     { id: 'earnings', label: 'Earnings', icon: DollarSign },
-    { id: 'messages', label: 'Messages', icon: MessageSquare },
-    { id: 'settings', label: 'Account Settings', icon: Settings },
   ];
 
   const renderContent = () => {
     switch (activeMenu) {
       case 'dashboard':
         return <DashboardContent />;
-      case 'products':
-        return <PlaceholderContent title="My Products" description="Manage your product listings and add new items" />;
-      case 'orders':
-        return <PlaceholderContent title="Orders Received" description="View and process orders from customers" />;
+      case 'new_requests':
+        return <SupplierOrderRequests />;
+      case 'order_history':
+        return <SupplierOrderHistory />;
       case 'inventory':
         return <PlaceholderContent title="Stock Management" description="Track inventory levels and manage stock" />;
       case 'earnings':
         return <PlaceholderContent title="Earnings" description="View your revenue, payouts, and financial reports" />;
-      case 'messages':
-        return <PlaceholderContent title="Messages" description="Communicate with customers and admin team" />;
-      case 'settings':
-        return <PlaceholderContent title="Account Settings" description="Update your supplier profile and preferences" />;
       default:
         return <DashboardContent />;
     }
