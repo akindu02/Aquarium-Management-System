@@ -16,6 +16,7 @@ import VerifyOtp from './pages/VerifyOtp';
 import ResetPassword from './pages/ResetPassword';
 import PasswordResetSuccess from './pages/PasswordResetSuccess';
 import Store from './pages/Store';
+import ServiceBooking from './pages/ServiceBooking';
 import './App.css';
 
 function App() {
@@ -35,6 +36,13 @@ function App() {
             <>
               <Navbar />
               <main><Store /></main>
+              <Footer />
+            </>
+          } />
+          <Route path="/services" element={
+            <>
+              <Navbar />
+              <main><ServiceBooking /></main>
               <Footer />
             </>
           } />

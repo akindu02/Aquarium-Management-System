@@ -29,7 +29,7 @@ const PRODUCTS = [
         name: 'Sponge Filter (Small)',
         category: 'Filters',
         price: 2500,
-        stock: 0,
+        stock: 2,
         image: '/store/Sponge Filter (Small).jpg',
         isNew: false
     },
@@ -56,7 +56,7 @@ const PRODUCTS = [
         name: 'Aquatic Plant Fertilizer',
         category: 'Medicine',
         price: 2300,
-        stock: 30,
+        stock: 0,
         image: '/store/Aquatic Plant Fertilizer.jpg',
         isNew: false
     },
