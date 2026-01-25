@@ -90,21 +90,27 @@ const PointOfSale = () => {
                 </div>
 
                 {/* Product Grid */}
-                <div className="product-grid">
+                {/* Product List */}
+                <div className="product-list">
+                    {/* Header Row */}
+                    <div className="product-list-header">
+                        <span>Product Name</span>
+                        <span>Category</span>
+                        <span>Stock</span>
+                        <span>Price</span>
+                        <span>Action</span>
+                    </div>
+
                     {filteredProducts.map(product => (
-                        <div key={product.id} className="product-card" onClick={() => addToCart(product)}>
-                            <div className="product-info-compact">
-                                <div className="p-header">
-                                    <h4 title={product.name}>{product.name}</h4>
-                                    <span className="stock-pill">{product.stock} in stock</span>
-                                </div>
-                                <div className="p-footer">
-                                    <span className="category-pill">{product.category}</span>
-                                    <div className="price-action">
-                                        <span className="price">LKR {product.price}</span>
-                                        <button className="add-btn-sm"><Plus size={14} /></button>
-                                    </div>
-                                </div>
+                        <div key={product.id} className="product-row" onClick={() => addToCart(product)}>
+                            <div className="p-name">{product.name}</div>
+                            <div className="p-cat"><span className="category-pill">{product.category}</span></div>
+                            <div className={`p-stock ${product.stock < 20 ? 'low' : ''}`}>
+                                {product.stock} left
+                            </div>
+                            <div className="p-price">LKR {product.price}</div>
+                            <div className="p-action">
+                                <button className="add-btn-sm"><Plus size={14} /></button>
                             </div>
                         </div>
                     ))}
@@ -174,8 +180,9 @@ const PointOfSale = () => {
                     <div className="receipt-modal">
                         <div className="receipt-header">
                             <h2>Methu Aquarium</h2>
-                            <p>123 Marine Drive, Columbo 03</p>
-                            <p>Tel: +94 11 234 5678</p>
+                            <p>No 50, Kumaradasa Mawatha, Matara</p>
+                            <p>041-2236848 / 074-3133109</p>
+                            <p>methuaquarium@gmail.com</p>
                             <div className="receipt-meta">
                                 <span>Date: {new Date().toLocaleDateString()}</span>
                                 <span>Time: {new Date().toLocaleTimeString()}</span>
@@ -287,40 +294,44 @@ const PointOfSale = () => {
                 }
                 .cat-btn:hover:not(.active) { background: rgba(255, 255, 255, 0.1); }
 
-                .product-grid {
-                    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-                    gap: 1rem; overflow-y: auto; padding-right: 0.5rem;
+                .product-list {
+                    display: flex; flex-direction: column; gap: 0.5rem; overflow-y: auto; padding-right: 0.5rem;
                 }
 
-                .product-card {
-                    background: rgba(255, 255, 255, 0.05);
-                    border-radius: 0.75rem; overflow: hidden; cursor: pointer;
-                    transition: all 0.2s; border: 1px solid rgba(255, 255, 255, 0.05);
-                }
-                .product-card:hover { transform: translateY(-2px); border-color: var(--color-primary); background: rgba(255, 255, 255, 0.08); }
-
-                .product-info-compact { padding: 1rem; display: flex; flex-direction: column; height: 100%; justify-content: space-between; gap: 1rem; }
-                
-                .p-header h4 { 
-                    margin: 0 0 0.5rem 0; font-size: 1rem; font-weight: 600; line-height: 1.4;
-                    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-                }
-                .stock-pill {
-                    font-size: 0.7rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; color: var(--text-muted);
+                .product-list-header {
+                    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 1rem;
+                    padding: 0.5rem 1rem; margin-bottom: 0.5rem;
+                    color: var(--text-muted); font-size: 0.85rem; font-weight: 600;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
                 }
 
-                .p-footer { display: flex; justify-content: space-between; align-items: flex-end; }
+                .product-row {
+                    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; align-items: center; gap: 1rem;
+                    background: rgba(255, 255, 255, 0.03); padding: 0.75rem 1rem;
+                    border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;
+                    border: 1px solid rgba(255, 255, 255, 0.05);
+                }
+                .product-row:hover {
+                    background: rgba(255, 255, 255, 0.06); border-color: var(--color-primary);
+                    transform: translateX(4px);
+                }
+
+                .p-name { font-weight: 600; font-size: 0.95rem; color: var(--text-main); }
+                .p-cat { display: flex; align-items: center; }
                 .category-pill { font-size: 0.75rem; color: var(--text-muted); background: rgba(0,0,0,0.2); padding: 2px 8px; border-radius: 10px; }
                 
-                .price-action { display: flex; align-items: center; gap: 0.5rem; }
-                .price { font-weight: 700; color: var(--color-primary); font-size: 1.1rem; }
+                .p-stock { font-size: 0.85rem; color: #10b981; }
+                .p-stock.low { color: #f59e0b; }
+
+                .p-price { font-weight: 700; color: var(--color-primary); font-size: 1rem; }
                 
                 .add-btn-sm {
-                    width: 24px; height: 24px; border-radius: 50%;
-                    background: var(--color-primary); color: white;
+                    width: 28px; height: 28px; border-radius: 50%;
+                    background: rgba(255,255,255,0.1); color: white;
                     display: flex; align-items: center; justify-content: center;
-                    border: none;
+                    border: none; transition: background 0.2s;
                 }
+                .product-row:hover .add-btn-sm { background: var(--color-primary); }
 
                 /* Right Side - Cart */
                 .pos-cart {
