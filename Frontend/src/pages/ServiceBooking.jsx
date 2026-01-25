@@ -11,26 +11,23 @@ const SERVICES = [
         title: 'Aquarium Maintenance',
         description: 'Regular maintenance including water testing, filter cleaning, and health check for your aquatic pets.',
         duration: '2 hours',
-        price: 3500,
-        image: '/images/tank1.jpg',
+        image: '/store/Aquarium Maintenance.jpg',
         icon: Wrench
     },
     {
         id: 'cleaning',
-        title: 'Deep Cleaning',
+        title: 'Aquarium Cleaning',
         description: 'Thorough cleaning of tank, decorations, substrate, and complete water change for a fresh start.',
         duration: '3 hours',
-        price: 5500,
-        image: '/images/tank1.jpg',
+        image: '/store/Aquarium Cleaning.jpg',
         icon: Sparkles
     },
     {
         id: 'installation',
-        title: 'Tank Installation',
+        title: 'Aquarium Installation',
         description: 'Professional setup of new aquariums including equipment installation and initial cycling.',
         duration: '4 hours',
-        price: 8500,
-        image: '/images/tank1.jpg',
+        image: '/store/Aquarium Installation.jpg',
         icon: Settings
     }
 ];
@@ -98,26 +95,29 @@ const ServiceCardList = ({ services, selectedService, onSelectService }) => {
     return (
         <div className="service-cards-grid">
             {services.map(service => {
-                const IconComponent = service.icon;
                 return (
                     <div
                         key={service.id}
                         className={`service-card ${selectedService?.id === service.id ? 'selected' : ''}`}
                     >
-                        <div className="service-card-icon">
-                            <IconComponent size={32} />
+                        {/* Image Banner */}
+                        <div className="service-card-media">
+                            <img
+                                src={service.image}
+                                alt={service.title}
+                                className="service-card-image"
+                            />
                         </div>
-                        <h3 className="service-card-title">{service.title}</h3>
-                        <p className="service-card-description">{service.description}</p>
-                        <div className="service-card-meta">
-                            <span className="service-duration">
-                                <Clock size={14} />
-                                {service.duration}
-                            </span>
-                            <span className="service-price">LKR {service.price.toLocaleString()}</span>
+
+                        {/* Card Content */}
+                        <div className="service-card-content">
+                            <h3 className="service-card-title">{service.title}</h3>
+                            <p className="service-card-description">{service.description}</p>
                         </div>
+
+                        {/* Full-width Button */}
                         <button
-                            className={`book-now-btn ${selectedService?.id === service.id ? 'active' : ''}`}
+                            className={`service-book-btn ${selectedService?.id === service.id ? 'active' : ''}`}
                             onClick={() => onSelectService(service)}
                         >
                             {selectedService?.id === service.id ? 'Selected' : 'Book Now'}
@@ -361,14 +361,6 @@ const BookingModal = ({ isOpen, service, date, slot, onConfirm, onClose }) => {
                     <div className="modal-detail-row">
                         <span>Time:</span>
                         <strong>{slot?.start} - {slot?.end}</strong>
-                    </div>
-                    <div className="modal-detail-row">
-                        <span>Duration:</span>
-                        <strong>{service?.duration}</strong>
-                    </div>
-                    <div className="modal-detail-row total">
-                        <span>Total:</span>
-                        <strong>LKR {service?.price.toLocaleString()}</strong>
                     </div>
                 </div>
                 <div className="modal-actions">
