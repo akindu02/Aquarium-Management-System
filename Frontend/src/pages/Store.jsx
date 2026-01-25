@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Eye, Search } from 'lucide-react';
+import { ShoppingCart, Eye, Search, X, Plus, Minus, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import './Store.css';
 
 // Initial dummy data
@@ -85,7 +86,8 @@ const Store = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [sortBy, setSortBy] = useState('newest');
-    const [cartCount, setCartCount] = useState(0);
+    const [cartItems, setCartItems] = useState([]);
+    const [showCart, setShowCart] = useState(false);
     const [showToast, setShowToast] = useState(false);
 
     // Filter and Sort Logic
@@ -110,19 +112,56 @@ const Store = () => {
         } else if (sortBy === 'price-high') {
             result.sort((a, b) => b.price - a.price);
         } else if (sortBy === 'newest') {
-            // For demo, we prioritize isNew, then id
             result.sort((a, b) => (b.isNew === a.isNew) ? 0 : b.isNew ? 1 : -1);
         }
 
         setFilteredProducts(result);
     }, [products, searchQuery, selectedCategory, sortBy]);
 
+    // Cart Functions
     const addToCart = (product) => {
         if (product.stock <= 0) return;
-        setCartCount(prev => prev + 1);
+
+        setCartItems(prev => {
+            const existing = prev.find(item => item.id === product.id);
+            if (existing) {
+                return prev.map(item =>
+                    item.id === product.id
+                        ? { ...item, quantity: item.quantity + 1 }
+                        : item
+                );
+            }
+            return [...prev, { ...product, quantity: 1 }];
+        });
 
         setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000);
+        setTimeout(() => setShowToast(false), 2000);
+    };
+
+    const removeFromCart = (productId) => {
+        setCartItems(prev => prev.filter(item => item.id !== productId));
+    };
+
+    const updateQuantity = (productId, newQuantity) => {
+        if (newQuantity < 1) {
+            removeFromCart(productId);
+            return;
+        }
+        setCartItems(prev =>
+            prev.map(item =>
+                item.id === productId
+                    ? { ...item, quantity: newQuantity }
+                    : item
+            )
+        );
+    };
+
+    const getCartTotal = () => {
+        return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    };
+
+    const getCartCount = () => {
+        return cartItems.reduce((count, item) => count + item.quantity, 0);
     };
 
     return (
@@ -173,10 +212,10 @@ const Store = () => {
                         <option value="price-high">Price: High → Low</option>
                     </select>
 
-                    <button className="cart-btn">
+                    <button className="cart-btn" onClick={() => setShowCart(true)}>
                         <ShoppingCart size={18} />
                         <span>Cart</span>
-                        <span className="cart-badge">{cartCount}</span>
+                        <span className="cart-badge">{getCartCount()}</span>
                     </button>
                 </div>
             </div>
@@ -186,14 +225,12 @@ const Store = () => {
                     <div key={product.id} className="product-card">
 
                         <div className="card-media">
-                            {/* Badges and Actions */}
                             <button className="btn-quick-view" title="Quick View">
                                 <Eye size={18} />
                             </button>
 
                             <img src={product.image} alt={product.name} className="product-image" />
 
-                            {/* Out of stock overlay */}
                             {product.stock <= 0 && (
                                 <div className="stock-overlay">Out of Stock</div>
                             )}
@@ -201,7 +238,7 @@ const Store = () => {
 
                         <div className="card-info">
                             <h3 className="product-name">{product.name}</h3>
-                            <div className="product-price">LKR {product.price.toFixed(2)}</div>
+                            <div className="product-price">LKR {product.price.toLocaleString()}</div>
                         </div>
 
                         <button
@@ -226,6 +263,102 @@ const Store = () => {
                 <button className="btn btn-outline load-more-btn">
                     Load More Products
                 </button>
+            </div>
+
+            {/* Cart Overlay */}
+            <div className={`cart-overlay ${showCart ? 'active' : ''}`} onClick={() => setShowCart(false)}></div>
+
+            {/* Cart Panel */}
+            <div className={`cart-panel ${showCart ? 'open' : ''}`}>
+                <div className="cart-header">
+                    <h2>Shopping Cart</h2>
+                    <button className="cart-close-btn" onClick={() => setShowCart(false)}>
+                        <X size={24} />
+                    </button>
+                </div>
+
+                {cartItems.length === 0 ? (
+                    <div className="cart-empty">
+                        <ShoppingCart size={48} />
+                        <p>Your cart is empty</p>
+                        <button className="btn btn-primary" onClick={() => setShowCart(false)}>
+                            Continue Shopping
+                        </button>
+                    </div>
+                ) : (
+                    <>
+                        <div className="cart-items">
+                            <div className="cart-table-header">
+                                <span>Product</span>
+                                <span>Price</span>
+                                <span>Quantity</span>
+                                <span>Subtotal</span>
+                            </div>
+
+                            {cartItems.map(item => (
+                                <div key={item.id} className="cart-item">
+                                    <div className="cart-item-product">
+                                        <button
+                                            className="cart-item-remove"
+                                            onClick={() => removeFromCart(item.id)}
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                        <img src={item.image} alt={item.name} className="cart-item-image" />
+                                        <span className="cart-item-name">{item.name}</span>
+                                    </div>
+                                    <div className="cart-item-price">
+                                        LKR {item.price.toLocaleString()}
+                                    </div>
+                                    <div className="cart-item-quantity">
+                                        <button
+                                            className="qty-btn"
+                                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                        >
+                                            <Minus size={14} />
+                                        </button>
+                                        <span className="qty-value">{item.quantity.toString().padStart(2, '0')}</span>
+                                        <button
+                                            className="qty-btn"
+                                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                        >
+                                            <Plus size={14} />
+                                        </button>
+                                    </div>
+                                    <div className="cart-item-subtotal">
+                                        LKR {(item.price * item.quantity).toLocaleString()}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="cart-actions">
+                            <button className="btn btn-outline" onClick={() => setShowCart(false)}>
+                                <ArrowLeft size={18} />
+                                Return To Shop
+                            </button>
+                        </div>
+
+                        <div className="cart-summary">
+                            <h3>Cart Total</h3>
+                            <div className="summary-row">
+                                <span>Subtotal:</span>
+                                <span>LKR {getCartTotal().toLocaleString()}</span>
+                            </div>
+                            <div className="summary-row">
+                                <span>Shipping:</span>
+                                <span>Free</span>
+                            </div>
+                            <div className="summary-row total">
+                                <span>Total:</span>
+                                <span>LKR {getCartTotal().toLocaleString()}</span>
+                            </div>
+                            <button className="checkout-btn">
+                                Proceed to Checkout
+                            </button>
+                        </div>
+                    </>
+                )}
             </div>
 
             <div className={`toast ${showToast ? 'show' : ''}`}>
