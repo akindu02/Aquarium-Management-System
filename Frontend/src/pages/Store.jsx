@@ -11,7 +11,7 @@ const PRODUCTS = [
         category: 'Fish',
         price: 4250,
         stock: 50,
-        image: '',
+        image: '/store/Goldfish (Medium).jpg',
         isNew: true
     },
     {
@@ -20,7 +20,7 @@ const PRODUCTS = [
         category: 'Tanks',
         price: 12000,
         stock: 5,
-        image: '',
+        image: '/store/Glass Tank 30L.jpg',
         isNew: false
     },
     {
@@ -29,7 +29,7 @@ const PRODUCTS = [
         category: 'Filters',
         price: 2500,
         stock: 0,
-        image: '',
+        image: '/store/Sponge Filter (Small).jpg',
         isNew: false
     },
     {
@@ -38,7 +38,7 @@ const PRODUCTS = [
         category: 'Food',
         price: 600,
         stock: 100,
-        image: '',
+        image: '/store/Goldfish Pellets 150g.jpg',
         isNew: true
     },
     {
@@ -47,7 +47,7 @@ const PRODUCTS = [
         category: 'Fish',
         price: 250,
         stock: 12,
-        image: '',
+        image: '/store/Betta Fish.jpg',
         isNew: true
     },
     {
@@ -56,7 +56,7 @@ const PRODUCTS = [
         category: 'Medicine',
         price: 2300,
         stock: 30,
-        image: '',
+        image: '/store/Aquatic Plant Fertilizer.jpg',
         isNew: false
     },
     {
@@ -65,7 +65,7 @@ const PRODUCTS = [
         category: 'Tanks',
         price: 1250,
         stock: 15,
-        image: '',
+        image: '/store/LED Spectrum Light.jpg',
         isNew: false
     },
     {
@@ -74,7 +74,7 @@ const PRODUCTS = [
         category: 'Medicine',
         price: 4500,
         stock: 45,
-        image: '',
+        image: '/store/Anti-Fungal Treatment.jpg',
         isNew: false
     }
 ];
