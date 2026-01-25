@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, ClipboardList, PackageSearch, Settings, Bell, LogOut, CheckCircle2, AlertTriangle, CalendarClock, Store } from "lucide-react";
+import { LayoutDashboard, ClipboardList, PackageSearch, Settings, Bell, LogOut, CheckCircle2, AlertTriangle, CalendarClock, Store, DollarSign, ChevronRight } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
@@ -33,26 +33,23 @@ const StaffDashboard = () => {
     { id: 'pos', label: 'Point of Sale', icon: Store },
     { id: 'orders', label: 'Process Orders', icon: ClipboardList },
     { id: 'bookings', label: 'Bookings', icon: CalendarClock },
-    { id: 'inventory', label: 'Inventory Check', icon: PackageSearch },
     { id: 'settings', label: 'My Settings', icon: Settings },
   ];
 
   const renderContent = () => {
     switch (activeMenu) {
       case 'dashboard':
-        return <DashboardContent />;
+        return <DashboardContent onNavigate={setActiveMenu} />;
       case 'pos':
         return <PointOfSale />;
       case 'orders':
         return <StaffOrderManagement />;
       case 'bookings':
         return <BookingManagement />;
-      case 'inventory':
-        return <PlaceholderContent title="Inventory Check" description="Monitor stock levels and report discrepancies" />;
       case 'settings':
         return <PlaceholderContent title="My Settings" description="Update your profile and work preferences" />;
       default:
-        return <DashboardContent />;
+        return <DashboardContent onNavigate={setActiveMenu} />;
     }
   };
 
@@ -431,6 +428,10 @@ const StaffDashboard = () => {
                     font-size: 0.9rem;
                 }
 
+                .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+                .card-arrow { color: var(--text-muted); opacity: 0; transition: all 0.2s; }
+                .dashboard-card:hover .card-arrow { opacity: 1; transform: translateX(5px); }
+
                 .card-stat {
                     display: flex;
                     flex-direction: column;
@@ -517,51 +518,57 @@ const StaffDashboard = () => {
 };
 
 // Dashboard Content Component
-const DashboardContent = () => (
+const DashboardContent = ({ onNavigate }) => (
   <>
     <div className="dashboard-welcome">
       <h1 className="dashboard-heading">Staff Dashboard</h1>
       <p className="dashboard-subtitle">
-        Manage orders and provide excellent customer service.
+        Overview of today's store activities and tasks.
       </p>
     </div>
 
     <div className="dashboard-grid">
-      <div className="dashboard-card">
-        <ClipboardList className="card-icon" style={{ color: "var(--color-primary)" }} />
+      {/* Sales / POS Summary */}
+      <div className="dashboard-card" onClick={() => onNavigate('pos')}>
+        <div className="card-header">
+          <Store className="card-icon" style={{ color: "var(--color-primary)" }} />
+          <ChevronRight size={20} className="card-arrow" />
+        </div>
+        <h3>Daily Sales</h3>
+        <p>Revenue generated today via POS</p>
+        <div className="card-stat">
+          <span className="stat-number">LKR 42,500</span>
+          <span className="stat-label">12 Transactions</span>
+        </div>
+      </div>
+
+      {/* Orders Summary */}
+      <div className="dashboard-card" onClick={() => onNavigate('orders')}>
+        <div className="card-header">
+          <ClipboardList className="card-icon" style={{ color: "#f59e0b" }} />
+          <ChevronRight size={20} className="card-arrow" />
+        </div>
         <h3>Pending Orders</h3>
-        <p>Orders waiting to be processed</p>
+        <p>Customer & Supplier orders to process</p>
         <div className="card-stat">
-          <span className="stat-number">24</span>
-          <span className="stat-label">To Process</span>
+          <span className="stat-number">5</span>
+          <span className="stat-label">Action Required</span>
         </div>
       </div>
 
-
-
-
-
-      <div className="dashboard-card">
-        <AlertTriangle className="card-icon" style={{ color: "#ef4444" }} />
-        <h3>Low Stock Items</h3>
-        <p>Products that need restocking</p>
+      {/* Bookings Summary */}
+      <div className="dashboard-card" onClick={() => onNavigate('bookings')}>
+        <div className="card-header">
+          <CalendarClock className="card-icon" style={{ color: "#8b5cf6" }} />
+          <ChevronRight size={20} className="card-arrow" />
+        </div>
+        <h3>Service Bookings</h3>
+        <p>Upcoming maintenance & services</p>
         <div className="card-stat">
-          <span className="stat-number">7</span>
-          <span className="stat-label">Items Low</span>
+          <span className="stat-number">3</span>
+          <span className="stat-label">Scheduled Today</span>
         </div>
       </div>
-
-      <div className="dashboard-card">
-        <CheckCircle2 className="card-icon" style={{ color: "#10b981" }} />
-        <h3>Completed Today</h3>
-        <p>Orders processed today</p>
-        <div className="card-stat">
-          <span className="stat-number">32</span>
-          <span className="stat-label">Completed</span>
-        </div>
-      </div>
-
-
     </div>
   </>
 );
