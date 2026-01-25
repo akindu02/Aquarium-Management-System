@@ -5,6 +5,7 @@ import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
 import BookingManagement from './admin/BookingManagement';
 import PointOfSale from './staff/PointOfSale';
+import StaffOrderManagement from './staff/StaffOrderManagement';
 import '../index.css';
 
 const StaffDashboard = () => {
@@ -43,7 +44,7 @@ const StaffDashboard = () => {
       case 'pos':
         return <PointOfSale />;
       case 'orders':
-        return <PlaceholderContent title="Process Orders" description="View and process pending customer orders" />;
+        return <StaffOrderManagement />;
       case 'bookings':
         return <BookingManagement />;
       case 'inventory':
