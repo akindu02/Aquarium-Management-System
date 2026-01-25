@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Package, ShoppingCart, Banknote, MessageSquare, Settings, Bell, LogOut, Star, AlertTriangle, ClipboardList, History } from "lucide-react";
+import { LayoutDashboard, ClipboardList, Banknote, Bell, LogOut, History, ChevronRight } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
@@ -38,7 +38,7 @@ const SupplierDashboard = () => {
   const renderContent = () => {
     switch (activeMenu) {
       case 'dashboard':
-        return <DashboardContent />;
+        return <DashboardContent onNavigate={setActiveMenu} />;
       case 'new_requests':
         return <SupplierOrderRequests />;
       case 'order_history':
@@ -46,7 +46,7 @@ const SupplierDashboard = () => {
       case 'earnings':
         return <SupplierEarnings />;
       default:
-        return <DashboardContent />;
+        return <DashboardContent onNavigate={setActiveMenu} />;
     }
   };
 
@@ -425,6 +425,10 @@ const SupplierDashboard = () => {
                     font-size: 0.9rem;
                 }
 
+                .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+                .card-arrow { color: var(--text-muted); opacity: 0; transition: all 0.2s; }
+                .dashboard-card:hover .card-arrow { opacity: 1; transform: translateX(5px); }
+
                 .card-stat {
                     display: flex;
                     flex-direction: column;
@@ -511,88 +515,59 @@ const SupplierDashboard = () => {
 };
 
 // Dashboard Content Component
-const DashboardContent = () => (
+const DashboardContent = ({ onNavigate }) => (
   <>
     <div className="dashboard-welcome">
       <h1 className="dashboard-heading">Supplier Dashboard</h1>
       <p className="dashboard-subtitle">
-        Manage your products and track your orders.
+        Overview of your pending requests, past orders, and earnings.
       </p>
     </div>
 
     <div className="dashboard-grid">
-      <div className="dashboard-card">
-        <Package className="card-icon" style={{ color: "var(--color-primary)" }} />
-        <h3>My Products</h3>
-        <p>Active listings in the marketplace</p>
+      {/* New Requests Summary */}
+      <div className="dashboard-card" onClick={() => onNavigate('new_requests')}>
+        <div className="card-header">
+          <ClipboardList className="card-icon" style={{ color: "var(--color-primary)" }} />
+          <ChevronRight size={20} className="card-arrow" />
+        </div>
+        <h3>Pending Requests</h3>
+        <p>New stock requests from shop</p>
         <div className="card-stat">
-          <span className="stat-number">48</span>
-          <span className="stat-label">Listed Products</span>
+          <span className="stat-number">4</span>
+          <span className="stat-label">Action Required</span>
         </div>
       </div>
 
-      <div className="dashboard-card">
-        <ShoppingCart className="card-icon" style={{ color: "#3b82f6" }} />
-        <h3>New Orders</h3>
-        <p>Orders awaiting processing</p>
+      {/* Order History Summary */}
+      <div className="dashboard-card" onClick={() => onNavigate('order_history')}>
+        <div className="card-header">
+          <History className="card-icon" style={{ color: "#f59e0b" }} />
+          <ChevronRight size={20} className="card-arrow" />
+        </div>
+        <h3>Order History</h3>
+        <p>Completed and processed orders</p>
         <div className="card-stat">
-          <span className="stat-number">12</span>
-          <span className="stat-label">Pending Orders</span>
+          <span className="stat-number">128</span>
+          <span className="stat-label">Total Orders</span>
         </div>
       </div>
 
-      <div className="dashboard-card">
-        <AlertTriangle className="card-icon" style={{ color: "#ef4444" }} />
-        <h3>Stock Alerts</h3>
-        <p>Items running low on stock</p>
-        <div className="card-stat">
-          <span className="stat-number">5</span>
-          <span className="stat-label">Low Stock Items</span>
+      {/* Earnings Summary */}
+      <div className="dashboard-card" onClick={() => onNavigate('earnings')}>
+        <div className="card-header">
+          <Banknote className="card-icon" style={{ color: "#10b981" }} />
+          <ChevronRight size={20} className="card-arrow" />
         </div>
-      </div>
-
-      <div className="dashboard-card">
-        <Banknote className="card-icon" style={{ color: "#10b981" }} />
-        <h3>This Month's Earnings</h3>
-        <p>Revenue from completed orders</p>
+        <h3>Total Earnings</h3>
+        <p>Revenue from sales</p>
         <div className="card-stat">
-          <span className="stat-number">$8,450</span>
-          <span className="stat-label">Total Revenue</span>
-        </div>
-      </div>
-
-      <div className="dashboard-card">
-        <Star className="card-icon" style={{ color: "#f59e0b" }} />
-        <h3>Customer Reviews</h3>
-        <p>Feedback on your products</p>
-        <div className="card-stat">
-          <span className="stat-number">4.6</span>
-          <span className="stat-label">Average Rating</span>
-        </div>
-      </div>
-
-      <div className="dashboard-card">
-        <MessageSquare className="card-icon" style={{ color: "#8b5cf6" }} />
-        <h3>Messages</h3>
-        <p>Unread customer inquiries</p>
-        <div className="card-stat">
-          <span className="stat-number">8</span>
-          <span className="stat-label">New Messages</span>
+          <span className="stat-number">LKR 125 000</span>
+          <span className="stat-label">This Month</span>
         </div>
       </div>
     </div>
   </>
-);
-
-// Placeholder Content for other menu items
-const PlaceholderContent = ({ title, description }) => (
-  <div className="placeholder-content">
-    <h2 className="placeholder-title">{title}</h2>
-    <p className="placeholder-description">{description}</p>
-    <div className="placeholder-note">
-      [!] This section is under development
-    </div>
-  </div>
 );
 
 export default SupplierDashboard;
