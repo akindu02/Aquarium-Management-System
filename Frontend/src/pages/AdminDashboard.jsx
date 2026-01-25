@@ -7,6 +7,7 @@ import UserManagement from './admin/UserManagement';
 import BookingManagement from './admin/BookingManagement';
 import InventoryManagement from './admin/InventoryManagement';
 import OrderManagement from './admin/OrderManagement';
+import ReportsAnalytics from './admin/ReportsAnalytics';
 import '../index.css';
 
 const AdminDashboard = () => {
@@ -52,7 +53,7 @@ const AdminDashboard = () => {
       case 'orders':
         return <OrderManagement />;
       case 'reports':
-        return <PlaceholderContent title="Reports & Analytics" description="View performance metrics and generate reports" />;
+        return <ReportsAnalytics />;
       case 'settings':
         return <PlaceholderContent title="Settings" description="Configure system preferences and features" />;
       default:
