@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Bell, Settings, LogOut, MessageSquare } from "lucide-react";
+import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Bell, Settings, LogOut, CalendarClock } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
+import UserManagement from './admin/UserManagement';
+import BookingManagement from './admin/BookingManagement';
 import '../index.css';
 
 const AdminDashboard = () => {
@@ -30,8 +32,8 @@ const AdminDashboard = () => {
     { id: 'users', label: 'Users Management', icon: Users },
     { id: 'products', label: 'Products / Inventory', icon: Package },
     { id: 'orders', label: 'Orders / Transactions', icon: ShoppingCart },
+    { id: 'bookings', label: 'Bookings', icon: CalendarClock },
     { id: 'reports', label: 'Reports & Analytics', icon: BarChart3 },
-    { id: 'messages', label: 'Messages / Notifications', icon: MessageSquare },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
@@ -40,15 +42,15 @@ const AdminDashboard = () => {
       case 'dashboard':
         return <DashboardContent />;
       case 'users':
-        return <PlaceholderContent title="Users Management" description="Manage all system users, roles, and permissions" />;
+        return <UserManagement />;
+      case 'bookings':
+        return <BookingManagement />;
       case 'products':
         return <PlaceholderContent title="Products / Inventory" description="Manage aquarium products, fish, and stock levels" />;
       case 'orders':
         return <PlaceholderContent title="Orders / Transactions" description="Track and manage all orders and transactions" />;
       case 'reports':
         return <PlaceholderContent title="Reports & Analytics" description="View performance metrics and generate reports" />;
-      case 'messages':
-        return <PlaceholderContent title="Messages / Notifications" description="Manage communications and system alerts" />;
       case 'settings':
         return <PlaceholderContent title="Settings" description="Configure system preferences and features" />;
       default:
@@ -600,28 +602,19 @@ const DashboardContent = () => (
       </p>
     </div>
 
+    {/* Main Management Tiles - 3 Columns */}
     <div className="dashboard-grid">
-      <div className="dashboard-card">
+      <div className="dashboard-card" style={{ cursor: 'pointer' }}>
         <Users className="card-icon" style={{ color: "var(--color-primary)" }} />
         <h3>User Management</h3>
         <p>Manage all users, roles, and permissions</p>
         <div className="card-stat">
-          <span className="stat-number">1,234</span>
+          <span className="stat-number">334</span>
           <span className="stat-label">Total Users</span>
         </div>
       </div>
 
-      <div className="dashboard-card">
-        <BarChart3 className="card-icon" style={{ color: "#a855f7" }} />
-        <h3>Analytics</h3>
-        <p>View system-wide analytics and reports</p>
-        <div className="card-stat">
-          <span className="stat-number">98%</span>
-          <span className="stat-label">System Health</span>
-        </div>
-      </div>
-
-      <div className="dashboard-card">
+      <div className="dashboard-card" style={{ cursor: 'pointer' }}>
         <Package className="card-icon" style={{ color: "#f59e0b" }} />
         <h3>Inventory</h3>
         <p>Manage aquarium products and stock</p>
@@ -631,32 +624,68 @@ const DashboardContent = () => (
         </div>
       </div>
 
-      <div className="dashboard-card">
+      <div className="dashboard-card" style={{ cursor: 'pointer' }}>
         <ShoppingCart className="card-icon" style={{ color: "#10b981" }} />
         <h3>Orders</h3>
         <p>Track and manage customer orders</p>
         <div className="card-stat">
-          <span className="stat-number">89</span>
-          <span className="stat-label">Pending Orders</span>
+          <span className="stat-number">123</span>
+          <span className="stat-label">Total Orders</span>
         </div>
       </div>
+    </div>
 
-      <div className="dashboard-card">
-        <h3>Revenue</h3>
-        <p>Monitor sales and revenue</p>
-        <div className="card-stat">
-          <span className="stat-number">$24.5K</span>
-          <span className="stat-label">This Month</span>
-        </div>
+    {/* Order/Service Details Table */}
+    <div className="recent-orders-section" style={{ marginTop: '2rem' }}>
+      <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-main)' }}>Order/Service Details</h2>
+        <select className="month-filter" style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.05)', color: 'var(--text-main)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.5rem', cursor: 'pointer' }}>
+          <option style={{ color: 'black' }}>October</option>
+          <option style={{ color: 'black' }}>September</option>
+          <option style={{ color: 'black' }}>August</option>
+        </select>
       </div>
 
-      <div className="dashboard-card">
-        <h3>Reviews</h3>
-        <p>Customer feedback and ratings</p>
-        <div className="card-stat">
-          <span className="stat-number">4.8</span>
-          <span className="stat-label">Avg Rating</span>
-        </div>
+      <div className="table-container" style={{ overflowX: 'auto', background: 'rgba(255,255,255,0.03)', borderRadius: '1rem', padding: '1rem' }}>
+        <table className="orders-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
+          <thead>
+            <tr style={{ background: 'rgba(255,255,255,0.05)' }}>
+              <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-muted)' }}>Order/Service Name</th>
+              <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-muted)' }}>Location</th>
+              <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-muted)' }}>Date</th>
+              <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-muted)' }}>Piece</th>
+              <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-muted)' }}>Amount</th>
+              <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-muted)' }}>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              { name: 'Gold Fish Pair', location: 'No 23,Hakmana Road Matara', date: '12.09.2025', piece: '1', amount: 'LKR 2300', status: 'Delivered' },
+              { name: 'Tank Maintenance', location: '234/2 New lane ,Thihagoda', date: '12.09.2025', piece: '-', amount: '-', status: 'Pending' },
+              { name: 'BOYU Water Filter', location: 'NO 50 New town ,Galle', date: '12.09.2025', piece: '2', amount: 'LKR 5600', status: 'Rejected' }
+            ].map((order, idx) => (
+              <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                <td style={{ padding: '1rem', color: 'var(--text-main)' }}>{order.name}</td>
+                <td style={{ padding: '1rem', color: 'var(--text-main)' }}>{order.location}</td>
+                <td style={{ padding: '1rem', color: 'var(--text-main)' }}>{order.date}</td>
+                <td style={{ padding: '1rem', color: 'var(--text-main)' }}>{order.piece}</td>
+                <td style={{ padding: '1rem', color: 'var(--text-main)' }}>{order.amount}</td>
+                <td style={{ padding: '1rem' }}>
+                  <span style={{
+                    padding: '0.35rem 1rem',
+                    borderRadius: '99px',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    color: 'white',
+                    backgroundColor: order.status === 'Delivered' ? '#10b981' : order.status === 'Pending' ? '#f59e0b' : '#ef4444'
+                  }}>
+                    {order.status}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   </>
