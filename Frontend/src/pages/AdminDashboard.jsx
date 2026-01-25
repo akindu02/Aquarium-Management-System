@@ -5,6 +5,8 @@ import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
 import UserManagement from './admin/UserManagement';
 import BookingManagement from './admin/BookingManagement';
+import InventoryManagement from './admin/InventoryManagement';
+import OrderManagement from './admin/OrderManagement';
 import '../index.css';
 
 const AdminDashboard = () => {
@@ -46,9 +48,9 @@ const AdminDashboard = () => {
       case 'bookings':
         return <BookingManagement />;
       case 'products':
-        return <PlaceholderContent title="Products / Inventory" description="Manage aquarium products, fish, and stock levels" />;
+        return <InventoryManagement />;
       case 'orders':
-        return <PlaceholderContent title="Orders / Transactions" description="Track and manage all orders and transactions" />;
+        return <OrderManagement />;
       case 'reports':
         return <PlaceholderContent title="Reports & Analytics" description="View performance metrics and generate reports" />;
       case 'settings':
