@@ -1,6 +1,7 @@
 const { query } = require('../config/db');
 const { hashPassword, comparePassword, validatePasswordStrength } = require('../utils/passwordUtils');
 const { generateToken, generateRefreshToken } = require('../utils/jwtUtils');
+const emailService = require('../utils/emailService');
 
 /**
  * Auth Service - Contains all authentication business logic
@@ -393,6 +394,185 @@ class AuthService {
         return {
             success: true,
             message: 'Password changed successfully. Please login again.',
+        };
+    }
+
+    /**
+     * Request password reset - Generate OTP and send email
+     * @param {string} email - User email
+     * @returns {Object} { success, message }
+     */
+    async requestPasswordReset(email) {
+        // Find user by email
+        const result = await query(
+            'SELECT id, email, name, is_active FROM users WHERE email = $1',
+            [email.toLowerCase()]
+        );
+
+        // Always return success to prevent email enumeration
+        if (result.rows.length === 0) {
+            return {
+                success: true,
+                message: 'If the email exists, a password reset code has been sent.',
+            };
+        }
+
+        const user = result.rows[0];
+
+        // Check if user is active
+        if (!user.is_active) {
+            return {
+                success: false,
+                message: 'Your account has been deactivated. Please contact support.',
+            };
+        }
+
+        // Generate 6-digit OTP
+        const resetToken = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // Set expiration to 15 minutes from now
+        const expiresAt = new Date();
+        expiresAt.setMinutes(expiresAt.getMinutes() + 15);
+
+        // Delete any existing unused password reset tokens for this user
+        await query(
+            'DELETE FROM password_reset_tokens WHERE user_id = $1',
+            [user.id]
+        );
+
+        // Store reset token in database
+        await query(
+            'INSERT INTO password_reset_tokens (user_id, token, expires_at, used) VALUES ($1, $2, $3, false)',
+            [user.id, resetToken, expiresAt]
+        );
+
+        // Send email with OTP
+        try {
+            await emailService.sendPasswordResetEmail(user.email, resetToken, user.name);
+        } catch (error) {
+            console.error('Error sending password reset email:', error);
+            return {
+                success: false,
+                message: 'Failed to send password reset email. Please try again later.',
+            };
+        }
+
+        return {
+            success: true,
+            message: 'If the email exists, a password reset code has been sent.',
+        };
+    }
+
+    /**
+     * Verify reset token (OTP)
+     * @param {string} email - User email
+     * @param {string} token - Reset token (OTP)
+     * @returns {Object} { success, message, userId }
+     */
+    async verifyResetToken(email, token) {
+        // Find user and token
+        const result = await query(
+            `SELECT u.id, u.email, u.name, prt.token, prt.expires_at, prt.used
+             FROM users u
+             JOIN password_reset_tokens prt ON u.id = prt.user_id
+             WHERE u.email = $1 AND prt.token = $2`,
+            [email.toLowerCase(), token]
+        );
+
+        if (result.rows.length === 0) {
+            return {
+                success: false,
+                message: 'Invalid or expired reset code.',
+            };
+        }
+
+        const data = result.rows[0];
+
+        // Check if token is already used
+        if (data.used) {
+            return {
+                success: false,
+                message: 'This reset code has already been used.',
+            };
+        }
+
+        // Check if token is expired
+        const now = new Date();
+        const expiresAt = new Date(data.expires_at);
+
+        if (now > expiresAt) {
+            return {
+                success: false,
+                message: 'This reset code has expired. Please request a new one.',
+            };
+        }
+
+        return {
+            success: true,
+            message: 'Reset code verified successfully.',
+            userId: data.id,
+        };
+    }
+
+    /**
+     * Reset password using verified token
+     * @param {string} email - User email
+     * @param {string} token - Reset token (OTP)
+     * @param {string} newPassword - New password
+     * @returns {Object} { success, message }
+     */
+    async resetPassword(email, token, newPassword) {
+        // First verify the token
+        const verification = await this.verifyResetToken(email, token);
+
+        if (!verification.success) {
+            return verification;
+        }
+
+        // Validate new password strength
+        const passwordValidation = validatePasswordStrength(newPassword);
+        if (!passwordValidation.isValid) {
+            return {
+                success: false,
+                message: passwordValidation.errors.join(', '),
+            };
+        }
+
+        // Hash new password
+        const hashedPassword = await hashPassword(newPassword);
+
+        // Update password
+        await query(
+            'UPDATE users SET password = $1 WHERE id = $2',
+            [hashedPassword, verification.userId]
+        );
+
+        // Mark token as used
+        await query(
+            'UPDATE password_reset_tokens SET used = true WHERE user_id = $1 AND token = $2',
+            [verification.userId, token]
+        );
+
+        // Invalidate all refresh tokens (force re-login on all devices)
+        await query('DELETE FROM refresh_tokens WHERE user_id = $1', [verification.userId]);
+
+        // Get user info for confirmation email
+        const userResult = await query(
+            'SELECT email, name FROM users WHERE id = $1',
+            [verification.userId]
+        );
+
+        if (userResult.rows.length > 0) {
+            const user = userResult.rows[0];
+            // Send confirmation email (don't wait for it)
+            emailService.sendPasswordResetConfirmation(user.email, user.name).catch(err => {
+                console.error('Error sending confirmation email:', err);
+            });
+        }
+
+        return {
+            success: true,
+            message: 'Password has been reset successfully. Please login with your new password.',
         };
     }
 }

@@ -51,6 +51,40 @@ const changePasswordValidation = [
         .withMessage('New password must be at least 8 characters long'),
 ];
 
+const forgotPasswordValidation = [
+    body('email')
+        .isEmail()
+        .withMessage('Please provide a valid email address')
+        .normalizeEmail(),
+];
+
+const verifyResetTokenValidation = [
+    body('email')
+        .isEmail()
+        .withMessage('Please provide a valid email address')
+        .normalizeEmail(),
+    body('token')
+        .isLength({ min: 6, max: 6 })
+        .withMessage('Reset code must be 6 digits')
+        .isNumeric()
+        .withMessage('Reset code must be numeric'),
+];
+
+const resetPasswordValidation = [
+    body('email')
+        .isEmail()
+        .withMessage('Please provide a valid email address')
+        .normalizeEmail(),
+    body('token')
+        .isLength({ min: 6, max: 6 })
+        .withMessage('Reset code must be 6 digits')
+        .isNumeric()
+        .withMessage('Reset code must be numeric'),
+    body('newPassword')
+        .isLength({ min: 8 })
+        .withMessage('New password must be at least 8 characters long'),
+];
+
 /**
  * Public Routes (no authentication required)
  */
@@ -66,6 +100,15 @@ router.post('/admin/login', loginValidation, authController.adminLogin);
 
 // POST /api/auth/refresh-token - Refresh access token
 router.post('/refresh-token', authController.refreshToken);
+
+// POST /api/auth/forgot-password - Request password reset (Send OTP)
+router.post('/forgot-password', forgotPasswordValidation, authController.requestPasswordReset);
+
+// POST /api/auth/verify-reset-token - Verify password reset OTP
+router.post('/verify-reset-token', verifyResetTokenValidation, authController.verifyResetToken);
+
+// POST /api/auth/reset-password - Reset password with token
+router.post('/reset-password', resetPasswordValidation, authController.resetPassword);
 
 /**
  * Protected Routes (authentication required)

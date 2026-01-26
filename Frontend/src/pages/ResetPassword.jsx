@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Lock, Eye, EyeOff } from 'lucide-react';
+import { resetPasswordAPI } from '../utils/api';
 import '../index.css';
 
 const ResetPassword = () => {
@@ -37,19 +38,31 @@ const ResetPassword = () => {
             return;
         }
 
-        if (formData.password.length < 6) {
-            setError("Password must be at least 6 characters");
+        if (formData.password.length < 8) {
+            setError("Password must be at least 8 characters");
             setLoading(false);
             return;
         }
 
-        // TODO: Integrate with backend API
-        // await apiRequest('/auth/reset-password', { email, otp, newPassword: formData.password });
-
-        setTimeout(() => {
+        if (!email || !otp) {
+            setError("Invalid reset session. Please start over.");
             setLoading(false);
-            navigate('/password-reset-success');
-        }, 1000);
+            return;
+        }
+
+        try {
+            const response = await resetPasswordAPI(email, otp, formData.password);
+
+            if (response.success) {
+                navigate('/password-reset-success');
+            } else {
+                setError(response.message || 'Failed to reset password. Please try again.');
+            }
+        } catch (err) {
+            setError(err.message || 'An error occurred. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (

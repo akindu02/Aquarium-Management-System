@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail } from 'lucide-react';
+import { verifyResetTokenAPI, forgotPasswordAPI } from '../utils/api';
 import '../index.css';
 
 const VerifyOtp = () => {
@@ -11,6 +12,8 @@ const VerifyOtp = () => {
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [resendLoading, setResendLoading] = useState(false);
+    const [resendMessage, setResendMessage] = useState('');
 
     const handleChange = (element, index) => {
         if (isNaN(element.value)) return false;
@@ -42,18 +45,41 @@ const VerifyOtp = () => {
             return;
         }
 
-        // TODO: Integrate with backend API
-        // await apiRequest('/auth/verify-otp', { email, otp: otpValue });
+        try {
+            const response = await verifyResetTokenAPI(email, otpValue);
 
-        setTimeout(() => {
+            if (response.success) {
+                // Navigate to reset password page with email and OTP
+                navigate('/reset-password', { state: { email, otp: otpValue } });
+            } else {
+                setError(response.message || 'Invalid or expired code.');
+            }
+        } catch (err) {
+            setError(err.message || 'An error occurred. Please try again.');
+        } finally {
             setLoading(false);
-            navigate('/reset-password', { state: { email, otp: otpValue } });
-        }, 1000);
+        }
     };
 
-    const handleResend = () => {
-        // TODO: Resend logic
-        alert("Resent OTP!");
+    const handleResend = async () => {
+        setResendLoading(true);
+        setResendMessage('');
+        setError('');
+
+        try {
+            const response = await forgotPasswordAPI(email);
+
+            if (response.success) {
+                setResendMessage('A new code has been sent to your email!');
+                setOtp(['', '', '', '', '', '']); // Clear OTP fields
+            } else {
+                setError(response.message || 'Failed to resend code.');
+            }
+        } catch (err) {
+            setError(err.message || 'Failed to resend code.');
+        } finally {
+            setResendLoading(false);
+        }
     };
 
     return (
@@ -71,6 +97,7 @@ const VerifyOtp = () => {
 
                 <form className="auth-form glass" onSubmit={handleSubmit}>
                     {error && <div className="error-message">{error}</div>}
+                    {resendMessage && <div className="success-message">{resendMessage}</div>}
 
                     <div className="form-group">
                         <label className="form-label center-text">Enter the 6-digit code</label>
@@ -86,18 +113,18 @@ const VerifyOtp = () => {
                                     onChange={e => handleChange(e.target, index)}
                                     onKeyDown={e => handleKeyDown(e, index)}
                                     onFocus={e => e.target.select()}
-                                    disabled={loading}
+                                    disabled={loading || resendLoading}
                                 />
                             ))}
                         </div>
                     </div>
 
-                    <button type="submit" className="btn btn-primary auth-btn" disabled={loading}>
+                    <button type="submit" className="btn btn-primary auth-btn" disabled={loading || resendLoading}>
                         {loading ? 'Verifying...' : 'Verify Code'}
                     </button>
 
                     <div className="resend-container">
-                        Didn't receive the email? <button type="button" onClick={handleResend} className="resend-btn">Click to resend</button>
+                        Didn't receive the email? <button type="button" onClick={handleResend} className="resend-btn" disabled={resendLoading}>{resendLoading ? 'Sending...' : 'Click to resend'}</button>
                     </div>
 
                     <div className="back-to-login">
@@ -275,6 +302,16 @@ const VerifyOtp = () => {
         .error-message {
             background: rgba(255, 107, 107, 0.15);
             color: #ff6b6b;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .success-message {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
             padding: 0.75rem;
             border-radius: 8px;
             margin-bottom: 1rem;

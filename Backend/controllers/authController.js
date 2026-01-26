@@ -284,6 +284,102 @@ class AuthController {
             });
         }
     }
+
+    /**
+     * Request password reset - Send OTP to email
+     * POST /api/auth/forgot-password
+     */
+    async requestPasswordReset(req, res) {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Validation failed',
+                    errors: errors.array(),
+                });
+            }
+
+            const { email } = req.body;
+
+            const result = await authService.requestPasswordReset(email);
+
+            // Always return 200 to prevent email enumeration
+            return res.status(200).json(result);
+        } catch (error) {
+            console.error('Request password reset error:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'An error occurred while processing your request',
+            });
+        }
+    }
+
+    /**
+     * Verify password reset token (OTP)
+     * POST /api/auth/verify-reset-token
+     */
+    async verifyResetToken(req, res) {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Validation failed',
+                    errors: errors.array(),
+                });
+            }
+
+            const { email, token } = req.body;
+
+            const result = await authService.verifyResetToken(email, token);
+
+            if (!result.success) {
+                return res.status(400).json(result);
+            }
+
+            return res.status(200).json(result);
+        } catch (error) {
+            console.error('Verify reset token error:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'An error occurred while verifying the code',
+            });
+        }
+    }
+
+    /**
+     * Reset password with token
+     * POST /api/auth/reset-password
+     */
+    async resetPassword(req, res) {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Validation failed',
+                    errors: errors.array(),
+                });
+            }
+
+            const { email, token, newPassword } = req.body;
+
+            const result = await authService.resetPassword(email, token, newPassword);
+
+            if (!result.success) {
+                return res.status(400).json(result);
+            }
+
+            return res.status(200).json(result);
+        } catch (error) {
+            console.error('Reset password error:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'An error occurred while resetting password',
+            });
+        }
+    }
 }
 
 module.exports = new AuthController();

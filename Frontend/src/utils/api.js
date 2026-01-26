@@ -91,3 +91,34 @@ export const refreshTokenAPI = async (refreshToken) => {
         body: JSON.stringify({ refreshToken }),
     });
 };
+
+/**
+ * Forgot password - Request OTP
+ */
+export const forgotPasswordAPI = async (email) => {
+    return apiRequest('/auth/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+    });
+};
+
+/**
+ * Verify password reset OTP
+ */
+export const verifyResetTokenAPI = async (email, token) => {
+    return apiRequest('/auth/verify-reset-token', {
+        method: 'POST',
+        body: JSON.stringify({ email, token }),
+    });
+};
+
+/**
+ * Reset password with OTP
+ */
+export const resetPasswordAPI = async (email, token, newPassword) => {
+    return apiRequest('/auth/reset-password', {
+        method: 'POST',
+        body: JSON.stringify({ email, token, newPassword }),
+    });
+};
+

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Key } from 'lucide-react';
+import { forgotPasswordAPI } from '../utils/api';
 import '../index.css';
 
 const ForgotPassword = () => {
@@ -8,21 +9,31 @@ const ForgotPassword = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess('');
 
-    // TODO: Integrate with backend API
-    // await apiRequest('/auth/forgot-password', { email });
+    try {
+      const response = await forgotPasswordAPI(email);
 
-    // Simulating API call
-    setTimeout(() => {
+      if (response.success) {
+        setSuccess(response.message);
+        // Navigate to OTP verification page after 1.5 seconds
+        setTimeout(() => {
+          navigate('/verify-otp', { state: { email } });
+        }, 1500);
+      } else {
+        setError(response.message || 'Failed to send reset code. Please try again.');
+      }
+    } catch (err) {
+      setError(err.message || 'An error occurred. Please try again.');
+    } finally {
       setLoading(false);
-      // Navigate to OTP verification page
-      navigate('/verify-otp', { state: { email } });
-    }, 1000);
+    }
   };
 
   return (
@@ -41,6 +52,7 @@ const ForgotPassword = () => {
 
         <form className="auth-form glass" onSubmit={handleSubmit}>
           {error && <div className="error-message">{error}</div>}
+          {success && <div className="success-message">{success}</div>}
 
           <div className="form-group">
             <label htmlFor="email" className="form-label">Email Address</label>
@@ -201,6 +213,16 @@ const ForgotPassword = () => {
         .error-message {
             background: rgba(255, 107, 107, 0.15);
             color: #ff6b6b;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .success-message {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
             padding: 0.75rem;
             border-radius: 8px;
             margin-bottom: 1rem;
