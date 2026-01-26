@@ -14,7 +14,7 @@ const ReportsAnalytics = () => {
     const recentReports = [
         { id: 'R-2025-001', name: 'October Monthly Sales', date: '2025-10-31', type: 'Sales', size: '1.2 MB' },
         { id: 'R-2025-002', name: 'Inventory Status Report', date: '2025-10-28', type: 'Inventory', size: '850 KB' },
-        { id: 'R-2025-003', name: 'Q3 Service Performance', date: '2025-10-15', type: 'Service', size: '2.4 MB' },
+        { id: 'R-2025-003', name: 'Service Performance', date: '2025-10-15', type: 'Service', size: '2.4 MB' },
     ];
 
     // Simple Render Functions for different sections
