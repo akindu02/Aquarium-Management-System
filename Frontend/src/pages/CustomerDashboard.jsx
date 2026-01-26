@@ -3,6 +3,8 @@ import { LayoutDashboard, ShoppingBag, CalendarDays, CalendarCheck, Settings, Be
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
+import MyBookings from './customer/MyBookings';
+import MyOrders from './customer/MyOrders';
 import '../index.css';
 
 const CustomerDashboard = () => {
@@ -37,9 +39,9 @@ const CustomerDashboard = () => {
       case 'dashboard':
         return <DashboardContent />;
       case 'orders':
-        return <PlaceholderContent title="My Orders" description="Track and manage your order history" />;
+        return <MyOrders />;
       case 'booking':
-        return <PlaceholderContent title="My Booking" description="View and manage your bookings" />;
+        return <MyBookings />;
       case 'settings':
         return <PlaceholderContent title="Account Settings" description="Update your profile and preferences" />;
       default:
