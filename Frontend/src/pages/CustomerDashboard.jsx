@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Store, ShoppingBag, Fish, Heart, MessageSquare, Settings, Bell, LogOut, LifeBuoy, Star, Activity } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, CalendarDays, CalendarCheck, Settings, Bell, LogOut, Store } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
@@ -27,11 +27,8 @@ const CustomerDashboard = () => {
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'browse', label: 'Browse Products', icon: Store },
     { id: 'orders', label: 'My Orders', icon: ShoppingBag },
-    { id: 'aquariums', label: 'My Aquariums', icon: Fish },
-    { id: 'wishlist', label: 'Wishlist', icon: Heart },
-    { id: 'messages', label: 'Messages', icon: MessageSquare },
+    { id: 'booking', label: 'My Booking', icon: CalendarDays },
     { id: 'settings', label: 'Account Settings', icon: Settings },
   ];
 
@@ -39,16 +36,10 @@ const CustomerDashboard = () => {
     switch (activeMenu) {
       case 'dashboard':
         return <DashboardContent />;
-      case 'browse':
-        return <PlaceholderContent title="Browse Products" description="Explore our wide range of aquarium fish, plants, and accessories" />;
       case 'orders':
         return <PlaceholderContent title="My Orders" description="Track and manage your order history" />;
-      case 'aquariums':
-        return <PlaceholderContent title="My Aquariums" description="Manage your aquarium setups and track their health" />;
-      case 'wishlist':
-        return <PlaceholderContent title="Wishlist" description="View and manage your saved items" />;
-      case 'messages':
-        return <PlaceholderContent title="Messages" description="Chat with our support team and suppliers" />;
+      case 'booking':
+        return <PlaceholderContent title="My Booking" description="View and manage your bookings" />;
       case 'settings':
         return <PlaceholderContent title="Account Settings" description="Update your profile and preferences" />;
       default:
@@ -404,6 +395,65 @@ const CustomerDashboard = () => {
                     margin-top: 2rem;
                 }
 
+                /* Quick Actions */
+                .quick-actions {
+                  margin-top: 2rem;
+                }
+
+                .quick-actions-title {
+                  font-size: 1.2rem;
+                  font-weight: 600;
+                  color: var(--text-main);
+                  margin-bottom: 1rem;
+                }
+
+                .quick-actions-grid {
+                  display: grid;
+                  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                  gap: 1.25rem;
+                }
+
+                .quick-action-btn {
+                  width: 100%;
+                  padding: 1.5rem;
+                  border-radius: 16px;
+                  background: rgba(255, 255, 255, 0.03);
+                  border: 1px solid rgba(255, 255, 255, 0.08);
+                  display: flex;
+                  align-items: center;
+                  gap: 1rem;
+                  cursor: pointer;
+                  text-align: left;
+                  transition: all 0.3s ease;
+                }
+
+                .quick-action-btn:hover {
+                  transform: translateY(-5px);
+                  box-shadow: 0 10px 30px rgba(78, 205, 196, 0.15);
+                  border-color: rgba(78, 205, 196, 0.3);
+                }
+
+                .quick-action-icon {
+                  width: 44px;
+                  height: 44px;
+                  flex-shrink: 0;
+                  opacity: 0.95;
+                }
+
+                .quick-action-label {
+                  display: block;
+                  font-size: 1.1rem;
+                  font-weight: 700;
+                  color: var(--text-main);
+                  margin-bottom: 0.25rem;
+                }
+
+                .quick-action-sub {
+                  display: block;
+                  font-size: 0.9rem;
+                  color: var(--text-muted);
+                }
+
                 .dashboard-card {
                     padding: 2rem;
                     border-radius: 16px;
@@ -517,78 +567,49 @@ const CustomerDashboard = () => {
 };
 
 // Dashboard Content Component
-const DashboardContent = () => (
-  <>
-    <div className="dashboard-welcome">
-      <h1 className="dashboard-heading">Welcome Back!</h1>
-      <p className="dashboard-subtitle">
-        Explore our aquarium products and manage your orders.
-      </p>
-    </div>
+const DashboardContent = () => {
+  const navigate = useNavigate();
 
-    <div className="dashboard-grid">
-      <div className="dashboard-card">
-        <ShoppingBag className="card-icon" style={{ color: "var(--color-primary)" }} />
-        <h3>My Orders</h3>
-        <p>Track your recent and past orders</p>
-        <div className="card-stat">
-          <span className="stat-number">5</span>
-          <span className="stat-label">Active Orders</span>
-        </div>
+  return (
+    <>
+      <div className="dashboard-welcome">
+        <h1 className="dashboard-heading">Welcome Back!</h1>
+        <p className="dashboard-subtitle">
+          Quick access to shopping and services.
+        </p>
       </div>
 
-      <div className="dashboard-card">
-        <Fish className="card-icon" style={{ color: "#3b82f6" }} />
-        <h3>My Aquariums</h3>
-        <p>Manage your aquarium setups</p>
-        <div className="card-stat">
-          <span className="stat-number">3</span>
-          <span className="stat-label">Registered Aquariums</span>
-        </div>
-      </div>
+      <div className="quick-actions">
+        <h2 className="quick-actions-title">Quick Actions</h2>
+        <div className="quick-actions-grid">
+          <button
+            type="button"
+            className="quick-action-btn"
+            onClick={() => navigate('/store')}
+          >
+            <Store className="quick-action-icon" style={{ color: "var(--color-primary)" }} />
+            <div>
+              <span className="quick-action-label">Store</span>
+              <span className="quick-action-sub">Browse products and place orders</span>
+            </div>
+          </button>
 
-      <div className="dashboard-card">
-        <Heart className="card-icon" style={{ color: "#ec4899" }} />
-        <h3>Wishlist</h3>
-        <p>Items you've saved for later</p>
-        <div className="card-stat">
-          <span className="stat-number">12</span>
-          <span className="stat-label">Saved Items</span>
+          <button
+            type="button"
+            className="quick-action-btn"
+            onClick={() => navigate('/services')}
+          >
+            <CalendarCheck className="quick-action-icon" style={{ color: "#8b5cf6" }} />
+            <div>
+              <span className="quick-action-label">Service Booking</span>
+              <span className="quick-action-sub">Book maintenance, cleaning, or installation</span>
+            </div>
+          </button>
         </div>
       </div>
-
-      <div className="dashboard-card">
-        <Star className="card-icon" style={{ color: "#f59e0b" }} />
-        <h3>Loyalty Points</h3>
-        <p>Earn and redeem rewards</p>
-        <div className="card-stat">
-          <span className="stat-number">2,450</span>
-          <span className="stat-label">Available Points</span>
-        </div>
-      </div>
-
-      <div className="dashboard-card">
-        <Activity className="card-icon" style={{ color: "#10b981" }} />
-        <h3>Recent Activity</h3>
-        <p>Your latest interactions</p>
-        <div className="card-stat">
-          <span className="stat-number">8</span>
-          <span className="stat-label">This Week</span>
-        </div>
-      </div>
-
-      <div className="dashboard-card">
-        <LifeBuoy className="card-icon" style={{ color: "#8b5cf6" }} />
-        <h3>Support</h3>
-        <p>Get help from our team</p>
-        <div className="card-stat">
-          <span className="stat-number">24/7</span>
-          <span className="stat-label">Available</span>
-        </div>
-      </div>
-    </div>
-  </>
-);
+    </>
+  );
+};
 
 // Placeholder Content for other menu items
 const PlaceholderContent = ({ title, description }) => (
