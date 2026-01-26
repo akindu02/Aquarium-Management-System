@@ -1,7 +1,4 @@
--- Aquarium Management System - Database Schema
--- Users Table
--- Create enum for user roles
--- Roles: customer (default), supplier, staff, admin
+
 DO $$ BEGIN CREATE TYPE user_role AS ENUM ('customer', 'supplier', 'staff', 'admin');
 EXCEPTION
 WHEN duplicate_object THEN null;
@@ -51,9 +48,6 @@ DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 CREATE TRIGGER update_users_updated_at BEFORE
 UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- =============================================
--- ENUM TYPES (For Data Integrity)
--- =============================================
 
 -- Status for Orders (Pending, Paid, Shipped, etc.)
 DO $$ BEGIN 
@@ -70,17 +64,15 @@ DO $$ BEGIN
     CREATE TYPE payment_status AS ENUM ('Pending', 'Completed', 'Failed', 'Refunded');
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
--- =============================================
--- INVENTORY & CATALOGUE TABLES
--- =============================================
+
 
 -- Products Table
--- 3NF: Depends on Supplier (User)
+--Depends on Supplier (User)
 CREATE TABLE IF NOT EXISTS products (
     product_id SERIAL PRIMARY KEY,
     supplier_id INTEGER REFERENCES users(id) ON DELETE SET NULL, -- specific to users with role 'supplier'
     name VARCHAR(100) NOT NULL,
-    category VARCHAR(50) NOT NULL, -- e.g., Tank, Food, Accessory
+    category VARCHAR(50) NOT NULL, 
     description TEXT,
     price DECIMAL(10, 2) NOT NULL CHECK (price >= 0),
     stock_quantity INTEGER NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0),
@@ -92,14 +84,11 @@ CREATE TABLE IF NOT EXISTS products (
 -- Services Table (Catalog of services offered)
 CREATE TABLE IF NOT EXISTS services (
     service_id SERIAL PRIMARY KEY,
-    service_type VARCHAR(100) NOT NULL, -- e.g., Tank Cleaning, Installation
+    service_type VARCHAR(100) NOT NULL, 
     description TEXT,
-    base_price DECIMAL(10, 2) -- Optional base price for the service
+    base_price DECIMAL(10, 2) 
 );
 
--- =============================================
--- TRANSACTION TABLES (Orders & Bookings)
--- =============================================
 
 -- Orders Table
 -- Tracks the main order details. Links to Customer and optionally Staff (for Walk-ins).
@@ -120,8 +109,8 @@ CREATE TABLE IF NOT EXISTS order_items (
     order_id INTEGER REFERENCES orders(order_id) ON DELETE CASCADE,
     product_id INTEGER REFERENCES products(product_id) ON DELETE SET NULL,
     quantity INTEGER NOT NULL CHECK (quantity > 0),
-    unit_price DECIMAL(10, 2) NOT NULL, -- Price at the moment of purchase (historical data)
-    subtotal DECIMAL(10, 2) GENERATED ALWAYS AS (quantity * unit_price) STORED -- calculated column
+    unit_price DECIMAL(10, 2) NOT NULL, 
+    subtotal DECIMAL(10, 2) GENERATED ALWAYS AS (quantity * unit_price) STORED 
 );
 
 -- Service Bookings Table
@@ -132,24 +121,22 @@ CREATE TABLE IF NOT EXISTS service_bookings (
     service_id INTEGER REFERENCES services(service_id) ON DELETE SET NULL,
     booking_date TIMESTAMP WITH TIME ZONE NOT NULL,
     status booking_status DEFAULT 'Pending',
-    notes TEXT, -- For specific customer requests
+    notes TEXT, 
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- =============================================
--- FINANCIAL & SUPPORT TABLES
--- =============================================
+
 
 -- Payments Table
 -- 1:1 Relationship with Order (usually), but kept separate for security/gateway logic.
 CREATE TABLE IF NOT EXISTS payments (
     payment_id SERIAL PRIMARY KEY,
     order_id INTEGER REFERENCES orders(order_id) ON DELETE CASCADE,
-    method VARCHAR(50) NOT NULL, -- e.g., 'Credit Card', 'Cash', 'PayPal'
+    method VARCHAR(50) NOT NULL, 
     amount DECIMAL(10, 2) NOT NULL,
     status payment_status DEFAULT 'Pending',
-    transaction_reference VARCHAR(100), -- ID from payment gateway (Stripe/PayPal)
+    transaction_reference VARCHAR(100), 
     payment_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -159,7 +146,7 @@ CREATE TABLE IF NOT EXISTS notifications (
     notification_id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     message TEXT NOT NULL,
-    type VARCHAR(50) NOT NULL, -- e.g., 'Order', 'Service', 'System'
+    type VARCHAR(50) NOT NULL, 
     is_read BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -168,16 +155,14 @@ CREATE TABLE IF NOT EXISTS notifications (
 -- Stores metadata about generated reports (files usually stored in cloud/disk)
 CREATE TABLE IF NOT EXISTS reports (
     report_id SERIAL PRIMARY KEY,
-    generated_by INTEGER REFERENCES users(id) ON DELETE SET NULL, -- Admin/Staff who generated it
+    generated_by INTEGER REFERENCES users(id) ON DELETE SET NULL, 
     title VARCHAR(150) NOT NULL,
-    report_type VARCHAR(50) NOT NULL, -- e.g., 'Sales', 'Inventory'
+    report_type VARCHAR(50) NOT NULL, 
     file_path VARCHAR(255),
     generated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- =============================================
--- INDEXES & TRIGGERS (Performance & Automation)
--- =============================================
+
 
 -- Indexes for frequent searches
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
