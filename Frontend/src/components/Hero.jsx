@@ -1,6 +1,8 @@
 import React from 'react';
 import '../index.css';
 
+import { Link } from 'react-router-dom';
+
 const Hero = () => {
   return (
     <section className="hero">
@@ -13,8 +15,8 @@ const Hero = () => {
           Experience the tranquility of marine life with Methu Aquarium's premium installation and maintenance services. We build liquid art.
         </p>
         <div className="hero-buttons">
-          <button className="btn btn-primary">Book a Service</button>
-          <button className="btn btn-outline">Shop Products</button>
+          <Link to="/services" className="btn btn-primary">Book a Service</Link>
+          <Link to="/store" className="btn btn-outline">Shop Products</Link>
         </div>
       </div>
 

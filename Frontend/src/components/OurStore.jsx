@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import '../index.css';
 
 const storeData = [
@@ -29,12 +30,7 @@ const storeData = [
 ];
 
 const OurStore = () => {
-  const handleBuyNow = (productTitle) => {
-    // Navigate to store page - you can replace this with actual navigation
-    console.log(`Navigating to store for: ${productTitle}`);
-    // Example: window.location.href = '/store';
-    // Or use React Router: navigate('/store');
-  };
+
 
   return (
     <section className="section-padding">
@@ -48,12 +44,9 @@ const OurStore = () => {
               <img src={product.image} alt={product.title} className="store-image" />
               <h3 className="store-title">{product.title}</h3>
               <p className="store-desc">{product.description}</p>
-              <button
-                className="btn btn-primary store-btn"
-                onClick={() => handleBuyNow(product.title)}
-              >
+              <Link to="/store" className="btn btn-primary store-btn">
                 Shop Now
-              </button>
+              </Link>
             </div>
           ))}
         </div>
