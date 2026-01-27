@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, CreditCard, CheckCircle, Lock } from 'lucide-react';
+import { ArrowLeft, CreditCard, CheckCircle, Lock, User, Calendar } from 'lucide-react';
 import '../index.css';
 
 const Payment = () => {
@@ -164,28 +164,34 @@ const Payment = () => {
 
                             <div className="form-group">
                                 <label>Card Holder Name</label>
-                                <input
-                                    type="text"
-                                    name="cardHolder"
-                                    required
-                                    value={cardData.cardHolder}
-                                    onChange={handleInputChange}
-                                    placeholder="YOUR NAME"
-                                />
+                                <div className="input-with-icon">
+                                    <input
+                                        type="text"
+                                        name="cardHolder"
+                                        required
+                                        value={cardData.cardHolder}
+                                        onChange={handleInputChange}
+                                        placeholder="YOUR NAME"
+                                    />
+                                    <User size={18} className="input-icon" />
+                                </div>
                             </div>
 
                             <div className="form-row">
                                 <div className="form-group">
                                     <label>Expiry Date</label>
-                                    <input
-                                        type="text"
-                                        name="expiryDate"
-                                        required
-                                        value={cardData.expiryDate}
-                                        onChange={handleInputChange}
-                                        placeholder="MM/YY"
-                                        maxLength="5"
-                                    />
+                                    <div className="input-with-icon">
+                                        <input
+                                            type="text"
+                                            name="expiryDate"
+                                            required
+                                            value={cardData.expiryDate}
+                                            onChange={handleInputChange}
+                                            placeholder="MM/YY"
+                                            maxLength="5"
+                                        />
+                                        <Calendar size={18} className="input-icon" />
+                                    </div>
                                 </div>
                                 <div className="form-group">
                                     <label>CVV</label>
@@ -372,11 +378,15 @@ const Payment = () => {
 
         .input-icon {
             position: absolute;
-            right: 12px;
+            left: 12px;
             top: 50%;
             transform: translateY(-50%);
             color: #9ca3af;
             pointer-events: none;
+        }
+
+        .input-with-icon input {
+            padding-left: 2.75rem;
         }
 
         .card-type-selector {
