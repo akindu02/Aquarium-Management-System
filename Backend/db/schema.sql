@@ -91,12 +91,16 @@ DO $$ BEGIN
     CREATE TYPE payment_status AS ENUM ('Pending', 'Completed', 'Failed', 'Refunded');
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
+-- [NEW] Enum for Time Slots
+DO $$ BEGIN 
+    CREATE TYPE slot_status AS ENUM ('Available', 'Booked', 'Maintenance', 'Unavailable');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
 -- =============================================
 -- 5. PRODUCT & SERVICE CATALOGUE
 -- =============================================
 
 -- Products Table
--- Updated to reference 'suppliers' table instead of generic 'users'
 CREATE TABLE IF NOT EXISTS products (
     product_id SERIAL PRIMARY KEY,
     supplier_id INTEGER REFERENCES suppliers(user_id) ON DELETE SET NULL, 
@@ -119,11 +123,22 @@ CREATE TABLE IF NOT EXISTS services (
 );
 
 -- =============================================
--- 6. ORDERS & BOOKINGS
+-- 6. ORDERS, BOOKINGS & TIME SLOTS
 -- =============================================
 
+-- [NEW] Service Time Slots Table
+CREATE TABLE IF NOT EXISTS service_time_slots (
+    slot_id SERIAL PRIMARY KEY,
+    staff_id INTEGER REFERENCES users(id) ON DELETE CASCADE, 
+    service_id INTEGER REFERENCES services(service_id) ON DELETE CASCADE,
+    start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    status slot_status DEFAULT 'Available',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT check_slot_times CHECK (end_time > start_time)
+);
+
 -- Orders Table
--- Updated to reference 'customers' table instead of generic 'users'
 CREATE TABLE IF NOT EXISTS orders (
     order_id SERIAL PRIMARY KEY,
     customer_id INTEGER REFERENCES customers(user_id) ON DELETE SET NULL,
@@ -145,7 +160,6 @@ CREATE TABLE IF NOT EXISTS order_items (
 );
 
 -- Service Bookings Table
--- Updated to reference 'customers' table instead of generic 'users'
 CREATE TABLE IF NOT EXISTS service_bookings (
     booking_id SERIAL PRIMARY KEY,
     customer_id INTEGER REFERENCES customers(user_id) ON DELETE CASCADE,
@@ -193,14 +207,20 @@ CREATE TABLE IF NOT EXISTS reports (
 );
 
 -- =============================================
--- 8. INDEXES & FINAL TRIGGERS (The Fix)
+-- 8. INDEXES & FINAL TRIGGERS
 -- =============================================
 
+-- Existing Indexes
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
 CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_date ON service_bookings(booking_date);
 
--- FIX: Explicitly DROP triggers before creating them to prevent "already exists" errors
+-- [NEW] Time Slot Indexes
+CREATE INDEX IF NOT EXISTS idx_slots_dates ON service_time_slots(start_time, end_time);
+CREATE INDEX IF NOT EXISTS idx_slots_staff ON service_time_slots(staff_id);
+CREATE INDEX IF NOT EXISTS idx_slots_status ON service_time_slots(status) WHERE status = 'Available';
+
+-- Update Timestamp Triggers
 DROP TRIGGER IF EXISTS update_products_timestamp ON products;
 CREATE TRIGGER update_products_timestamp BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
