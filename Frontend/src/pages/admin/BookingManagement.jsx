@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Filter, Calendar, Check, X, Clock, Eye, AlertCircle, MapPin, User, ChevronDown, CheckCircle } from 'lucide-react';
+import { Search, Filter, Calendar, Check, X, Clock, Eye, AlertCircle, MapPin, User, ChevronDown, CheckCircle, Plus, Trash2 } from 'lucide-react';
 
 const BookingManagement = () => {
     // Dummy Data
@@ -19,6 +19,39 @@ const BookingManagement = () => {
     const [filterService, setFilterService] = useState('All');
     const [filterStatus, setFilterStatus] = useState('All');
     const [selectedBooking, setSelectedBooking] = useState(null); // For Modal
+
+    // New State for Time Slot Management
+    const [viewMode, setViewMode] = useState('bookings'); // 'bookings' or 'slots'
+    const [managedSlots, setManagedSlots] = useState([
+        { id: 1, service: 'Maintenance', date: '2026-01-28', start: '09:00', end: '11:00', status: 'Available' },
+        { id: 2, service: 'Cleaning', date: '2026-01-29', start: '13:00', end: '16:00', status: 'Booked' },
+    ]);
+    const [newSlot, setNewSlot] = useState({
+        service: 'Maintenance',
+        date: '',
+        start: '',
+        end: ''
+    });
+
+    const handleAddSlot = (e) => {
+        e.preventDefault();
+        if (!newSlot.date || !newSlot.start || !newSlot.end) return;
+
+        const slot = {
+            id: Date.now(),
+            ...newSlot,
+            status: 'Available'
+        };
+        setManagedSlots([...managedSlots, slot]);
+        setNewSlot({ ...newSlot, date: '', start: '', end: '' }); // Reset form
+        alert('Time slot added successfully!');
+    };
+
+    const handleDeleteSlot = (id) => {
+        if (window.confirm('Are you sure you want to remove this slot?')) {
+            setManagedSlots(managedSlots.filter(slot => slot.id !== id));
+        }
+    };
 
     // Status Badge Colors
     const getStatusStyle = (status) => {
@@ -128,125 +161,237 @@ const BookingManagement = () => {
 
             {/* Filters Toolbar */}
             <div className="bm-toolbar">
-                <div className="bm-filter-group">
-                    <div className="search-box">
-                        <Search size={16} />
-                        <input
-                            type="text"
-                            placeholder="Search Customer or ID..."
-                            value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-
-                    <div className="select-wrapper">
-                        <select value={filterService} onChange={e => setFilterService(e.target.value)}>
-                            <option value="All">All Services</option>
-                            <option value="Maintenance">Maintenance</option>
-                            <option value="Cleaning">Cleaning</option>
-                            <option value="Installation">Installation</option>
-                            <option value="Setup">Setup</option>
-                        </select>
-                        <ChevronDown size={14} className="select-arrow" />
-                    </div>
-
-                    <div className="select-wrapper">
-                        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-                            <option value="All">All Status</option>
-                            <option value="Pending">Pending</option>
-                            <option value="Accepted">Accepted</option>
-                            <option value="Completed">Completed</option>
-                            <option value="Cancelled">Cancelled</option>
-                            <option value="Rejected">Rejected</option>
-                        </select>
-                        <ChevronDown size={14} className="select-arrow" />
-                    </div>
-
-                    {/* Date Range Placeholders (Visual Only) */}
-                    <div className="date-input">
-                        <span className="date-label">From:</span>
-                        <input type="date" />
-                    </div>
-                    <div className="date-input">
-                        <span className="date-label">To:</span>
-                        <input type="date" />
-                    </div>
+                <div className="bm-tabs">
+                    <button
+                        className={`bm-tab ${viewMode === 'bookings' ? 'active' : ''}`}
+                        onClick={() => setViewMode('bookings')}
+                    >
+                        Booking Requests
+                    </button>
+                    <button
+                        className={`bm-tab ${viewMode === 'slots' ? 'active' : ''}`}
+                        onClick={() => setViewMode('slots')}
+                    >
+                        Manage Time Slots
+                    </button>
                 </div>
 
-                <button className="btn-clear" onClick={clearFilters}>
-                    Clear Filters
-                </button>
+                {viewMode === 'bookings' && (
+                    <div className="bm-filter-group">
+                        <div className="search-box">
+                            <Search size={16} />
+                            <input
+                                type="text"
+                                placeholder="Search Customer or ID..."
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="select-wrapper">
+                            <select value={filterService} onChange={e => setFilterService(e.target.value)}>
+                                <option value="All">All Services</option>
+                                <option value="Maintenance">Maintenance</option>
+                                <option value="Cleaning">Cleaning</option>
+                                <option value="Installation">Installation</option>
+                                <option value="Setup">Setup</option>
+                            </select>
+                            <ChevronDown size={14} className="select-arrow" />
+                        </div>
+
+                        <div className="select-wrapper">
+                            <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+                                <option value="All">All Status</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Accepted">Accepted</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Cancelled">Cancelled</option>
+                                <option value="Rejected">Rejected</option>
+                            </select>
+                            <ChevronDown size={14} className="select-arrow" />
+                        </div>
+
+                        <button className="btn-clear" onClick={clearFilters}>
+                            Clear Filters
+                        </button>
+                    </div>
+                )}
             </div>
 
-            {/* Bookings Table */}
-            <div className="bm-table-container">
-                <table className="bm-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Customer</th>
-                            <th>Service</th>
-                            <th>Date & Time</th>
-                            <th>Location</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredBookings.map(booking => {
-                            const statusStyle = getStatusStyle(booking.status);
-                            return (
-                                <tr key={booking.id}>
-                                    <td className="font-mono">{booking.id}</td>
-                                    <td>
-                                        <div className="td-customer">
-                                            <div className="td-avatar">{booking.customer[0]}</div>
-                                            <span>{booking.customer}</span>
-                                        </div>
-                                    </td>
-                                    <td>{booking.service}</td>
-                                    <td>
-                                        <div className="td-datetime">
-                                            <span>{booking.date}</span>
-                                            <small>{booking.time}</small>
-                                        </div>
-                                    </td>
-                                    <td className="truncate-cell" title={booking.location}>{booking.location}</td>
-                                    <td>
-                                        <span className="status-badge" style={{ backgroundColor: statusStyle.bg, color: statusStyle.color }}>
-                                            {booking.status}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div className="td-actions">
-                                            <button className="btn-icon view" title="View Details" onClick={() => setSelectedBooking(booking)}>
-                                                <Eye size={16} />
-                                            </button>
-
-                                            {booking.status === 'Pending' && (
-                                                <>
-                                                    <button className="btn-icon accept" title="Accept" onClick={() => updateStatus(booking.id, 'Accepted')}>
-                                                        <Check size={16} />
-                                                    </button>
-                                                    <button className="btn-icon reject" title="Reject" onClick={() => updateStatus(booking.id, 'Rejected')}>
-                                                        <X size={16} />
-                                                    </button>
-                                                </>
-                                            )}
-
-                                            {booking.status === 'Accepted' && (
-                                                <button className="btn-icon complete" title="Mark Completed" onClick={() => updateStatus(booking.id, 'Completed')}>
-                                                    <CheckCircle size={16} />
+            {/* Content Area */}
+            {viewMode === 'bookings' ? (
+                <div className="bm-table-container">
+                    <table className="bm-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Customer</th>
+                                <th>Service</th>
+                                <th>Date & Time</th>
+                                <th>Location</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredBookings.map(booking => {
+                                const statusStyle = getStatusStyle(booking.status);
+                                return (
+                                    <tr key={booking.id}>
+                                        <td className="font-mono">{booking.id}</td>
+                                        <td>
+                                            <div className="td-customer">
+                                                <div className="td-avatar">{booking.customer[0]}</div>
+                                                <span>{booking.customer}</span>
+                                            </div>
+                                        </td>
+                                        <td>{booking.service}</td>
+                                        <td>
+                                            <div className="td-datetime">
+                                                <span>{booking.date}</span>
+                                                <small>{booking.time}</small>
+                                            </div>
+                                        </td>
+                                        <td className="truncate-cell" title={booking.location}>{booking.location}</td>
+                                        <td>
+                                            <span className="status-badge" style={{ backgroundColor: statusStyle.bg, color: statusStyle.color }}>
+                                                {booking.status}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div className="td-actions">
+                                                <button className="btn-icon view" title="View Details" onClick={() => setSelectedBooking(booking)}>
+                                                    <Eye size={16} />
                                                 </button>
-                                            )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
-            </div>
+
+                                                {booking.status === 'Pending' && (
+                                                    <>
+                                                        <button className="btn-icon accept" title="Accept" onClick={() => updateStatus(booking.id, 'Accepted')}>
+                                                            <Check size={16} />
+                                                        </button>
+                                                        <button className="btn-icon reject" title="Reject" onClick={() => updateStatus(booking.id, 'Rejected')}>
+                                                            <X size={16} />
+                                                        </button>
+                                                    </>
+                                                )}
+
+                                                {booking.status === 'Accepted' && (
+                                                    <button className="btn-icon complete" title="Mark Completed" onClick={() => updateStatus(booking.id, 'Completed')}>
+                                                        <CheckCircle size={16} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            ) : (
+                <div className="slot-management-container">
+                    {/* Add Slot Form */}
+                    <div className="add-slot-panel">
+                        <h3>Add New Time Slot</h3>
+                        <form onSubmit={handleAddSlot} className="slot-form">
+                            <div className="form-group">
+                                <label>Service Type</label>
+                                <div className="select-wrapper">
+                                    <select
+                                        value={newSlot.service}
+                                        onChange={e => setNewSlot({ ...newSlot, service: e.target.value })}
+                                    >
+                                        <option value="Maintenance">Maintenance</option>
+                                        <option value="Cleaning">Cleaning</option>
+                                        <option value="Installation">Installation</option>
+
+                                    </select>
+                                    <ChevronDown size={14} className="select-arrow" />
+                                </div>
+                            </div>
+                            <div className="form-group">
+                                <label>Date</label>
+                                <input
+                                    type="date"
+                                    value={newSlot.date}
+                                    onChange={e => setNewSlot({ ...newSlot, date: e.target.value })}
+                                    required
+                                />
+                            </div>
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Start Time</label>
+                                    <input
+                                        type="time"
+                                        value={newSlot.start}
+                                        onChange={e => setNewSlot({ ...newSlot, start: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>End Time</label>
+                                    <input
+                                        type="time"
+                                        value={newSlot.end}
+                                        onChange={e => setNewSlot({ ...newSlot, end: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            <button type="submit" className="btn-add-slot">
+                                <Plus size={18} /> Add Slot
+                            </button>
+                        </form>
+                    </div>
+
+                    {/* Slot List */}
+                    <div className="slots-list-panel">
+                        <h3>Existing Slots</h3>
+                        <div className="slots-table-wrapper">
+                            <table className="bm-table">
+                                <thead>
+                                    <tr>
+                                        <th>Service</th>
+                                        <th>Date</th>
+                                        <th>Time Range</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {managedSlots.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="5" className="text-center">No slots added yet.</td>
+                                        </tr>
+                                    ) : (
+                                        managedSlots.map(slot => (
+                                            <tr key={slot.id}>
+                                                <td>{slot.service}</td>
+                                                <td>{slot.date}</td>
+                                                <td>{slot.start} - {slot.end}</td>
+                                                <td>
+                                                    <span className={`status-badge ${slot.status === 'Available' ? 'available' : 'booked'}`}>
+                                                        {slot.status}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <button
+                                                        className="btn-icon reject"
+                                                        title="Delete Slot"
+                                                        onClick={() => handleDeleteSlot(slot.id)}
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {renderModal()}
 
@@ -586,6 +731,156 @@ const BookingManagement = () => {
 
                 .btn-reject:hover { background: rgba(239, 68, 68, 0.2); }
                 .btn-accept:hover { filter: brightness(1.1); }
+                
+                /* Tabs */
+                .bm-tabs {
+                    display: flex;
+                    gap: 1rem;
+                    margin-bottom: 1rem;
+                    width: 100%;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                    padding-bottom: 1rem;
+                }
+
+                .bm-tab {
+                    background: transparent;
+                    border: none;
+                    color: var(--text-muted);
+                    font-size: 1rem;
+                    font-weight: 500;
+                    padding: 0.5rem 1rem;
+                    cursor: pointer;
+                    position: relative;
+                    transition: all 0.2s;
+                }
+
+                .bm-tab:hover { color: var(--text-main); }
+                
+                .bm-tab.active {
+                    color: var(--color-primary);
+                }
+
+                .bm-tab.active::after {
+                    content: '';
+                    position: absolute;
+                    bottom: -17px;
+                    left: 0;
+                    width: 100%;
+                    height: 2px;
+                    background: var(--color-primary);
+                }
+
+                /* Slot Management Styles */
+                .slot-management-container {
+                    display: grid;
+                    grid-template-columns: 350px 1fr;
+                    gap: 2rem;
+                    align-items: start;
+                }
+
+                .add-slot-panel, .slots-list-panel {
+                    background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border-radius: 1.5rem;
+                    padding: 2rem;
+                    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+                }
+
+                .add-slot-panel h3, .slots-list-panel h3 {
+                    margin-top: 0;
+                    margin-bottom: 2rem;
+                    font-size: 1.5rem;
+                    font-weight: 700;
+                    background: linear-gradient(to right, #fff, #94a3b8);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                }
+
+                .slot-form {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 1.5rem;
+                }
+
+                .slot-form label {
+                    display: block;
+                    font-size: 0.9rem;
+                    color: var(--text-muted);
+                    margin-bottom: 0.75rem;
+                    font-weight: 500;
+                    letter-spacing: 0.5px;
+                }
+
+                .slot-form input, .slot-form select {
+                    width: 100%;
+                    background: rgba(0, 0, 0, 0.2);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 1rem;
+                    padding: 1rem;
+                    color: white;
+                    outline: none;
+                    transition: all 0.3s ease;
+                    font-size: 0.95rem;
+                    color-scheme: dark; /* Forces browser date/time pickers to use dark theme */
+                }
+                
+                .slot-form select option {
+                    background-color: #1a1f2e;
+                    color: white;
+                    padding: 10px;
+                }
+
+                .slot-form input:focus, .slot-form select:focus { 
+                    border-color: var(--color-primary); 
+                    background: rgba(0, 0, 0, 0.4);
+                    box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.1);
+                }
+
+                .form-row {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 1rem;
+                }
+
+                .btn-add-slot {
+                    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+                    color: white;
+                    border: none;
+                    padding: 1rem;
+                    border-radius: 1rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.75rem;
+                    margin-top: 1rem;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    font-size: 1rem;
+                    letter-spacing: 0.5px;
+                    box-shadow: 0 10px 20px -5px rgba(6, 182, 212, 0.4);
+                }
+
+                .btn-add-slot:hover { 
+                    filter: brightness(1.1); 
+                    transform: translateY(-3px);
+                    box-shadow: 0 15px 30px -5px rgba(6, 182, 212, 0.5);
+                }
+
+                .btn-add-slot:active {
+                    transform: translateY(-1px);
+                }
+
+                .status-badge.available { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+                .status-badge.booked { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+                .text-center { text-align: center; color: var(--text-muted); }
+
+                @media (max-width: 1024px) {
+                    .slot-management-container {
+                        grid-template-columns: 1fr;
+                    }
+                }
             `}</style>
         </div>
     );
