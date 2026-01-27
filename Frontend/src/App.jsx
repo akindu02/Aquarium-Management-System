@@ -17,6 +17,7 @@ import ResetPassword from './pages/ResetPassword';
 import PasswordResetSuccess from './pages/PasswordResetSuccess';
 import Store from './pages/Store';
 import ServiceBooking from './pages/ServiceBooking';
+import Checkout from './pages/Checkout';
 import './App.css';
 
 function App() {
@@ -36,6 +37,13 @@ function App() {
             <>
               <Navbar />
               <main><Store /></main>
+              <Footer />
+            </>
+          } />
+          <Route path="/checkout" element={
+            <>
+              <Navbar />
+              <main><Checkout /></main>
               <Footer />
             </>
           } />

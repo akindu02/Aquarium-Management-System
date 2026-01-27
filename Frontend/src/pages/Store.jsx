@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Eye, Search, X, Plus, Minus, ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './Store.css';
 
 // Initial dummy data
@@ -81,6 +81,7 @@ const PRODUCTS = [
 ];
 
 const Store = () => {
+    const navigate = useNavigate();
     const [products, setProducts] = useState(PRODUCTS);
     const [filteredProducts, setFilteredProducts] = useState(PRODUCTS);
     const [searchQuery, setSearchQuery] = useState('');
@@ -353,7 +354,15 @@ const Store = () => {
                                 <span>Total:</span>
                                 <span>LKR {getCartTotal().toLocaleString()}</span>
                             </div>
-                            <button className="checkout-btn">
+                            <button
+                                className="checkout-btn"
+                                onClick={() => navigate('/checkout', {
+                                    state: {
+                                        cartItems: cartItems,
+                                        cartTotal: getCartTotal()
+                                    }
+                                })}
+                            >
                                 Proceed to Checkout
                             </button>
                         </div>
