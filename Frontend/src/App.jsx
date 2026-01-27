@@ -18,6 +18,7 @@ import PasswordResetSuccess from './pages/PasswordResetSuccess';
 import Store from './pages/Store';
 import ServiceBooking from './pages/ServiceBooking';
 import Checkout from './pages/Checkout';
+import Payment from './pages/Payment';
 import './App.css';
 
 function App() {
@@ -44,6 +45,13 @@ function App() {
             <>
               <Navbar />
               <main><Checkout /></main>
+              <Footer />
+            </>
+          } />
+          <Route path="/payment" element={
+            <>
+              <Navbar />
+              <main><Payment /></main>
               <Footer />
             </>
           } />

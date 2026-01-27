@@ -34,55 +34,17 @@ const Checkout = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        setIsProcessing(true);
-
-        // Simulate API call
-        setTimeout(() => {
-            setIsProcessing(false);
-            setIsSuccess(true);
-            // Here you would normally clear the cart context/storage
-        }, 2000);
+        // Navigate to payment page with form data and cart data
+        navigate('/payment', {
+            state: {
+                shippingData: formData,
+                cartItems: cartItems,
+                cartTotal: currentTotal
+            }
+        });
     };
 
-    if (isSuccess) {
-        return (
-            <div className="checkout-container container">
-                <div className="success-message glass">
-                    <CheckCircle size={64} className="text-success" />
-                    <h1>Order Placed Successfully!</h1>
-                    <p>Thank you for your purchase. We have sent a confirmation email to {formData.email}.</p>
-                    <p>Order ID: #ORD-{Math.floor(Math.random() * 100000)}</p>
-                    <Link to="/store" className="btn btn-primary mt-4">
-                        Continue Shopping
-                    </Link>
-                </div>
-                <style>{`
-          .checkout-container {
-            padding-top: 8rem;
-            min-height: 80vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-          }
-          .success-message {
-            text-align: center;
-            padding: 3rem;
-            border-radius: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1.5rem;
-            max-width: 500px;
-            width: 100%;
-          }
-          .text-success { color: #10b981; }
-          .mt-4 { margin-top: 2rem; }
-        `}</style>
-            </div>
-        );
-    }
-
-    if (cartItems.length === 0 && !isSuccess) {
+    if (cartItems.length === 0) {
         return (
             <div className="checkout-container container">
                 <div className="empty-cart glass">
@@ -192,25 +154,6 @@ const Checkout = () => {
                                     />
                                 </div>
                             </div>
-
-                            <h2 className="section-title mt-6">
-                                <CreditCard size={24} className="icon-primary" />
-                                Payment Method
-                            </h2>
-
-                            <div className="payment-options">
-                                <label className={`payment-option ${formData.paymentMethod === 'card' ? 'active' : ''}`}>
-                                    <input
-                                        type="radio"
-                                        name="paymentMethod"
-                                        value="card"
-                                        checked={formData.paymentMethod === 'card'}
-                                        onChange={handleInputChange}
-                                    />
-                                    <span className="radio-dot"></span>
-                                    <span>Credit/Debit Card</span>
-                                </label>
-                            </div>
                         </form>
                     </div>
 
@@ -249,9 +192,8 @@ const Checkout = () => {
                                 type="submit"
                                 form="checkout-form"
                                 className="btn btn-primary place-order-btn"
-                                disabled={isProcessing}
                             >
-                                {isProcessing ? 'Processing...' : 'Place Order'}
+                                Proceed to Payment
                             </button>
 
                             <p className="secure-notice">
