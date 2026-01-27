@@ -101,28 +101,7 @@ const startServer = async () => {
         console.log('✅ Database connection verified');
 
         app.listen(PORT, () => {
-            console.log(`
-╔════════════════════════════════════════════════════════════╗
-║                                                            ║
-║   🐠 Aquarium Management System Backend                    ║
-║                                                            ║
-║   Server running on: http://localhost:${PORT}                ║
-║   Environment: ${(process.env.NODE_ENV || 'development').padEnd(10)}                            ║
-║                                                            ║
-║   API Endpoints:                                           ║
-║   • Health Check:    GET  /api/health                      ║
-║   • DB Health:       GET  /api/health/db                   ║
-║   • Register:        POST /api/auth/register               ║
-║   • Login:           POST /api/auth/login                  ║
-║   • Refresh Token:   POST /api/auth/refresh-token          ║
-║   • Get Profile:     GET  /api/auth/me                     ║
-║   • Update Profile:  PUT  /api/auth/profile                ║
-║   • Change Password: PUT  /api/auth/change-password        ║
-║   • Logout:          POST /api/auth/logout                 ║
-║   • Logout All:      POST /api/auth/logout-all             ║
-║                                                            ║
-╚════════════════════════════════════════════════════════════╝
-      `);
+            console.log(`Server running on port ${PORT}`);
         });
     } catch (error) {
         console.error('❌ Failed to start server:', error);
