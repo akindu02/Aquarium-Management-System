@@ -125,7 +125,7 @@ CREATE TABLE IF NOT EXISTS services (
     base_price DECIMAL(10, 2) 
 );
 
--- Restock Requests Table (The Header)
+-- Restock Requests Table
 CREATE TABLE IF NOT EXISTS restock_requests (
     request_id SERIAL PRIMARY KEY,
     created_by_staff_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
@@ -140,14 +140,13 @@ CREATE TABLE IF NOT EXISTS restock_requests (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- [NEW] Restock Items Table (The Details)
+-- Restock Items Table
 CREATE TABLE IF NOT EXISTS restock_items (
     request_item_id SERIAL PRIMARY KEY,
     request_id INTEGER REFERENCES restock_requests(request_id) ON DELETE CASCADE,
     product_id INTEGER REFERENCES products(product_id) ON DELETE CASCADE,
     quantity INTEGER NOT NULL CHECK (quantity > 0),
     unit_cost DECIMAL(10, 2) NOT NULL,
-    -- Auto-calculated total cost (matches logic in order_items)
     total_cost DECIMAL(10, 2) GENERATED ALWAYS AS (quantity * unit_cost) STORED
 );
 
@@ -201,7 +200,7 @@ CREATE TABLE IF NOT EXISTS service_bookings (
 );
 
 -- =============================================
--- 7. PAYMENTS & NOTIFICATIONS
+-- 7. PAYMENTS, RECEIPTS & NOTIFICATIONS
 -- =============================================
 
 -- Payments Table
@@ -213,6 +212,15 @@ CREATE TABLE IF NOT EXISTS payments (
     status payment_status DEFAULT 'Pending',
     transaction_reference VARCHAR(100), 
     payment_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- [NEW] Receipts Table
+CREATE TABLE IF NOT EXISTS receipts (
+    receipt_id SERIAL PRIMARY KEY,
+    order_id INTEGER REFERENCES orders(order_id) ON DELETE CASCADE UNIQUE, -- Ensures 1 receipt per order
+    receipt_number VARCHAR(100) UNIQUE NOT NULL,
+    issued_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    file_path VARCHAR(255)
 );
 
 -- Notifications Table
@@ -249,11 +257,9 @@ CREATE INDEX IF NOT EXISTS idx_slots_dates ON service_time_slots(start_time, end
 CREATE INDEX IF NOT EXISTS idx_slots_staff ON service_time_slots(staff_id);
 CREATE INDEX IF NOT EXISTS idx_slots_status ON service_time_slots(status) WHERE status = 'Available';
 
--- Restock Indexes (Requests)
+-- Restock Indexes
 CREATE INDEX IF NOT EXISTS idx_restock_supplier ON restock_requests(supplier_id);
 CREATE INDEX IF NOT EXISTS idx_restock_status ON restock_requests(status);
-
--- [NEW] Restock Indexes (Items)
 CREATE INDEX IF NOT EXISTS idx_restock_items_request ON restock_items(request_id);
 CREATE INDEX IF NOT EXISTS idx_restock_items_product ON restock_items(product_id);
 
