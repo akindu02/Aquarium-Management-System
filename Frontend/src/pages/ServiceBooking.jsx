@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, Check, X, ChevronLeft, ChevronRight, Wrench, Sparkles, Settings } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { isAuthenticated } from '../utils/auth';
 import './ServiceBooking.css';
 
 // ===== DUMMY DATA =====
@@ -398,7 +400,29 @@ const ServiceBooking = () => {
         return availability?.slots || [];
     };
 
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    // Check for returned state from login
+    useEffect(() => {
+        if (location.state?.serviceId) {
+            const service = SERVICES.find(s => s.id === location.state.serviceId);
+            if (service) {
+                setSelectedService(service);
+            }
+        }
+    }, [location.state]);
+
     const handleSelectService = (service) => {
+        if (!isAuthenticated()) {
+            navigate('/signin', {
+                state: {
+                    from: location.pathname,
+                    serviceId: service.id
+                }
+            });
+            return;
+        }
         setSelectedService(service);
         setSelectedDate(null);
         setSelectedSlot(null);
@@ -420,11 +444,13 @@ const ServiceBooking = () => {
             date: selectedDate,
             slot: selectedSlot
         };
+        // In a real app, you would send this to the backend
         setBookings([...bookings, newBooking]);
         setShowModal(false);
         setSelectedSlot(null);
         setSelectedDate(null);
         setSelectedService(null);
+        alert('Booking confirmed successfully!');
     };
 
     const handleCancelBooking = (index) => {
