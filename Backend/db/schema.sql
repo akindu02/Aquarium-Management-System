@@ -95,7 +95,6 @@ DO $$ BEGIN
     CREATE TYPE slot_status AS ENUM ('Available', 'Booked', 'Maintenance', 'Unavailable');
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
--- [NEW] Enum for Restock Requests
 DO $$ BEGIN 
     CREATE TYPE restock_status AS ENUM ('Pending', 'Approved', 'Ordered', 'Received', 'Cancelled');
 EXCEPTION WHEN duplicate_object THEN null; END $$;
@@ -126,7 +125,7 @@ CREATE TABLE IF NOT EXISTS services (
     base_price DECIMAL(10, 2) 
 );
 
--- [NEW] Restock Requests Table
+-- Restock Requests Table (The Header)
 CREATE TABLE IF NOT EXISTS restock_requests (
     request_id SERIAL PRIMARY KEY,
     created_by_staff_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
@@ -139,6 +138,17 @@ CREATE TABLE IF NOT EXISTS restock_requests (
     received_by_staff_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
     delivery_note_ref VARCHAR(50),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- [NEW] Restock Items Table (The Details)
+CREATE TABLE IF NOT EXISTS restock_items (
+    request_item_id SERIAL PRIMARY KEY,
+    request_id INTEGER REFERENCES restock_requests(request_id) ON DELETE CASCADE,
+    product_id INTEGER REFERENCES products(product_id) ON DELETE CASCADE,
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    unit_cost DECIMAL(10, 2) NOT NULL,
+    -- Auto-calculated total cost (matches logic in order_items)
+    total_cost DECIMAL(10, 2) GENERATED ALWAYS AS (quantity * unit_cost) STORED
 );
 
 -- =============================================
@@ -239,9 +249,13 @@ CREATE INDEX IF NOT EXISTS idx_slots_dates ON service_time_slots(start_time, end
 CREATE INDEX IF NOT EXISTS idx_slots_staff ON service_time_slots(staff_id);
 CREATE INDEX IF NOT EXISTS idx_slots_status ON service_time_slots(status) WHERE status = 'Available';
 
--- [NEW] Restock Indexes
+-- Restock Indexes (Requests)
 CREATE INDEX IF NOT EXISTS idx_restock_supplier ON restock_requests(supplier_id);
 CREATE INDEX IF NOT EXISTS idx_restock_status ON restock_requests(status);
+
+-- [NEW] Restock Indexes (Items)
+CREATE INDEX IF NOT EXISTS idx_restock_items_request ON restock_items(request_id);
+CREATE INDEX IF NOT EXISTS idx_restock_items_product ON restock_items(product_id);
 
 -- Update Timestamp Triggers
 DROP TRIGGER IF EXISTS update_products_timestamp ON products;
@@ -253,6 +267,5 @@ CREATE TRIGGER update_orders_timestamp BEFORE UPDATE ON orders FOR EACH ROW EXEC
 DROP TRIGGER IF EXISTS update_bookings_timestamp ON service_bookings;
 CREATE TRIGGER update_bookings_timestamp BEFORE UPDATE ON service_bookings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- [NEW] Restock Trigger
 DROP TRIGGER IF EXISTS update_restock_timestamp ON restock_requests;
 CREATE TRIGGER update_restock_timestamp BEFORE UPDATE ON restock_requests FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
