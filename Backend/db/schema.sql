@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
 );
 
 -- =============================================
--- 2. PROFILE TABLES (New Additions)
+-- 2. PROFILE TABLES
 -- =============================================
 
 -- Customers Table (Extends users)
@@ -91,13 +91,17 @@ DO $$ BEGIN
     CREATE TYPE payment_status AS ENUM ('Pending', 'Completed', 'Failed', 'Refunded');
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
--- [NEW] Enum for Time Slots
 DO $$ BEGIN 
     CREATE TYPE slot_status AS ENUM ('Available', 'Booked', 'Maintenance', 'Unavailable');
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
+-- [NEW] Enum for Restock Requests
+DO $$ BEGIN 
+    CREATE TYPE restock_status AS ENUM ('Pending', 'Approved', 'Ordered', 'Received', 'Cancelled');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
 -- =============================================
--- 5. PRODUCT & SERVICE CATALOGUE
+-- 5. PRODUCT, SERVICE & INVENTORY CATALOGUE
 -- =============================================
 
 -- Products Table
@@ -122,11 +126,26 @@ CREATE TABLE IF NOT EXISTS services (
     base_price DECIMAL(10, 2) 
 );
 
+-- [NEW] Restock Requests Table
+CREATE TABLE IF NOT EXISTS restock_requests (
+    request_id SERIAL PRIMARY KEY,
+    created_by_staff_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    supplier_id INTEGER REFERENCES suppliers(user_id) ON DELETE CASCADE,
+    requested_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    expected_date DATE,
+    notes TEXT,
+    status restock_status DEFAULT 'Pending',
+    delivered_at TIMESTAMP WITH TIME ZONE,
+    received_by_staff_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    delivery_note_ref VARCHAR(50),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- =============================================
 -- 6. ORDERS, BOOKINGS & TIME SLOTS
 -- =============================================
 
--- [NEW] Service Time Slots Table
+-- Service Time Slots Table
 CREATE TABLE IF NOT EXISTS service_time_slots (
     slot_id SERIAL PRIMARY KEY,
     staff_id INTEGER REFERENCES users(id) ON DELETE CASCADE, 
@@ -215,10 +234,14 @@ CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
 CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_date ON service_bookings(booking_date);
 
--- [NEW] Time Slot Indexes
+-- Time Slot Indexes
 CREATE INDEX IF NOT EXISTS idx_slots_dates ON service_time_slots(start_time, end_time);
 CREATE INDEX IF NOT EXISTS idx_slots_staff ON service_time_slots(staff_id);
 CREATE INDEX IF NOT EXISTS idx_slots_status ON service_time_slots(status) WHERE status = 'Available';
+
+-- [NEW] Restock Indexes
+CREATE INDEX IF NOT EXISTS idx_restock_supplier ON restock_requests(supplier_id);
+CREATE INDEX IF NOT EXISTS idx_restock_status ON restock_requests(status);
 
 -- Update Timestamp Triggers
 DROP TRIGGER IF EXISTS update_products_timestamp ON products;
@@ -229,3 +252,7 @@ CREATE TRIGGER update_orders_timestamp BEFORE UPDATE ON orders FOR EACH ROW EXEC
 
 DROP TRIGGER IF EXISTS update_bookings_timestamp ON service_bookings;
 CREATE TRIGGER update_bookings_timestamp BEFORE UPDATE ON service_bookings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- [NEW] Restock Trigger
+DROP TRIGGER IF EXISTS update_restock_timestamp ON restock_requests;
+CREATE TRIGGER update_restock_timestamp BEFORE UPDATE ON restock_requests FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
