@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Check, X, ChevronLeft, ChevronRight, Wrench, Sparkles, Settings } from 'lucide-react';
+import { Calendar, Clock, Check, X, ChevronLeft, ChevronRight, Wrench, Sparkles, Settings, Phone, MapPin } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { isAuthenticated } from '../utils/auth';
 import './ServiceBooking.css';
@@ -337,7 +337,37 @@ const UpcomingBookings = ({ bookings, services, onCancelBooking }) => {
 
 // ===== BOOKING MODAL COMPONENT =====
 const BookingModal = ({ isOpen, service, date, slot, onConfirm, onClose }) => {
+    const [phone, setPhone] = useState('');
+    const [address, setAddress] = useState('');
+    const [errors, setErrors] = useState({});
+
+    // Reset state when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            setPhone('');
+            setAddress('');
+            setErrors({});
+        }
+    }, [isOpen]);
+
     if (!isOpen) return null;
+
+    const handleConfirm = () => {
+        const newErrors = {};
+        if (!phone.trim()) newErrors.phone = 'Phone number is required';
+        if (!address.trim()) newErrors.address = 'Address is required';
+        // Basic phone validation
+        if (phone.trim() && !/^\d{10,}$/.test(phone.replace(/\D/g, ''))) {
+            newErrors.phone = 'Please enter a valid phone number';
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+
+        onConfirm({ phone, address });
+    };
 
     return (
         <div className="modal-overlay" onClick={onClose}>
@@ -365,9 +395,40 @@ const BookingModal = ({ isOpen, service, date, slot, onConfirm, onClose }) => {
                         <strong>{slot?.start} - {slot?.end}</strong>
                     </div>
                 </div>
+
+                <div className="modal-input-group">
+                    <label className="modal-label">Phone Number</label>
+                    <div className="input-wrapper">
+                        <Phone size={18} className="input-icon" />
+                        <input
+                            type="tel"
+                            className="modal-input with-icon"
+                            placeholder="Enter your phone number"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                        />
+                    </div>
+                    {errors.phone && <p className="input-error">{errors.phone}</p>}
+                </div>
+
+                <div className="modal-input-group">
+                    <label className="modal-label">Address</label>
+                    <div className="input-wrapper">
+                        <MapPin size={18} className="input-icon textarea-icon" />
+                        <textarea
+                            className="modal-input with-icon"
+                            placeholder="Enter your address"
+                            rows="3"
+                            value={address}
+                            onChange={(e) => setAddress(e.target.value)}
+                        />
+                    </div>
+                    {errors.address && <p className="input-error">{errors.address}</p>}
+                </div>
+
                 <div className="modal-actions">
                     <button className="btn-cancel" onClick={onClose}>Cancel</button>
-                    <button className="btn-confirm" onClick={onConfirm}>Confirm Booking</button>
+                    <button className="btn-confirm" onClick={handleConfirm}>Confirm Booking</button>
                 </div>
             </div>
         </div>
@@ -438,13 +499,16 @@ const ServiceBooking = () => {
         setShowModal(true);
     };
 
-    const handleConfirmBooking = () => {
+    const handleConfirmBooking = (bookingDetails) => {
         const newBooking = {
             serviceId: selectedService.id,
             date: selectedDate,
-            slot: selectedSlot
+            slot: selectedSlot,
+            phone: bookingDetails.phone,
+            address: bookingDetails.address
         };
         // In a real app, you would send this to the backend
+        console.log('Booking Confirmed:', newBooking);
         setBookings([...bookings, newBooking]);
         setShowModal(false);
         setSelectedSlot(null);
