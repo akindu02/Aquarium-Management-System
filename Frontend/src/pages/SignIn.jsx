@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { saveAuthData, getDashboardRoute } from '../utils/auth';
 import { loginAPI, loginAdminAPI } from '../utils/api';
 import '../index.css';
 
 const SignIn = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const isAdminLogin = searchParams.get('type') === 'admin';
 
@@ -39,11 +40,17 @@ const SignIn = () => {
         // Save authentication data (token, refresh token, and user data)
         saveAuthData(response.accessToken, response.refreshToken, response.user);
 
-        // Get the dashboard route based on user role
-        const dashboardRoute = getDashboardRoute(response.user.role);
+        // Check if there is a redirect location
+        const state = location.state || {}; // Get the state
+        const { from, ...stateData } = state; // Extract 'from' and the rest of the data
 
-        // Redirect to role-specific dashboard
-        navigate(dashboardRoute, { replace: true });
+        if (from) {
+          navigate(from, { replace: true, state: stateData });
+        } else {
+          // Get the dashboard route based on user role
+          const dashboardRoute = getDashboardRoute(response.user.role);
+          navigate(dashboardRoute, { replace: true });
+        }
       } else {
         setError(response.message || 'Login failed. Please try again.');
       }

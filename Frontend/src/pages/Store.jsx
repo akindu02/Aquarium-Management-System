@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Eye, Search, X, Plus, Minus, ArrowLeft } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { isAuthenticated } from '../utils/auth';
 import './Store.css';
 
 // Initial dummy data
@@ -356,12 +357,24 @@ const Store = () => {
                             </div>
                             <button
                                 className="checkout-btn"
-                                onClick={() => navigate('/checkout', {
-                                    state: {
-                                        cartItems: cartItems,
-                                        cartTotal: getCartTotal()
+                                onClick={() => {
+                                    if (isAuthenticated()) {
+                                        navigate('/checkout', {
+                                            state: {
+                                                cartItems: cartItems,
+                                                cartTotal: getCartTotal()
+                                            }
+                                        });
+                                    } else {
+                                        navigate('/signin', {
+                                            state: {
+                                                from: '/checkout',
+                                                cartItems: cartItems,
+                                                cartTotal: getCartTotal()
+                                            }
+                                        });
                                     }
-                                })}
+                                }}
                             >
                                 Proceed to Checkout
                             </button>
