@@ -5,6 +5,13 @@ const StaffOrderManagement = () => {
     const [activeTab, setActiveTab] = useState('customer'); // 'customer' or 'supplier'
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedOrder, setSelectedOrder] = useState(null);
+    const [showRequestModal, setShowRequestModal] = useState(false);
+    const [newRequest, setNewRequest] = useState({
+        supplier: '',
+        items: '',
+        cost: '',
+        expected: ''
+    });
 
     // --- Customer Orders Data ---
     const initialCustomerOrders = [
@@ -43,6 +50,24 @@ const StaffOrderManagement = () => {
 
     const updateSupplierStatus = (id, newStatus) => {
         setSupplierOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
+    };
+
+    const handleCreateRequest = () => {
+        if (!newRequest.supplier || !newRequest.items || !newRequest.cost) return;
+        
+        const newOrder = {
+            id: `SUP-${Math.floor(Math.random() * 1000) + 9000}`,
+            supplier: newRequest.supplier,
+            items: newRequest.items,
+            date: new Date().toISOString().split('T')[0],
+            cost: parseFloat(newRequest.cost),
+            status: 'Pending',
+            expected: newRequest.expected || 'TBD'
+        };
+
+        setSupplierOrders([newOrder, ...supplierOrders]);
+        setShowRequestModal(false);
+        setNewRequest({ supplier: '', items: '', cost: '', expected: '' });
     };
 
     const filteredData = activeTab === 'customer'
@@ -85,7 +110,7 @@ const StaffOrderManagement = () => {
                     />
                 </div>
                 {activeTab === 'supplier' && (
-                    <button className="new-req-btn">
+                    <button className="new-req-btn" onClick={() => setShowRequestModal(true)}>
                         <Plus size={18} /> New Request
                     </button>
                 )}
@@ -214,6 +239,65 @@ const StaffOrderManagement = () => {
                                         </>
                                     )}
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* New Request Modal */}
+            {showRequestModal && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h3>Create Supplier Request</h3>
+                            <button className="modal-close" onClick={() => setShowRequestModal(false)}><X size={20} /></button>
+                        </div>
+                        <div className="modal-body">
+                            <div className="form-group">
+                                <label>Supplier Name</label>
+                                <input 
+                                    type="text" 
+                                    className="form-input"
+                                    placeholder="Enter supplier name"
+                                    value={newRequest.supplier} 
+                                    onChange={(e) => setNewRequest({...newRequest, supplier: e.target.value})}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Items Required</label>
+                                <textarea 
+                                    className="form-input"
+                                    placeholder="List items and quantities"
+                                    rows="3"
+                                    value={newRequest.items} 
+                                    onChange={(e) => setNewRequest({...newRequest, items: e.target.value})}
+                                />
+                            </div>
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Expected Cost (LKR)</label>
+                                    <input 
+                                        type="number" 
+                                        className="form-input"
+                                        placeholder="0.00"
+                                        value={newRequest.cost} 
+                                        onChange={(e) => setNewRequest({...newRequest, cost: e.target.value})}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Expected Date</label>
+                                    <input 
+                                        type="date" 
+                                        className="form-input"
+                                        value={newRequest.expected} 
+                                        onChange={(e) => setNewRequest({...newRequest, expected: e.target.value})}
+                                    />
+                                </div>
+                            </div>
+                            <div className="form-actions">
+                                <button className="cancel-btn" onClick={() => setShowRequestModal(false)}>Cancel</button>
+                                <button className="submit-btn" onClick={handleCreateRequest}>Submit Request</button>
                             </div>
                         </div>
                     </div>
@@ -350,6 +434,33 @@ const StaffOrderManagement = () => {
                 }
                 .st-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
                 .st-btn.success:hover { border-color: #10b981; color: #10b981; }
+
+                /* Form Styles */
+                .form-group { margin-bottom: 1.25rem; }
+                .form-group label { display: block; color: rgba(255,255,255,0.7); margin-bottom: 0.5rem; font-size: 0.9rem; }
+                .form-input {
+                    width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);
+                    padding: 0.75rem; border-radius: 0.5rem; color: white; font-size: 0.95rem;
+                    outline: none; transition: border-color 0.2s;
+                }
+                .form-input:focus { border-color: var(--color-primary); }
+                
+                .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+                .form-actions {
+                    display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem;
+                }
+                .submit-btn {
+                    background: var(--color-primary); color: white; border: none;
+                    padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600;
+                    cursor: pointer;
+                }
+                .cancel-btn {
+                    background: transparent; color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.1);
+                    padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600;
+                    cursor: pointer;
+                }
+                .cancel-btn:hover { background: rgba(255,255,255,0.05); color: white; }
             `}</style>
         </div>
     );
