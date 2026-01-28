@@ -70,8 +70,6 @@ const SupplierOrderHistory = () => {
                             <th>Date</th>
                             <th>Items Summary</th>
                             <th>Status</th>
-                            <th>Amount (LKR)</th>
-                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -82,17 +80,11 @@ const SupplierOrderHistory = () => {
                                     <td>{order.date}</td>
                                     <td className="items-col">{order.items}</td>
                                     <td>{getStatusBadge(order.status)}</td>
-                                    <td className="fw-600">{order.status === 'Declined' ? '-' : `LKR ${order.amount.toLocaleString()}`}</td>
-                                    <td>
-                                        <button className="btn-view" title="View Details">
-                                            <Eye size={18} />
-                                        </button>
-                                    </td>
                                 </tr>
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="6" className="text-center">No orders found matching criteria.</td>
+                                <td colSpan="4" className="text-center">No orders found matching criteria.</td>
                             </tr>
                         )}
                     </tbody>
