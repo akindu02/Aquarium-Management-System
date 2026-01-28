@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ShoppingCart, Plus, Minus, Trash2, CreditCard, RotateCcw, CheckCircle, Package } from 'lucide-react';
+import { Search, ShoppingCart, Plus, Minus, Trash2, CreditCard, RotateCcw, CheckCircle, Package, User, Mail, Phone, MapPin } from 'lucide-react';
 
 const PointOfSale = () => {
     // Dummy Product Data
@@ -19,6 +19,13 @@ const PointOfSale = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [showCustomerModal, setShowCustomerModal] = useState(false); // New state for customer modal
+    const [customer, setCustomer] = useState({
+        name: '',
+        email: '',
+        phone: '',
+        address: ''
+    });
 
     // Filter Logic
     const filteredProducts = products.filter(product => {
@@ -121,10 +128,28 @@ const PointOfSale = () => {
             <div className="pos-cart">
                 <div className="cart-header">
                     <h3>Current Order</h3>
-                    <button className="clear-btn" onClick={clearCart} disabled={cart.length === 0}>
-                        <RotateCcw size={16} /> Clear
-                    </button>
+                    <div className="cart-actions">
+                        <button className="customer-trigger-btn" onClick={() => setShowCustomerModal(true)} title="Add Customer Details">
+                            <User size={18} />
+                            {customer.name ? <span className="active-dot"></span> : null}
+                        </button>
+                        <button className="clear-btn" onClick={clearCart} disabled={cart.length === 0}>
+                            <RotateCcw size={16} /> Clear
+                        </button>
+                    </div>
                 </div>
+
+                {customer.name && (
+                    <div className="selected-customer-preview">
+                        <div className="sc-info">
+                            <span className="sc-name">{customer.name}</span>
+                            <span className="sc-phone">{customer.phone}</span>
+                        </div>
+                        <button className="sc-remove" onClick={() => setCustomer({ name: '', email: '', phone: '', address: '' })}>
+                            <Trash2 size={14} />
+                        </button>
+                    </div>
+                )}
 
                 <div className="cart-items">
                     {cart.length === 0 ? (
@@ -153,6 +178,8 @@ const PointOfSale = () => {
                     )}
                 </div>
 
+                {/* Removed Customer Form Section from here */}
+
                 <div className="cart-footer">
                     <div className="summary-row">
                         <span>Subtotal</span>
@@ -174,6 +201,74 @@ const PointOfSale = () => {
                 </div>
             </div>
 
+            {/* Customer Details Modal */}
+            {showCustomerModal && (
+                <div className="modal-overlay">
+                    <div className="customer-modal">
+                        <div className="modal-header">
+                            <h3>Customer Details</h3>
+                            <button className="close-modal-btn" onClick={() => setShowCustomerModal(false)}>×</button>
+                        </div>
+                        <div className="modal-body">
+                            <div className="customer-form">
+                                <div className="form-group-full">
+                                    <label>Customer Name</label>
+                                    <div className="input-icon-wrapper">
+                                        <User size={18} />
+                                        <input
+                                            type="text"
+                                            placeholder="Name"
+                                            value={customer.name}
+                                            onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="form-group-full">
+                                    <label>Phone Number</label>
+                                    <div className="input-icon-wrapper">
+                                        <Phone size={18} />
+                                        <input
+                                            type="tel"
+                                            placeholder="07xxxxxxxx"
+                                            value={customer.phone}
+                                            onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="form-group-full">
+                                    <label>Email Address</label>
+                                    <div className="input-icon-wrapper">
+                                        <Mail size={18} />
+                                        <input
+                                            type="email"
+                                            placeholder="customer@example.com"
+                                            value={customer.email}
+                                            onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="form-group-full">
+                                    <label>Address</label>
+                                    <div className="input-icon-wrapper">
+                                        <MapPin size={18} />
+                                        <input
+                                            type="text"
+                                            placeholder="Home Address"
+                                            value={customer.address}
+                                            onChange={(e) => setCustomer({ ...customer, address: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button className="cancel-btn" onClick={() => setShowCustomerModal(false)}>Cancel</button>
+                            <button className="save-btn" onClick={() => setShowCustomerModal(false)}>Save Customer</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Receipt Modal */}
             {showPaymentModal && (
                 <div className="modal-overlay">
@@ -189,6 +284,14 @@ const PointOfSale = () => {
                             </div>
                             <div className="receipt-id">Receipt #: {Math.floor(Math.random() * 100000)}</div>
                         </div>
+
+                        {customer.name && (
+                            <div className="receipt-customer">
+                                <p><strong>Bill To:</strong> {customer.name}</p>
+                                {customer.phone && <p>{customer.phone}</p>}
+                                {customer.address && <p>{customer.address}</p>}
+                            </div>
+                        )}
 
                         <div className="receipt-divider"></div>
 
@@ -239,7 +342,11 @@ const PointOfSale = () => {
                             </button>
                             <button
                                 className="close-btn"
-                                onClick={() => { setShowPaymentModal(false); setCart([]); }}
+                                onClick={() => { 
+                                    setShowPaymentModal(false); 
+                                    setCart([]); 
+                                    setCustomer({ name: '', email: '', phone: '', address: '' });
+                                }}
                             >
                                 New Sale
                             </button>
@@ -250,9 +357,91 @@ const PointOfSale = () => {
 
             <style>{`
                 .pos-container {
-                    display: flex;
-                    height: calc(100vh - 100px); /* Adjust based on header/layout */
+                    display: flex; height: calc(100vh - 100px); /* Adjust based on header/layout */
                     gap: 1.5rem;
+                }
+
+                /* Customer Modal Styles */
+                .customer-modal {
+                    background: #1a1f2e;
+                    width: 450px;
+                    border-radius: 1rem;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    overflow: hidden;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+                }
+                .modal-header {
+                    padding: 1.5rem;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                    display: flex; justify-content: space-between; align-items: center;
+                }
+                .modal-header h3 { margin: 0; font-size: 1.25rem; color: white; }
+                .close-modal-btn {
+                    background: transparent; border: none; color: var(--text-muted);
+                    font-size: 1.5rem; cursor: pointer; padding: 0; line-height: 1;
+                }
+                .modal-body { padding: 1.5rem; }
+                .modal-footer {
+                    padding: 1rem 1.5rem;
+                    border-top: 1px solid rgba(255, 255, 255, 0.1);
+                    display: flex; justify-content: flex-end; gap: 1rem;
+                    background: rgba(0, 0, 0, 0.2);
+                }
+
+                .form-group-full { margin-bottom: 1.25rem; }
+                .form-group-full label {
+                    display: block; color: var(--text-muted); font-size: 0.9rem;
+                    margin-bottom: 0.5rem;
+                }
+                .input-icon-wrapper {
+                    display: flex; align-items: center; gap: 0.75rem;
+                    background: rgba(255, 255, 255, 0.05);
+                    padding: 0.75rem 1rem; border-radius: 0.5rem;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                }
+                .input-icon-wrapper:focus-within { border-color: var(--color-primary); background: rgba(255, 255, 255, 0.08); }
+                .input-icon-wrapper input {
+                    background: transparent; border: none; outline: none;
+                    color: white; width: 100%; font-size: 1rem;
+                }
+                .input-icon-wrapper svg { color: var(--text-muted); }
+
+                .save-btn {
+                    background: var(--color-primary); color: white; border: none;
+                    padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600;
+                    cursor: pointer;
+                }
+                .cancel-btn {
+                    background: transparent; color: var(--text-muted); border: 1px solid rgba(255, 255, 255, 0.1);
+                    padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600;
+                    cursor: pointer;
+                }
+
+                /* Cart Header Updates */
+                .cart-actions { display: flex; gap: 0.75rem; align-items: center; }
+                .customer-trigger-btn {
+                    width: 36px; height: 36px; border-radius: 8px;
+                    background: rgba(255, 255, 255, 0.1); color: white;
+                    border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+                    position: relative; transition: all 0.2s;
+                }
+                .customer-trigger-btn:hover { background: rgba(255, 255, 255, 0.2); }
+                .active-dot {
+                    width: 8px; height: 8px; background: #10b981; border-radius: 50%;
+                    position: absolute; top: -2px; right: -2px; border: 2px solid #1a1f2e;
+                }
+
+                .selected-customer-preview {
+                    display: flex; justify-content: space-between; align-items: center;
+                    background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2);
+                    padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem;
+                }
+                .sc-info { display: flex; flex-direction: column; gap: 0.25rem; }
+                .sc-name { color: #10b981; font-weight: 600; font-size: 0.9rem; }
+                .sc-phone { color: var(--text-muted); font-size: 0.8rem; }
+                .sc-remove {
+                    background: transparent; border: none; color: #ef4444;
+                    cursor: pointer; padding: 0.25rem; display: flex;
                 }
 
                 /* Left Side */
@@ -387,6 +576,46 @@ const PointOfSale = () => {
                 }
                 .remove-btn { background: transparent; color: #ef4444; border: none; cursor: pointer; padding: 0; }
 
+                .customer-section {
+                    margin-top: 1rem;
+                    padding-top: 1rem;
+                    border-top: 1px solid rgba(255, 255, 255, 0.08);
+                }
+                .customer-section h4 {
+                    margin: 0 0 0.75rem 0;
+                    font-size: 0.9rem;
+                    color: var(--text-muted);
+                }
+                .customer-form {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 0.75rem;
+                }
+                .form-group {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    background: rgba(0, 0, 0, 0.2);
+                    padding: 0.5rem 0.75rem;
+                    border-radius: 0.5rem;
+                    border: 1px solid rgba(255, 255, 255, 0.05);
+                }
+                .form-group:hover, .form-group:focus-within {
+                    border-color: rgba(255, 255, 255, 0.2);
+                }
+                .form-group input {
+                    background: transparent;
+                    border: none;
+                    outline: none;
+                    color: white;
+                    width: 100%;
+                    font-size: 0.85rem;
+                }
+                .form-group svg {
+                    color: var(--text-muted);
+                    min-width: 16px;
+                }
+
                 .cart-footer {
                     margin-top: 1.5rem; padding-top: 1rem;
                     border-top: 1px dashed rgba(255, 255, 255, 0.1);
@@ -423,6 +652,9 @@ const PointOfSale = () => {
                 
                 .receipt-meta { margin-top: 1rem; display: flex; justify-content: space-between; font-size: 0.8rem; border-bottom: 1px dashed #ccc; padding-bottom: 0.5rem; }
                 .receipt-id { text-align: left; font-size: 0.8rem; margin-top: 0.5rem; }
+                
+                .receipt-customer { text-align: left; margin: 1rem 0; font-size: 0.85rem; }
+                .receipt-customer p { margin: 0.2rem 0; color: #333; }
 
                 .receipt-divider { border-bottom: 1px dashed #000; margin: 1rem 0; }
 
