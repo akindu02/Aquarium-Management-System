@@ -38,7 +38,7 @@ const Footer = () => {
           <div className="footer-social">
             <h4 className="footer-title">Contact Us</h4>
             <p className="footer-text"> No 50, Kumaradasa Mawatha, Matara</p>
-            <p className="footer-text"> 041-2236848 / 074-3133109</p>
+            <p className="footer-text"> 041-2236848 / 074-3143109</p>
             <p className="footer-text"> methuaquarium@gmail.com</p>
           </div>
         </div>
