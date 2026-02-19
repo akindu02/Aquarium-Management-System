@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, ClipboardList, PackageSearch, Settings, Bell, LogOut, CheckCircle2, AlertTriangle, CalendarClock, Store, DollarSign, ChevronRight } from "lucide-react";
+import { LayoutDashboard, ClipboardList, Package, Settings, Bell, LogOut, CheckCircle2, AlertTriangle, CalendarClock, Store, DollarSign, ChevronRight } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
 import BookingManagement from './admin/BookingManagement';
+import InventoryManagement from './admin/InventoryManagement';
 import PointOfSale from './staff/PointOfSale';
 import StaffOrderManagement from './staff/StaffOrderManagement';
 import '../index.css';
@@ -31,6 +32,7 @@ const StaffDashboard = () => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'pos', label: 'Point of Sale', icon: Store },
+    { id: 'products', label: 'Products / Inventory', icon: Package },
     { id: 'orders', label: 'Process Orders', icon: ClipboardList },
     { id: 'bookings', label: 'Bookings', icon: CalendarClock },
     { id: 'settings', label: 'My Settings', icon: Settings },
@@ -42,6 +44,8 @@ const StaffDashboard = () => {
         return <DashboardContent onNavigate={setActiveMenu} />;
       case 'pos':
         return <PointOfSale />;
+      case 'products':
+        return <InventoryManagement />;
       case 'orders':
         return <StaffOrderManagement />;
       case 'bookings':
