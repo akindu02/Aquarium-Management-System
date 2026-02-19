@@ -2,7 +2,6 @@
 
 ## ✅ GREAT NEWS!
 
-Your password reset feature is now working in **TEST MODE**! This means:
 - ❌ No real emails are sent
 - ✅ Emails are captured and can be viewed in your browser
 - ✅ Perfect for testing without Gmail configuration
