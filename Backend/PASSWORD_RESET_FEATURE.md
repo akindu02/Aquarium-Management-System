@@ -256,7 +256,7 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
 For issues or questions, please refer to:
 - Backend README: `Backend/README.md`
 - Role-based Auth: `ROLE_BASED_AUTH.md`
-- Quick Start Guide: `QUICK_START.md`
+
 
 ---
 
