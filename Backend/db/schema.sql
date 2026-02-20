@@ -122,6 +122,10 @@ CREATE TABLE IF NOT EXISTS products (
         category VARCHAR(50) NOT NULL,
         description TEXT,
         price DECIMAL(10, 2) NOT NULL CHECK (price >= 0),
+        discount_percent DECIMAL(5, 2) NOT NULL DEFAULT 0.00 CHECK (
+            discount_percent >= 0
+            AND discount_percent <= 100
+        ),
         stock_quantity INTEGER NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0),
         image_url VARCHAR(255),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
