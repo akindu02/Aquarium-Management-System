@@ -130,23 +130,6 @@ const SignUp = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="role" className="form-label">I am a </label>
-            <select
-              id="role"
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              className="form-input form-select"
-              required
-              disabled={loading}
-            >
-              <option value="customer">Customer</option>
-              <option value="staff">Staff</option>
-              <option value="supplier">Supplier</option>
-            </select>
-          </div>
-
-          <div className="form-group">
             <label htmlFor="password" className="form-label">Password </label>
             <input
               type="password"
