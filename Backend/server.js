@@ -1,7 +1,9 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const authRoutes = require('./routes/authRoutes');
+const productRoutes = require('./routes/productRoutes');
 const { pool } = require('./config/db');
 
 const app = express();
@@ -66,8 +68,14 @@ app.get('/api/health/db', async (req, res) => {
     }
 });
 
+// Serve uploaded images as static files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Auth routes
 app.use('/api/auth', authRoutes);
+
+// Product routes
+app.use('/api/products', productRoutes);
 
 /**
  * Error Handling

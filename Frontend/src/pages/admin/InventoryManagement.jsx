@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Search, Plus, Edit, Trash2, Package, AlertTriangle,
-    CheckCircle, XCircle, ChevronDown, X, Tag, DollarSign,
-    Layers, Image, FileText, Percent, User
+    CheckCircle, XCircle, ChevronDown, Tag, DollarSign,
+    Layers, Image, FileText, Percent, User, RefreshCw
 } from 'lucide-react';
 import Swal from 'sweetalert2';
+
+const API = 'http://localhost:5001/api';
 
 const CATEGORIES = ['Live Fish', 'Tanks', 'Equipment', 'Food', 'Plants', 'Decor', 'Medicine', 'Water Treatment', 'Lighting', 'Filters'];
 
@@ -28,24 +30,42 @@ const EMPTY_FORM = {
 };
 
 const InventoryManagement = () => {
-    const initialProducts = [
-        { id: 'P-1001', name: 'Goldfish (Medium)', category: 'Live Fish', price: 250, discount_percent: 0, stock: 45, status: 'In Stock', image: '/store/Goldfish (Medium).jpg' },
-        { id: 'P-1002', name: 'Neon Tetra', category: 'Live Fish', price: 120, discount_percent: 10, stock: 12, status: 'Low Stock', image: '/store/Betta Fish.jpg' },
-        { id: 'P-1003', name: 'Glass Tank 30L', category: 'Tanks', price: 8500, discount_percent: 0, stock: 5, status: 'Low Stock', image: '/store/Glass Tank 30L.jpg' },
-        { id: 'P-1004', name: 'Canister Filter', category: 'Equipment', price: 15000, discount_percent: 5, stock: 0, status: 'Out of Stock', image: '/store/Sponge Filter (Small).jpg' },
-        { id: 'P-1005', name: 'Fish Food Flakes 100g', category: 'Food', price: 450, discount_percent: 0, stock: 100, status: 'In Stock', image: '/store/Goldfish Pellets 150g.jpg' },
-        { id: 'P-1006', name: 'LED Aquarium Light', category: 'Equipment', price: 3200, discount_percent: 15, stock: 20, status: 'In Stock', image: '/store/LED Spectrum Light.jpg' },
-        { id: 'P-1007', name: 'Anti-Fungal Treatment', category: 'Medicine', price: 800, discount_percent: 0, stock: 35, status: 'In Stock', image: '/store/Anti-Fungal Treatment.jpg' },
-        { id: 'P-1008', name: 'Aquatic Plant Fertilizer', category: 'Plants', price: 1200, discount_percent: 0, stock: 8, status: 'Low Stock', image: '/store/Aquatic Plant Fertilizer.jpg' },
-    ];
-
-    const [products, setProducts] = useState(initialProducts);
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterCategory, setFilterCategory] = useState('All');
     const [showAddModal, setShowAddModal] = useState(false);
     const [formData, setFormData] = useState(EMPTY_FORM);
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // ── Fetch products from backend ───────────────────────────────
+    const fetchProducts = async () => {
+        try {
+            setLoading(true);
+            const res = await fetch(`${API}/products`);
+            const json = await res.json();
+            if (json.success) {
+                // Normalise API shape → table shape
+                setProducts(json.data.map(p => ({
+                    id: p.product_id,
+                    name: p.name,
+                    category: p.category,
+                    price: parseFloat(p.price),
+                    discount_percent: parseFloat(p.discount_percent),
+                    stock: p.stock_quantity,
+                    status: p.stock_status,
+                    image: p.image_url ? `http://localhost:5001${p.image_url}` : '',
+                })));
+            }
+        } catch (err) {
+            console.error('Failed to fetch products:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => { fetchProducts(); }, []);
 
     // ── Filter ────────────────────────────────────────────────────
     const filteredProducts = products.filter(p => {
@@ -104,37 +124,40 @@ const InventoryManagement = () => {
         if (!validateForm()) return;
         setIsSubmitting(true);
 
-        // Simulate API call delay
-        await new Promise(r => setTimeout(r, 800));
+        try {
+            const token = localStorage.getItem('auth_token');
+            const body = new FormData();
+            body.append('name', formData.name);
+            body.append('category', formData.category);
+            body.append('description', formData.description);
+            body.append('price', formData.price);
+            body.append('discount_percent', formData.discount_percent);
+            body.append('stock_quantity', formData.stock_quantity);
+            body.append('supplier_id', formData.supplier_id);
+            if (formData.image) body.append('image', formData.image);
 
-        const stock = Number(formData.stock_quantity);
-        const status = stock === 0 ? 'Out of Stock' : stock <= 10 ? 'Low Stock' : 'In Stock';
+            const res = await fetch(`${API}/products`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body,
+            });
+            const json = await res.json();
 
-        const newProduct = {
-            id: `P-${Date.now()}`,
-            name: formData.name,
-            category: formData.category,
-            price: Number(formData.price),
-            discount_percent: Number(formData.discount_percent),
-            stock,
-            status,
-            image: formData.imagePreview || '',
-        };
+            if (!res.ok) throw new Error(json.message || 'Failed to create product.');
 
-        setProducts(prev => [newProduct, ...prev]);
-        setIsSubmitting(false);
-        handleCloseModal();
-
-        Swal.fire({
-            icon: 'success',
-            title: 'Product Added!',
-            text: `"${formData.name}" has been added to inventory.`,
-            background: '#1a1f2e',
-            color: '#fff',
-            confirmButtonColor: '#4ecdc4',
-            timer: 2500,
-            showConfirmButton: false,
-        });
+            await fetchProducts(); // Refresh table from DB
+            handleCloseModal();
+            Swal.fire({
+                icon: 'success', title: 'Product Added!',
+                text: `"${formData.name}" has been added to inventory.`,
+                background: '#1a1f2e', color: '#fff',
+                confirmButtonColor: '#4ecdc4', timer: 2500, showConfirmButton: false,
+            });
+        } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Error', text: err.message, background: '#1a1f2e', color: '#fff', confirmButtonColor: '#ef4444' });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleCloseModal = () => {
@@ -153,15 +176,26 @@ const InventoryManagement = () => {
             confirmButtonColor: '#ef4444',
             cancelButtonColor: '#6b7280',
             confirmButtonText: 'Yes, remove',
-            background: '#1a1f2e',
-            color: '#fff',
-        }).then((result) => {
+            background: '#1a1f2e', color: '#fff',
+        }).then(async (result) => {
             if (result.isConfirmed) {
-                setProducts(prev => prev.filter(p => p.id !== id));
-                Swal.fire({ icon: 'success', title: 'Removed!', text: 'Product deleted.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#4ecdc4', timer: 2000, showConfirmButton: false });
+                try {
+                    const token = localStorage.getItem('auth_token');
+                    const res = await fetch(`${API}/products/${id}`, {
+                        method: 'DELETE',
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                    const json = await res.json();
+                    if (!res.ok) throw new Error(json.message);
+                    setProducts(prev => prev.filter(p => p.id !== id));
+                    Swal.fire({ icon: 'success', title: 'Removed!', text: 'Product deleted.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#4ecdc4', timer: 2000, showConfirmButton: false });
+                } catch (err) {
+                    Swal.fire({ icon: 'error', title: 'Error', text: err.message, background: '#1a1f2e', color: '#fff', confirmButtonColor: '#ef4444' });
+                }
             }
         });
     };
+
 
     // ── Render ────────────────────────────────────────────────────
     return (
