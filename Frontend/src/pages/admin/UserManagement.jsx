@@ -12,7 +12,7 @@ const UserManagement = () => {
         fullName: '',
         email: '',
         password: '',
-        role: '',
+        role: 'admin',
     });
     const [showPassword, setShowPassword] = useState(false);
     const [formErrors, setFormErrors] = useState({});
@@ -103,7 +103,7 @@ const UserManagement = () => {
 
     const handleCloseModal = () => {
         setShowAddModal(false);
-        setFormData({ fullName: '', email: '', password: '', role: '' });
+        setFormData({ fullName: '', email: '', password: '', role: 'admin' });
         setFormErrors({});
         setFormTouched({});
         setShowPassword(false);
