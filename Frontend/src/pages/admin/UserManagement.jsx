@@ -1,10 +1,21 @@
 import React, { useState } from 'react';
-import { Search, Plus, Trash2, Edit, Filter, MoreVertical, Shield, User, Truck, Briefcase } from 'lucide-react';
+import { Search, Plus, Trash2, Edit, Filter, MoreVertical, Shield, User, Truck, Briefcase, Eye, EyeOff, X, UserPlus, AlertCircle, CheckCircle } from 'lucide-react';
 
 const UserManagement = () => {
     const [activeTab, setActiveTab] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
+
+    // Add User Form State
+    const [formData, setFormData] = useState({
+        fullName: '',
+        email: '',
+        password: '',
+        role: '',
+    });
+    const [showPassword, setShowPassword] = useState(false);
+    const [formErrors, setFormErrors] = useState({});
+    const [formTouched, setFormTouched] = useState({});
 
     // Dummy Data
     const [users, setUsers] = useState([
@@ -14,6 +25,80 @@ const UserManagement = () => {
         { id: 4, name: 'Saman Kumara', email: 'saman@example.com', role: 'customer', status: 'Inactive', date: '2025-11-20' },
         { id: 5, name: 'Chathuri Bandara', email: 'chathuri@aquarium.com', role: 'staff', status: 'Active', date: '2025-07-10' },
     ]);
+
+    // Form Validation
+    const validateField = (name, value) => {
+        switch (name) {
+            case 'fullName':
+                if (!value.trim()) return 'Full name is required';
+                if (value.trim().length < 2) return 'Name must be at least 2 characters';
+                return '';
+            case 'email':
+                if (!value.trim()) return 'Email address is required';
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(value)) return 'Please enter a valid email address';
+                return '';
+            case 'password':
+                if (!value) return 'Password is required';
+                if (value.length < 6) return 'Password must be at least 6 characters';
+                return '';
+            case 'role':
+                if (!value) return 'Please select a user role';
+                return '';
+            default:
+                return '';
+        }
+    };
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+        // Validate on change if field was already touched
+        if (formTouched[name]) {
+            setFormErrors(prev => ({ ...prev, [name]: validateField(name, value) }));
+        }
+    };
+
+    const handleBlur = (e) => {
+        const { name, value } = e.target;
+        setFormTouched(prev => ({ ...prev, [name]: true }));
+        setFormErrors(prev => ({ ...prev, [name]: validateField(name, value) }));
+    };
+
+    const validateForm = () => {
+        const errors = {};
+        Object.keys(formData).forEach(key => {
+            const error = validateField(key, formData[key]);
+            if (error) errors[key] = error;
+        });
+        setFormErrors(errors);
+        setFormTouched({ fullName: true, email: true, password: true, role: true });
+        return Object.keys(errors).length === 0;
+    };
+
+    const handleAddUser = () => {
+        if (!validateForm()) return;
+
+        const newUser = {
+            id: users.length + 1 + Date.now(),
+            name: formData.fullName,
+            email: formData.email,
+            role: formData.role,
+            status: 'Active',
+            date: new Date().toISOString().split('T')[0],
+        };
+        setUsers(prev => [newUser, ...prev]);
+        handleCloseModal();
+        alert('✅ User added successfully! (Frontend Only)');
+    };
+
+    const handleCloseModal = () => {
+        setShowAddModal(false);
+        setFormData({ fullName: '', email: '', password: '', role: '' });
+        setFormErrors({});
+        setFormTouched({});
+        setShowPassword(false);
+    };
 
     // Handle Delete
     const handleDelete = (id) => {
@@ -48,7 +133,7 @@ const UserManagement = () => {
                     <h2 className="um-title">User Management</h2>
                     <p className="um-subtitle">Manage system users, roles and permissions</p>
                 </div>
-                <button className="btn-add-user" onClick={() => setShowAddModal(true)}>
+                <button className="btn-add-user" id="btn-add-user" onClick={() => setShowAddModal(true)}>
                     <Plus size={18} />
                     Add New User
                 </button>
@@ -148,36 +233,146 @@ const UserManagement = () => {
                 </table>
             </div>
 
-            {/* Add User Modal (Simulated) */}
+            {/* ===== Add User Modal ===== */}
             {showAddModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <h3>Add New User</h3>
-                        <p style={{ marginBottom: '1rem', color: '#6b7280' }}>Enter user details below.</p>
-
-                        <div className="form-group">
-                            <label>Full Name</label>
-                            <input type="text" placeholder="John Doe" />
-                        </div>
-                        <div className="form-group">
-                            <label>Email Address</label>
-                            <input type="email" placeholder="john@example.com" />
-                        </div>
-                        <div className="form-group">
-                            <label>Role</label>
-                            <select>
-                                <option value="customer">Customer</option>
-                                <option value="staff">Staff</option>
-                                <option value="supplier">Supplier</option>
-                            </select>
+                <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && handleCloseModal()}>
+                    <div className="modal-content add-user-modal">
+                        {/* Modal Header */}
+                        <div className="modal-header">
+                            <div className="modal-header-left">
+                                <div className="modal-icon-wrapper">
+                                    <UserPlus size={22} />
+                                </div>
+                                <div>
+                                    <h3 className="modal-title">Add New User</h3>
+                                    <p className="modal-description">Create a new user account for the system.</p>
+                                </div>
+                            </div>
+                            <button className="modal-close-btn" onClick={handleCloseModal} title="Close">
+                                <X size={20} />
+                            </button>
                         </div>
 
+                        {/* Modal Divider */}
+                        <div className="modal-divider"></div>
+
+                        {/* Form Body */}
+                        <div className="modal-body">
+                            {/* Full Name */}
+                            <div className={`form-group ${formErrors.fullName && formTouched.fullName ? 'has-error' : ''}`}>
+                                <label htmlFor="fullName">
+                                    Full Name <span className="required-star"></span>
+                                </label>
+                                <input
+                                    type="text"
+                                    id="fullName"
+                                    name="fullName"
+                                    placeholder="e.g. Kasun Perera"
+                                    value={formData.fullName}
+                                    onChange={handleInputChange}
+                                    onBlur={handleBlur}
+                                    autoFocus
+                                />
+                                {formErrors.fullName && formTouched.fullName && (
+                                    <span className="field-error">
+                                        <AlertCircle size={14} />
+                                        {formErrors.fullName}
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Email Address */}
+                            <div className={`form-group ${formErrors.email && formTouched.email ? 'has-error' : ''}`}>
+                                <label htmlFor="email">
+                                    Email Address <span className="required-star"></span>
+                                </label>
+                                <input
+                                    type="email"
+                                    id="email"
+                                    name="email"
+                                    placeholder="e.g. kasun@example.com"
+                                    value={formData.email}
+                                    onChange={handleInputChange}
+                                    onBlur={handleBlur}
+                                />
+                                {formErrors.email && formTouched.email && (
+                                    <span className="field-error">
+                                        <AlertCircle size={14} />
+                                        {formErrors.email}
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Password */}
+                            <div className={`form-group ${formErrors.password && formTouched.password ? 'has-error' : ''}`}>
+                                <label htmlFor="password">
+                                    Password <span className="required-star"></span>
+                                </label>
+                                <div className="password-input-wrapper">
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        id="password"
+                                        name="password"
+                                        placeholder="Minimum 6 characters"
+                                        value={formData.password}
+                                        onChange={handleInputChange}
+                                        onBlur={handleBlur}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="password-toggle-btn"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        title={showPassword ? 'Hide password' : 'Show password'}
+                                    >
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                </div>
+                                {formErrors.password && formTouched.password && (
+                                    <span className="field-error">
+                                        <AlertCircle size={14} />
+                                        {formErrors.password}
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* User Role */}
+                            <div className={`form-group ${formErrors.role && formTouched.role ? 'has-error' : ''}`}>
+                                <label htmlFor="role">
+                                    User Role <span className="required-star"></span>
+                                </label>
+                                <select
+                                    id="role"
+                                    name="role"
+                                    value={formData.role}
+                                    onChange={handleInputChange}
+                                    onBlur={handleBlur}
+                                >
+                                    <option value="admin">Admin</option>
+                                    <option value="staff">Staff</option>
+                                    <option value="supplier">Supplier</option>
+                                    <option value="customer">Customer</option>
+                                </select>
+                                {formErrors.role && formTouched.role && (
+                                    <span className="field-error">
+                                        <AlertCircle size={14} />
+                                        {formErrors.role}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Modal Divider */}
+                        <div className="modal-divider"></div>
+
+                        {/* Modal Footer / Actions */}
                         <div className="modal-actions">
-                            <button className="btn-cancel" onClick={() => setShowAddModal(false)}>Cancel</button>
-                            <button className="btn-save" onClick={() => {
-                                alert('User added successfully! (Frontend Only)');
-                                setShowAddModal(false);
-                            }}>Add User</button>
+                            <button className="btn-cancel" onClick={handleCloseModal}>
+                                Cancel
+                            </button>
+                            <button className="btn-save" onClick={handleAddUser}>
+                                <UserPlus size={16} />
+                                Add User
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -385,76 +580,288 @@ const UserManagement = () => {
                     color: var(--text-muted);
                 }
 
-                /* Modal Styles */
+                /* ===== ADD USER MODAL STYLES ===== */
                 .modal-overlay {
                     position: fixed;
                     top: 0;
                     left: 0;
                     right: 0;
                     bottom: 0;
-                    background: rgba(0,0,0,0.7);
-                    backdrop-filter: blur(5px);
+                    background: rgba(0, 0, 0, 0.75);
+                    backdrop-filter: blur(8px);
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     z-index: 1000;
+                    animation: overlayFadeIn 0.25s ease;
                 }
 
-                .modal-content {
-                    background: #1a1f2e;
-                    padding: 2rem;
-                    border-radius: 1rem;
+                @keyframes overlayFadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+
+                .add-user-modal {
+                    background: linear-gradient(180deg, #1e2538 0%, #171d2e 100%);
+                    padding: 0;
+                    border-radius: 1.25rem;
                     width: 100%;
-                    max-width: 450px;
-                    border: 1px solid rgba(255,255,255,0.1);
-                    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                    max-width: 500px;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+                    animation: modalSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                    overflow: hidden;
+                }
+
+                @keyframes modalSlideIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(20px) scale(0.97);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0) scale(1);
+                    }
+                }
+
+                /* Modal Header */
+                .modal-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 1.5rem 1.75rem;
+                }
+
+                .modal-header-left {
+                    display: flex;
+                    align-items: center;
+                    gap: 1rem;
+                }
+
+                .modal-icon-wrapper {
+                    width: 44px;
+                    height: 44px;
+                    border-radius: 12px;
+                    background: linear-gradient(135deg, rgba(78, 205, 196, 0.15), rgba(78, 205, 196, 0.05));
+                    border: 1px solid rgba(78, 205, 196, 0.2);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: var(--color-primary);
+                    flex-shrink: 0;
+                }
+
+                .modal-title {
+                    font-size: 1.2rem;
+                    font-weight: 700;
+                    color: var(--text-main);
+                    margin: 0 0 0.15rem 0;
+                }
+
+                .modal-description {
+                    font-size: 0.85rem;
+                    color: var(--text-muted);
+                    margin: 0;
+                }
+
+                .modal-close-btn {
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 10px;
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    background: rgba(255, 255, 255, 0.03);
+                    color: var(--text-muted);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                }
+
+                .modal-close-btn:hover {
+                    background: rgba(255, 107, 107, 0.1);
+                    border-color: rgba(255, 107, 107, 0.3);
+                    color: #FF6B6B;
+                }
+
+                .modal-divider {
+                    height: 1px;
+                    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+                }
+
+                /* Modal Body */
+                .modal-body {
+                    padding: 1.5rem 1.75rem;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 1.25rem;
                 }
 
                 .form-group {
-                    margin-bottom: 1rem;
+                    margin-bottom: 0;
                 }
 
                 .form-group label {
                     display: block;
                     margin-bottom: 0.5rem;
-                    color: var(--text-muted);
-                    font-size: 0.9rem;
-                }
-
-                .form-group input, .form-group select {
-                    width: 100%;
-                    padding: 0.75rem;
-                    border-radius: 0.5rem;
-                    border: 1px solid rgba(255,255,255,0.1);
-                    background: rgba(0,0,0,0.2);
                     color: var(--text-main);
-                    outline: none;
+                    font-size: 0.9rem;
+                    font-weight: 600;
                 }
 
+                .required-star {
+                    color: #ef4444;
+                    margin-left: 2px;
+                }
+
+                .form-group input,
+                .form-group select {
+                    width: 100%;
+                    padding: 0.8rem 1rem;
+                    border-radius: 0.625rem;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    background: rgba(0, 0, 0, 0.25);
+                    color: var(--text-main);
+                    font-size: 0.95rem;
+                    outline: none;
+                    transition: all 0.2s ease;
+                    box-sizing: border-box;
+                }
+
+                .form-group input::placeholder {
+                    color: rgba(255, 255, 255, 0.25);
+                }
+
+                .form-group input:focus,
+                .form-group select:focus {
+                    border-color: var(--color-primary);
+                    box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+                    background: rgba(0, 0, 0, 0.35);
+                }
+
+                .form-group.has-error input,
+                .form-group.has-error select {
+                    border-color: #ef4444;
+                    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+                }
+
+                .form-group select {
+                    cursor: pointer;
+                    appearance: none;
+                    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+                    background-repeat: no-repeat;
+                    background-position: right 1rem center;
+                    padding-right: 2.5rem;
+                }
+
+                .form-group select option {
+                    background: #1e2538;
+                    color: var(--text-main);
+                    padding: 0.5rem;
+                }
+
+                /* Password Input */
+                .password-input-wrapper {
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+                }
+
+                .password-input-wrapper input {
+                    padding-right: 3rem;
+                }
+
+                .password-toggle-btn {
+                    position: absolute;
+                    right: 0.75rem;
+                    background: none;
+                    border: none;
+                    color: var(--text-muted);
+                    cursor: pointer;
+                    padding: 0.35rem;
+                    border-radius: 6px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.2s ease;
+                }
+
+                .password-toggle-btn:hover {
+                    color: var(--color-primary);
+                    background: rgba(78, 205, 196, 0.1);
+                }
+
+                /* Field Error */
+                .field-error {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.35rem;
+                    margin-top: 0.45rem;
+                    font-size: 0.8rem;
+                    color: #ef4444;
+                    animation: errorFadeIn 0.25s ease;
+                }
+
+                @keyframes errorFadeIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(-4px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
+                /* Modal Actions */
                 .modal-actions {
                     display: flex;
-                    gap: 1rem;
-                    margin-top: 1.5rem;
+                    gap: 0.75rem;
+                    padding: 1.25rem 1.75rem;
+                    margin-top: 0;
                 }
 
                 .btn-cancel, .btn-save {
                     flex: 1;
-                    padding: 0.75rem;
-                    border-radius: 0.5rem;
+                    padding: 0.8rem 1rem;
+                    border-radius: 0.625rem;
                     border: none;
                     cursor: pointer;
                     font-weight: 600;
+                    font-size: 0.95rem;
+                    transition: all 0.2s ease;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.5rem;
                 }
 
                 .btn-cancel {
-                    background: transparent;
-                    border: 1px solid rgba(255,255,255,0.1);
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
                     color: var(--text-muted);
                 }
 
+                .btn-cancel:hover {
+                    background: rgba(255, 255, 255, 0.08);
+                    border-color: rgba(255, 255, 255, 0.15);
+                    color: var(--text-main);
+                }
+
                 .btn-save {
-                    background: var(--color-primary);
+                    background: linear-gradient(135deg, var(--color-primary), #38b2ac);
                     color: white;
+                    box-shadow: 0 4px 15px rgba(78, 205, 196, 0.25);
+                }
+
+                .btn-save:hover {
+                    filter: brightness(1.1);
+                    transform: translateY(-1px);
+                    box-shadow: 0 6px 20px rgba(78, 205, 196, 0.35);
+                }
+
+                .btn-save:active {
+                    transform: translateY(0);
                 }
             `}</style>
         </div>
