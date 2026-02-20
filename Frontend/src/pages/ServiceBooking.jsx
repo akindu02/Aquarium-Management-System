@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, Check, X, ChevronLeft, ChevronRight, Wrench, Sparkles, Settings, Phone, MapPin } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { isAuthenticated } from '../utils/auth';
+import Swal from 'sweetalert2';
 import './ServiceBooking.css';
 
 // ===== DUMMY DATA =====
@@ -514,7 +515,14 @@ const ServiceBooking = () => {
         setSelectedSlot(null);
         setSelectedDate(null);
         setSelectedService(null);
-        alert('Booking confirmed successfully!');
+        Swal.fire({
+            icon: 'success',
+            title: 'Booking Confirmed!',
+            text: 'Your service booking has been confirmed successfully.',
+            background: '#1a1f2e',
+            color: '#fff',
+            confirmButtonColor: '#4ecdc4',
+        });
     };
 
     const handleCancelBooking = (index) => {

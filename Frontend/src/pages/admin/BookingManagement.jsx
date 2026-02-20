@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Filter, Calendar, Check, X, Clock, Eye, AlertCircle, MapPin, User, ChevronDown, CheckCircle, Plus, Trash2 } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 const BookingManagement = () => {
     // Dummy Data
@@ -44,13 +45,45 @@ const BookingManagement = () => {
         };
         setManagedSlots([...managedSlots, slot]);
         setNewSlot({ ...newSlot, date: '', start: '', end: '' }); // Reset form
-        alert('Time slot added successfully!');
+        Swal.fire({
+            icon: 'success',
+            title: 'Time Slot Added!',
+            text: 'The new time slot has been created successfully.',
+            background: '#1a1f2e',
+            color: '#fff',
+            confirmButtonColor: '#4ecdc4',
+            timer: 2000,
+            showConfirmButton: false,
+        });
     };
 
     const handleDeleteSlot = (id) => {
-        if (window.confirm('Are you sure you want to remove this slot?')) {
-            setManagedSlots(managedSlots.filter(slot => slot.id !== id));
-        }
+        Swal.fire({
+            title: 'Remove Time Slot?',
+            text: 'This action cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, remove',
+            cancelButtonText: 'Cancel',
+            background: '#1a1f2e',
+            color: '#fff',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                setManagedSlots(managedSlots.filter(slot => slot.id !== id));
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Removed!',
+                    text: 'Time slot has been deleted.',
+                    background: '#1a1f2e',
+                    color: '#fff',
+                    confirmButtonColor: '#4ecdc4',
+                    timer: 2000,
+                    showConfirmButton: false,
+                });
+            }
+        });
     };
 
     // Status Badge Colors

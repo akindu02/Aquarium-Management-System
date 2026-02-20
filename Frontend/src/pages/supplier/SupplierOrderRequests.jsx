@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Clock, Check, X, AlertCircle, FileText, Calendar } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 const SupplierOrderRequests = () => {
     // Dummy Pending Requests
@@ -14,13 +15,42 @@ const SupplierOrderRequests = () => {
 
     const handleAction = (id, action) => {
         if (action === 'accept') {
-            // In real app, API call here
-            alert(`Request ${id} Accepted! Moving to processing.`);
             setRequests(requests.filter(r => r.id !== id));
+            Swal.fire({
+                icon: 'success',
+                title: 'Request Accepted!',
+                text: `Request ${id} has been moved to processing.`,
+                background: '#1a1f2e',
+                color: '#fff',
+                confirmButtonColor: '#4ecdc4',
+            });
         } else {
-            if (window.confirm('Are you sure you want to decline this request?')) {
-                setRequests(requests.filter(r => r.id !== id));
-            }
+            Swal.fire({
+                title: 'Decline Request?',
+                text: 'Are you sure you want to decline this request?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, decline',
+                cancelButtonText: 'Cancel',
+                background: '#1a1f2e',
+                color: '#fff',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    setRequests(requests.filter(r => r.id !== id));
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Declined!',
+                        text: 'The request has been declined.',
+                        background: '#1a1f2e',
+                        color: '#fff',
+                        confirmButtonColor: '#4ecdc4',
+                        timer: 2000,
+                        showConfirmButton: false,
+                    });
+                }
+            });
         }
     };
 

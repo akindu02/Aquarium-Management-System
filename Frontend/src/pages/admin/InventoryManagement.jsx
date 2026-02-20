@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Plus, Filter, Edit, Trash2, Package, Tag, AlertTriangle, CheckCircle, XCircle, MoreVertical, ChevronDown, X } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 const InventoryManagement = () => {
     // Dummy Data
@@ -29,9 +30,32 @@ const InventoryManagement = () => {
 
     // Handle Delete
     const handleDelete = (id) => {
-        if (window.confirm('Are you sure you want to remove this product?')) {
-            setProducts(products.filter(p => p.id !== id));
-        }
+        Swal.fire({
+            title: 'Remove Product?',
+            text: 'This product will be permanently removed from inventory.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, remove',
+            cancelButtonText: 'Cancel',
+            background: '#1a1f2e',
+            color: '#fff',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                setProducts(products.filter(p => p.id !== id));
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Removed!',
+                    text: 'Product has been deleted.',
+                    background: '#1a1f2e',
+                    color: '#fff',
+                    confirmButtonColor: '#4ecdc4',
+                    timer: 2000,
+                    showConfirmButton: false,
+                });
+            }
+        });
     };
 
     // Stock Badge Style
@@ -165,7 +189,7 @@ const InventoryManagement = () => {
 
                             <div className="modal-actions">
                                 <button className="btn-cancel" onClick={() => setShowAddModal(false)}>Cancel</button>
-                                <button className="btn-save" onClick={() => { alert('Product added! (Frontend)'); setShowAddModal(false); }}>Save Product</button>
+                                <button className="btn-save" onClick={() => { setShowAddModal(false); Swal.fire({ icon: 'success', title: 'Product Added!', text: 'New product has been added to inventory.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#4ecdc4' }); }}>Save Product</button>
                             </div>
                         </div>
                     </div>

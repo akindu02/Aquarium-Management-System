@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Plus, Trash2, Edit, Filter, MoreVertical, Shield, User, Truck, Briefcase, Eye, EyeOff, X, UserPlus, AlertCircle, CheckCircle } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 const UserManagement = () => {
     const [activeTab, setActiveTab] = useState('all');
@@ -90,7 +91,14 @@ const UserManagement = () => {
         };
         setUsers(prev => [newUser, ...prev]);
         handleCloseModal();
-        alert('✅ User added successfully! (Frontend Only)');
+        Swal.fire({
+            icon: 'success',
+            title: 'User Added!',
+            text: `${formData.fullName} has been added successfully.`,
+            background: '#1a1f2e',
+            color: '#fff',
+            confirmButtonColor: '#4ecdc4',
+        });
     };
 
     const handleCloseModal = () => {
@@ -103,9 +111,32 @@ const UserManagement = () => {
 
     // Handle Delete
     const handleDelete = (id) => {
-        if (window.confirm('Are you sure you want to delete this user?')) {
-            setUsers(users.filter(user => user.id !== id));
-        }
+        Swal.fire({
+            title: 'Delete User?',
+            text: 'This action cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, delete',
+            cancelButtonText: 'Cancel',
+            background: '#1a1f2e',
+            color: '#fff',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                setUsers(users.filter(user => user.id !== id));
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Deleted!',
+                    text: 'User has been removed.',
+                    background: '#1a1f2e',
+                    color: '#fff',
+                    confirmButtonColor: '#4ecdc4',
+                    timer: 2000,
+                    showConfirmButton: false,
+                });
+            }
+        });
     };
 
     // Handle Filter

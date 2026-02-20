@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { BarChart3, TrendingUp, Package, Calendar, Download, FileText, ArrowUp, ArrowDown, Coins } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 const ReportsAnalytics = () => {
     const [activeTab, setActiveTab] = useState('overview');
@@ -60,11 +61,11 @@ const ReportsAnalytics = () => {
                     <p className="ra-subtitle">Business insights and performance metrics</p>
                 </div>
                 <div className="ra-actions">
-                    <button className="btn-secondary" onClick={() => alert('Exporting data...')}>
+                    <button className="btn-secondary" onClick={() => Swal.fire({ icon: 'info', title: 'Exporting Data...', text: 'Your data export is being prepared.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#4ecdc4' })}>
                         <Download size={18} />
                         Export
                     </button>
-                    <button className="btn-primary" onClick={() => alert('Generating new report...')}>
+                    <button className="btn-primary" onClick={() => Swal.fire({ icon: 'info', title: 'Generating Report...', text: 'A new report is being generated.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#4ecdc4' })}>
                         <FileText size={18} />
                         Generate Report
                     </button>
