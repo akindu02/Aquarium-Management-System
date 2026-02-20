@@ -19,11 +19,12 @@ const UserManagement = () => {
 
     // Dummy Data
     const [users, setUsers] = useState([
-        { id: 1, name: 'Kasun Perera', email: 'kasun@gmail.com', role: 'customer', status: 'Active', date: '2025-10-12' },
-        { id: 2, name: 'Nimali Silva', email: 'nimali@aquarium.com', role: 'staff', status: 'Active', date: '2025-09-01' },
-        { id: 3, name: 'Aqua Supplies Ltd', email: 'contact@aquasupplies.com', role: 'supplier', status: 'Active', date: '2025-08-15' },
-        { id: 4, name: 'Saman Kumara', email: 'saman@example.com', role: 'customer', status: 'Inactive', date: '2025-11-20' },
-        { id: 5, name: 'Chathuri Bandara', email: 'chathuri@aquarium.com', role: 'staff', status: 'Active', date: '2025-07-10' },
+        { id: 1, name: 'Methu Akindu', email: 'methu@aquarium.com', role: 'admin', status: 'Active', date: '2025-06-01' },
+        { id: 2, name: 'Kasun Perera', email: 'kasun@gmail.com', role: 'customer', status: 'Active', date: '2025-10-12' },
+        { id: 3, name: 'Nimali Silva', email: 'nimali@aquarium.com', role: 'staff', status: 'Active', date: '2025-09-01' },
+        { id: 4, name: 'Aqua Supplies Ltd', email: 'contact@aquasupplies.com', role: 'supplier', status: 'Active', date: '2025-08-15' },
+        { id: 5, name: 'Saman Kumara', email: 'saman@example.com', role: 'customer', status: 'Inactive', date: '2025-11-20' },
+        { id: 6, name: 'Chathuri Bandara', email: 'chathuri@aquarium.com', role: 'staff', status: 'Active', date: '2025-07-10' },
     ]);
 
     // Form Validation
@@ -143,7 +144,7 @@ const UserManagement = () => {
             <div className="um-controls">
                 {/* Tabs */}
                 <div className="um-tabs">
-                    {['all', 'customer', 'staff', 'supplier'].map(tab => (
+                    {['all', 'admin', 'customer', 'staff', 'supplier'].map(tab => (
                         <button
                             key={tab}
                             className={`um-tab ${activeTab === tab ? 'active' : ''}`}
