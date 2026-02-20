@@ -34,7 +34,7 @@ const AdminDashboard = () => {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'users', label: 'Users Management', icon: Users },
     { id: 'products', label: 'Products / Inventory', icon: Package },
-    { id: 'orders', label: 'Orders / Transactions', icon: ShoppingCart },
+    { id: 'orders', label: 'Order Management', icon: ShoppingCart },
     { id: 'bookings', label: 'Bookings', icon: CalendarClock },
     { id: 'reports', label: 'Reports & Analytics', icon: BarChart3 },
     { id: 'settings', label: 'Settings', icon: Settings },

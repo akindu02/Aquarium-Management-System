@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
     Search, Eye, DollarSign, Package, Check, X, Truck, Clock,
-    AlertCircle, ChevronDown, Download, RotateCcw, CheckCircle,
+    AlertCircle, ChevronDown, RotateCcw, CheckCircle,
     XCircle, ThumbsUp, ThumbsDown, Banknote, RefreshCw, FileText,
     MessageSquare, User, ShoppingBag, Hash, Calendar, CreditCard, Filter
 } from 'lucide-react';
@@ -188,12 +188,9 @@ const OrderManagement = () => {
             {/* ── Header ── */}
             <div className="om-header">
                 <div>
-                    <h2 className="om-title">Orders &amp; Transactions</h2>
+                    <h2 className="om-title">Order Management</h2>
                     <p className="om-subtitle">Manage customer orders, payments and return requests</p>
                 </div>
-                <button className="btn-export">
-                    <Download size={18} /> Export Report
-                </button>
             </div>
 
             {/* ── Tab Navigation ── */}
