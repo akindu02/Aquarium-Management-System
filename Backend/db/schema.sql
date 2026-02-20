@@ -294,7 +294,6 @@ END $$;
 CREATE TABLE IF NOT EXISTS order_returns (
     return_id SERIAL PRIMARY KEY,
     order_id INTEGER NOT NULL REFERENCES orders(order_id) ON DELETE CASCADE UNIQUE,
-    customer_id INTEGER NOT NULL REFERENCES customers(user_id) ON DELETE CASCADE,
     reason VARCHAR(100) NOT NULL,
     description TEXT,
     status return_status DEFAULT 'Pending',
