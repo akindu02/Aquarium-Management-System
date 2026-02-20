@@ -380,6 +380,93 @@ class AuthController {
             });
         }
     }
+
+    // =============================================
+    // ADMIN USER MANAGEMENT
+    // =============================================
+
+    /**
+     * Admin creates a new user
+     * POST /api/auth/admin/create-user
+     */
+    async createUser(req, res) {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Validation failed',
+                    errors: errors.array(),
+                });
+            }
+
+            const { email, password, name, role } = req.body;
+
+            const result = await authService.adminCreateUser({
+                email,
+                password,
+                name,
+                role,
+            });
+
+            if (!result.success) {
+                return res.status(400).json(result);
+            }
+
+            return res.status(201).json(result);
+        } catch (error) {
+            console.error('Admin create user error:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'An error occurred while creating the user',
+            });
+        }
+    }
+
+    /**
+     * Get all users (admin only)
+     * GET /api/auth/admin/users
+     */
+    async getAllUsers(req, res) {
+        try {
+            const { role, search } = req.query;
+
+            const result = await authService.getAllUsers({ role, search });
+
+            return res.status(200).json(result);
+        } catch (error) {
+            console.error('Get all users error:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'An error occurred while fetching users',
+            });
+        }
+    }
+
+    /**
+     * Delete a user (admin only)
+     * DELETE /api/auth/admin/users/:id
+     */
+    async deleteUser(req, res) {
+        try {
+            const userId = req.params.id;
+            const adminId = req.user.id;
+
+            const result = await authService.deleteUser(userId, adminId);
+
+            if (!result.success) {
+                return res.status(400).json(result);
+            }
+
+            return res.status(200).json(result);
+        } catch (error) {
+            console.error('Delete user error:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'An error occurred while deleting the user',
+            });
+        }
+    }
 }
 
 module.exports = new AuthController();

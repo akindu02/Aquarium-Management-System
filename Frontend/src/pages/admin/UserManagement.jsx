@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
-import { Search, Plus, Trash2, Edit, Filter, MoreVertical, Shield, User, Truck, Briefcase, Eye, EyeOff, X, UserPlus, AlertCircle, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Search, Plus, Trash2, Edit, Filter, MoreVertical, Shield, User, Truck, Briefcase, Eye, EyeOff, X, UserPlus, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { adminGetUsersAPI, adminCreateUserAPI, adminDeleteUserAPI } from '../../utils/api';
 
 const UserManagement = () => {
     const [activeTab, setActiveTab] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Add User Form State
     const [formData, setFormData] = useState({
@@ -18,15 +21,35 @@ const UserManagement = () => {
     const [formErrors, setFormErrors] = useState({});
     const [formTouched, setFormTouched] = useState({});
 
-    // Dummy Data
-    const [users, setUsers] = useState([
-        { id: 1, name: 'Methu Akindu', email: 'methu@aquarium.com', role: 'admin', status: 'Active', date: '2025-06-01' },
-        { id: 2, name: 'Kasun Perera', email: 'kasun@gmail.com', role: 'customer', status: 'Active', date: '2025-10-12' },
-        { id: 3, name: 'Nimali Silva', email: 'nimali@aquarium.com', role: 'staff', status: 'Active', date: '2025-09-01' },
-        { id: 4, name: 'Aqua Supplies Ltd', email: 'contact@aquasupplies.com', role: 'supplier', status: 'Active', date: '2025-08-15' },
-        { id: 5, name: 'Saman Kumara', email: 'saman@example.com', role: 'customer', status: 'Inactive', date: '2025-11-20' },
-        { id: 6, name: 'Chathuri Bandara', email: 'chathuri@aquarium.com', role: 'staff', status: 'Active', date: '2025-07-10' },
-    ]);
+    // Users from backend
+    const [users, setUsers] = useState([]);
+
+    // Fetch users from backend
+    const fetchUsers = useCallback(async () => {
+        try {
+            setIsLoading(true);
+            const response = await adminGetUsersAPI();
+            if (response.success) {
+                setUsers(response.users);
+            }
+        } catch (error) {
+            console.error('Error fetching users:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message || 'Failed to load users',
+                background: '#1a1f2e',
+                color: '#fff',
+                confirmButtonColor: '#4ecdc4',
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchUsers();
+    }, [fetchUsers]);
 
     // Form Validation
     const validateField = (name, value) => {
@@ -78,27 +101,44 @@ const UserManagement = () => {
         return Object.keys(errors).length === 0;
     };
 
-    const handleAddUser = () => {
+    const handleAddUser = async () => {
         if (!validateForm()) return;
 
-        const newUser = {
-            id: users.length + 1 + Date.now(),
-            name: formData.fullName,
-            email: formData.email,
-            role: formData.role,
-            status: 'Active',
-            date: new Date().toISOString().split('T')[0],
-        };
-        setUsers(prev => [newUser, ...prev]);
-        handleCloseModal();
-        Swal.fire({
-            icon: 'success',
-            title: 'User Added!',
-            text: `${formData.fullName} has been added successfully.`,
-            background: '#1a1f2e',
-            color: '#fff',
-            confirmButtonColor: '#4ecdc4',
-        });
+        setIsSubmitting(true);
+        try {
+            const response = await adminCreateUserAPI({
+                name: formData.fullName,
+                email: formData.email,
+                password: formData.password,
+                role: formData.role,
+            });
+
+            if (response.success) {
+                handleCloseModal();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'User Added!',
+                    text: `${formData.fullName} has been added successfully.`,
+                    background: '#1a1f2e',
+                    color: '#fff',
+                    confirmButtonColor: '#4ecdc4',
+                });
+                // Refresh the users list from backend
+                fetchUsers();
+            }
+        } catch (error) {
+            console.error('Error creating user:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Failed to Add User',
+                text: error.message || 'An error occurred while creating the user.',
+                background: '#1a1f2e',
+                color: '#fff',
+                confirmButtonColor: '#4ecdc4',
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleCloseModal = () => {
@@ -122,19 +162,33 @@ const UserManagement = () => {
             cancelButtonText: 'Cancel',
             background: '#1a1f2e',
             color: '#fff',
-        }).then((result) => {
+        }).then(async (result) => {
             if (result.isConfirmed) {
-                setUsers(users.filter(user => user.id !== id));
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Deleted!',
-                    text: 'User has been removed.',
-                    background: '#1a1f2e',
-                    color: '#fff',
-                    confirmButtonColor: '#4ecdc4',
-                    timer: 2000,
-                    showConfirmButton: false,
-                });
+                try {
+                    const response = await adminDeleteUserAPI(id);
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Deleted!',
+                            text: response.message || 'User has been removed.',
+                            background: '#1a1f2e',
+                            color: '#fff',
+                            confirmButtonColor: '#4ecdc4',
+                            timer: 2000,
+                            showConfirmButton: false,
+                        });
+                        fetchUsers();
+                    }
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Delete Failed',
+                        text: error.message || 'Could not delete the user.',
+                        background: '#1a1f2e',
+                        color: '#fff',
+                        confirmButtonColor: '#4ecdc4',
+                    });
+                }
             }
         });
     };
@@ -398,12 +452,12 @@ const UserManagement = () => {
 
                         {/* Modal Footer / Actions */}
                         <div className="modal-actions">
-                            <button className="btn-cancel" onClick={handleCloseModal}>
+                            <button className="btn-cancel" onClick={handleCloseModal} disabled={isSubmitting}>
                                 Cancel
                             </button>
-                            <button className="btn-save" onClick={handleAddUser}>
-                                <UserPlus size={16} />
-                                Add User
+                            <button className="btn-save" onClick={handleAddUser} disabled={isSubmitting}>
+                                {isSubmitting ? <Loader2 size={16} className="spin-icon" /> : <UserPlus size={16} />}
+                                {isSubmitting ? 'Adding...' : 'Add User'}
                             </button>
                         </div>
                     </div>
@@ -843,6 +897,15 @@ const UserManagement = () => {
                         opacity: 1;
                         transform: translateY(0);
                     }
+                }
+
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+
+                .spin-icon {
+                    animation: spin 1s linear infinite;
                 }
 
                 /* Modal Actions */

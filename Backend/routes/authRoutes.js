@@ -1,7 +1,7 @@
 const express = require('express');
 const { body } = require('express-validator');
 const authController = require('../controllers/authController');
-const { authenticate } = require('../middleware/authMiddleware');
+const { authenticate, adminOnly } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
@@ -26,6 +26,27 @@ const registerValidation = [
         .optional()
         .isIn(['customer', 'staff', 'supplier'])
         .withMessage('Invalid role. Must be customer, staff, or supplier'),
+];
+
+const adminCreateUserValidation = [
+    body('email')
+        .isEmail()
+        .withMessage('Please provide a valid email address')
+        .normalizeEmail(),
+    body('password')
+        .isLength({ min: 8 })
+        .withMessage('Password must be at least 8 characters long'),
+    body('name')
+        .trim()
+        .notEmpty()
+        .withMessage('Name is required')
+        .isLength({ max: 200 })
+        .withMessage('Name cannot exceed 200 characters'),
+    body('role')
+        .notEmpty()
+        .withMessage('Role is required')
+        .isIn(['customer', 'staff', 'supplier', 'admin'])
+        .withMessage('Invalid role. Must be customer, staff, supplier, or admin'),
 ];
 
 const loginValidation = [
@@ -128,5 +149,18 @@ router.post('/logout', authenticate, authController.logout);
 
 // POST /api/auth/logout-all - Logout from all devices
 router.post('/logout-all', authenticate, authController.logoutAll);
+
+/**
+ * Admin User Management Routes (admin only)
+ */
+
+// POST /api/auth/admin/create-user - Admin creates a new user (any role)
+router.post('/admin/create-user', authenticate, adminOnly, adminCreateUserValidation, authController.createUser);
+
+// GET /api/auth/admin/users - Get all users
+router.get('/admin/users', authenticate, adminOnly, authController.getAllUsers);
+
+// DELETE /api/auth/admin/users/:id - Delete a user
+router.delete('/admin/users/:id', authenticate, adminOnly, authController.deleteUser);
 
 module.exports = router;

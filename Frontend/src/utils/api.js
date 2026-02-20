@@ -122,3 +122,39 @@ export const resetPasswordAPI = async (email, token, newPassword) => {
     });
 };
 
+// =============================================
+// ADMIN USER MANAGEMENT APIs
+// =============================================
+
+/**
+ * Admin - Get all users
+ */
+export const adminGetUsersAPI = async (filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.role && filters.role !== 'all') params.append('role', filters.role);
+    if (filters.search) params.append('search', filters.search);
+    const queryString = params.toString();
+    return apiRequest(`/auth/admin/users${queryString ? `?${queryString}` : ''}`, {
+        method: 'GET',
+    });
+};
+
+/**
+ * Admin - Create a new user (any role including admin)
+ */
+export const adminCreateUserAPI = async (userData) => {
+    return apiRequest('/auth/admin/create-user', {
+        method: 'POST',
+        body: JSON.stringify(userData),
+    });
+};
+
+/**
+ * Admin - Delete a user
+ */
+export const adminDeleteUserAPI = async (userId) => {
+    return apiRequest(`/auth/admin/users/${userId}`, {
+        method: 'DELETE',
+    });
+};
+

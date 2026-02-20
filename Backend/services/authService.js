@@ -575,6 +575,172 @@ class AuthService {
             message: 'Password has been reset successfully. Please login with your new password.',
         };
     }
+
+    // =============================================
+    // ADMIN USER MANAGEMENT METHODS
+    // =============================================
+
+    /**
+     * Admin creates a new user (allows ALL roles including admin)
+     * @param {Object} userData - User data from admin
+     * @returns {Object} { success, user, message }
+     */
+    async adminCreateUser(userData) {
+        const { email, password, name, role } = userData;
+
+        // Validate password strength
+        const passwordValidation = validatePasswordStrength(password);
+        if (!passwordValidation.isValid) {
+            return {
+                success: false,
+                message: passwordValidation.errors.join(', '),
+            };
+        }
+
+        // Admin can assign ANY role including admin
+        const allowedRoles = ['customer', 'staff', 'supplier', 'admin'];
+        if (!allowedRoles.includes(role)) {
+            return {
+                success: false,
+                message: 'Invalid role. Must be one of: customer, staff, supplier, admin',
+            };
+        }
+
+        // Check if user already exists
+        const existingUser = await query(
+            'SELECT id FROM users WHERE email = $1',
+            [email.toLowerCase()]
+        );
+
+        if (existingUser.rows.length > 0) {
+            return {
+                success: false,
+                message: 'A user with this email already exists',
+            };
+        }
+
+        // Hash password
+        const hashedPassword = await hashPassword(password);
+
+        // Insert new user
+        const result = await query(
+            `INSERT INTO users (email, password, name, role, is_active, email_verified)
+             VALUES ($1, $2, $3, $4, true, false)
+             RETURNING id, email, name, role, is_active, email_verified, created_at`,
+            [email.toLowerCase(), hashedPassword, name, role]
+        );
+
+        const user = result.rows[0];
+
+        return {
+            success: true,
+            message: 'User created successfully',
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                role: user.role,
+                isActive: user.is_active,
+                emailVerified: user.email_verified,
+                createdAt: user.created_at,
+            },
+        };
+    }
+
+    /**
+     * Get all users (for admin dashboard)
+     * @param {Object} filters - Optional filters { role, search }
+     * @returns {Object} { success, users }
+     */
+    async getAllUsers(filters = {}) {
+        let queryText = `
+            SELECT id, email, name, role, is_active, email_verified, created_at, updated_at
+            FROM users
+            WHERE 1=1
+        `;
+        const params = [];
+        let paramIndex = 1;
+
+        // Filter by role
+        if (filters.role && filters.role !== 'all') {
+            queryText += ` AND role = $${paramIndex}`;
+            params.push(filters.role);
+            paramIndex++;
+        }
+
+        // Search by name or email
+        if (filters.search) {
+            queryText += ` AND (LOWER(name) LIKE $${paramIndex} OR LOWER(email) LIKE $${paramIndex})`;
+            params.push(`%${filters.search.toLowerCase()}%`);
+            paramIndex++;
+        }
+
+        queryText += ' ORDER BY created_at DESC';
+
+        const result = await query(queryText, params);
+
+        const users = result.rows.map(user => ({
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            status: user.is_active ? 'Active' : 'Inactive',
+            isActive: user.is_active,
+            emailVerified: user.email_verified,
+            date: user.created_at ? new Date(user.created_at).toISOString().split('T')[0] : null,
+            createdAt: user.created_at,
+            updatedAt: user.updated_at,
+        }));
+
+        return {
+            success: true,
+            users,
+            total: users.length,
+        };
+    }
+
+    /**
+     * Delete a user (admin only)
+     * @param {number} userId - User ID to delete
+     * @param {number} adminId - ID of the admin performing the deletion
+     * @returns {Object} { success, message }
+     */
+    async deleteUser(userId, adminId) {
+        // Prevent admin from deleting themselves
+        if (parseInt(userId) === parseInt(adminId)) {
+            return {
+                success: false,
+                message: 'You cannot delete your own account',
+            };
+        }
+
+        // Check if user exists
+        const userResult = await query(
+            'SELECT id, name, role FROM users WHERE id = $1',
+            [userId]
+        );
+
+        if (userResult.rows.length === 0) {
+            return {
+                success: false,
+                message: 'User not found',
+            };
+        }
+
+        // Delete refresh tokens first
+        await query('DELETE FROM refresh_tokens WHERE user_id = $1', [userId]);
+
+        // Delete password reset tokens
+        await query('DELETE FROM password_reset_tokens WHERE user_id = $1', [userId]);
+
+        // Delete the user
+        await query('DELETE FROM users WHERE id = $1', [userId]);
+
+        return {
+            success: true,
+            message: `User "${userResult.rows[0].name}" has been deleted successfully`,
+        };
+    }
 }
 
 module.exports = new AuthService();
