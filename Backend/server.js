@@ -77,6 +77,23 @@ app.use('/api/auth', authRoutes);
 // Product routes
 app.use('/api/products', productRoutes);
 
+// Suppliers list (for dropdowns)
+app.get('/api/suppliers', async (req, res) => {
+    try {
+        const { rows } = await pool.query(
+            `SELECT s.user_id AS id, u.name, s.company_name
+             FROM suppliers s
+             JOIN users u ON u.id = s.user_id
+             WHERE u.is_active = true
+             ORDER BY s.company_name`
+        );
+        res.json({ success: true, data: rows });
+    } catch (err) {
+        console.error('GET /api/suppliers error:', err);
+        res.status(500).json({ success: false, message: 'Failed to fetch suppliers.' });
+    }
+});
+
 /**
  * Error Handling
  */

@@ -10,13 +10,6 @@ const API = 'http://localhost:5001/api';
 
 const CATEGORIES = ['Live Fish', 'Tanks', 'Equipment', 'Food', 'Plants', 'Decor', 'Medicine', 'Water Treatment', 'Lighting', 'Filters'];
 
-// Mock supplier list — will come from backend later
-const SUPPLIERS = [
-    { id: 1, name: 'AquaWorld Suppliers' },
-    { id: 2, name: 'FishMart Lanka' },
-    { id: 3, name: 'TropicalAqua Co.' },
-];
-
 const EMPTY_FORM = {
     name: '',
     category: '',
@@ -31,6 +24,7 @@ const EMPTY_FORM = {
 
 const InventoryManagement = () => {
     const [products, setProducts] = useState([]);
+    const [suppliers, setSuppliers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterCategory, setFilterCategory] = useState('All');
@@ -65,7 +59,26 @@ const InventoryManagement = () => {
         }
     };
 
-    useEffect(() => { fetchProducts(); }, []);
+    useEffect(() => {
+        fetchProducts();
+        fetchSuppliers();
+    }, []);
+
+    // ── Fetch suppliers from backend ──────────────────────────────
+    const fetchSuppliers = async () => {
+        try {
+            const res = await fetch(`${API}/suppliers`);
+            const json = await res.json();
+            if (json.success) {
+                setSuppliers(json.data.map(s => ({
+                    id: s.id,
+                    name: s.company_name || s.name,
+                })));
+            }
+        } catch (err) {
+            console.error('Failed to fetch suppliers:', err);
+        }
+    };
 
     // ── Filter ────────────────────────────────────────────────────
     const filteredProducts = products.filter(p => {
@@ -440,7 +453,7 @@ const InventoryManagement = () => {
                                     <div className="select-wrap-full">
                                         <select name="supplier_id" value={formData.supplier_id} onChange={handleChange}>
                                             <option value="">-- No Supplier --</option>
-                                            {SUPPLIERS.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                            {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                         </select>
                                         <ChevronDown size={14} className="sel-arrow" />
                                     </div>
