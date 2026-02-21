@@ -45,21 +45,6 @@ const Footer = () => {
 
         <div className="footer-bottom">
           <p>&copy; {new Date().getFullYear()} Methu Aquarium Management System. All rights reserved.</p>
-          <div style={{ marginTop: '1rem' }}>
-            <Link
-              to="/signin?type=admin"
-              style={{
-                fontSize: '0.8rem',
-                color: 'var(--text-muted)',
-                opacity: 0.6,
-                textDecoration: 'none'
-              }}
-              onMouseEnter={(e) => e.target.style.opacity = '1'}
-              onMouseLeave={(e) => e.target.style.opacity = '0.6'}
-            >
-              Sign in as Admin
-            </Link>
-          </div>
         </div>
       </div>
 
