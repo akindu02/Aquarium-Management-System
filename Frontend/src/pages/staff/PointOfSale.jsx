@@ -1,78 +1,175 @@
-import React, { useState, useEffect } from 'react';
-import { Search, ShoppingCart, Plus, Minus, Trash2, CreditCard, RotateCcw, CheckCircle, Package, User, Mail, Phone, MapPin } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+    Search, ShoppingCart, Plus, Minus, Trash2, Banknote, RotateCcw,
+    Package, User, Mail, Phone, MapPin, AlertCircle, Loader
+} from 'lucide-react';
+import Swal from 'sweetalert2';
+import { getProductsAPI, createPosOrderAPI } from '../../utils/api';
 
 const PointOfSale = () => {
-    // Dummy Product Data
-    const initialProducts = [
-        { id: 1, name: 'Goldfish Food Flakes', price: 450, category: 'Food', stock: 50, image: 'https://images.unsplash.com/photo-1598516088219-c68e738e4a05?auto=format&fit=crop&q=80&w=200' },
-        { id: 2, name: 'Neon Tetra', price: 120, category: 'Live Fish', stock: 200, image: 'https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?auto=format&fit=crop&q=80&w=200' },
-        { id: 3, name: 'Glass Tank 30L', price: 8500, category: 'Tanks', stock: 15, image: 'https://images.unsplash.com/photo-1516684669134-de6d7c47343b?auto=format&fit=crop&q=80&w=200' },
-        { id: 4, name: 'Water Filter Pump', price: 3200, category: 'Equipment', stock: 8, image: 'https://images.unsplash.com/photo-1596464716127-f9a862557988?auto=format&fit=crop&q=80&w=200' },
-        { id: 5, name: 'Decor Stones (1kg)', price: 350, category: 'Decor', stock: 100, image: 'https://images.unsplash.com/photo-1535591273668-578e31182c4f?auto=format&fit=crop&q=80&w=200' },
-        { id: 6, name: 'Anti-Chlorine', price: 600, category: 'Medicine', stock: 40, image: 'https://images.unsplash.com/photo-1628156173748-18e420a3aaee?auto=format&fit=crop&q=80&w=200' },
-        { id: 7, name: 'Guppy Fish', price: 80, category: 'Live Fish', stock: 300, image: 'https://images.unsplash.com/photo-1533633634024-d2e4682390a4?auto=format&fit=crop&q=80&w=200' },
-        { id: 8, name: 'LED Aquarium Light', price: 4500, category: 'Equipment', stock: 20, image: 'https://images.unsplash.com/photo-1615147342761-9238e1548b20?auto=format&fit=crop&q=80&w=200' },
-    ];
+    // ── Product state ─────────────────────────────────────────────────────────
+    const [products, setProducts] = useState([]);
+    const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+    const [productError, setProductError] = useState(null);
+    const [saleCount, setSaleCount] = useState(0);
 
-    const [products, setProducts] = useState(initialProducts);
+    // ── Cart / UI state ───────────────────────────────────────────────────────
     const [cart, setCart] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
-    const [showPaymentModal, setShowPaymentModal] = useState(false);
-    const [showCustomerModal, setShowCustomerModal] = useState(false); // New state for customer modal
-    const [customer, setCustomer] = useState({
-        name: '',
-        email: '',
-        phone: '',
-        address: ''
-    });
 
-    // Filter Logic
-    const filteredProducts = products.filter(product => {
-        const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
-        return matchesSearch && matchesCategory;
-    });
+    // ── Customer form state ───────────────────────────────────────────────────
+    const [showCustomerModal, setShowCustomerModal] = useState(false);
+    const [customer, setCustomer] = useState({ name: '', phone: '', email: '', address: '' });
 
+    // ── Checkout / receipt state ──────────────────────────────────────────────
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [receiptData, setReceiptData] = useState(null);
+    const [showReceiptModal, setShowReceiptModal] = useState(false);
+
+    // ── Fetch real products ───────────────────────────────────────────────────
+    const fetchProducts = useCallback(async () => {
+        try {
+            setIsLoadingProducts(true);
+            setProductError(null);
+            const res = await getProductsAPI();
+            const raw = Array.isArray(res.data) ? res.data : (res.products || []);
+            setProducts(
+                raw
+                    .filter(p => p.stock_quantity > 0)
+                    .map(p => ({
+                        id: p.product_id,
+                        name: p.name,
+                        category: p.category,
+                        stock: p.stock_quantity,
+                        originalPrice: parseFloat(p.price),
+                        discount: parseFloat(p.discount_percent || 0),
+                        price: parseFloat(
+                            (p.price - (p.price * (p.discount_percent || 0)) / 100).toFixed(2)
+                        ),
+                    }))
+            );
+        } catch (err) {
+            setProductError('Failed to load products. Please retry.');
+        } finally {
+            setIsLoadingProducts(false);
+        }
+    }, []);
+
+    useEffect(() => { fetchProducts(); }, [fetchProducts, saleCount]);
+
+    // ── Filter / categories ───────────────────────────────────────────────────
+    const filteredProducts = products.filter(p => {
+        const matchSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchCat = selectedCategory === 'All' || p.category === selectedCategory;
+        return matchSearch && matchCat;
+    });
     const categories = ['All', ...new Set(products.map(p => p.category))];
 
-    // Cart Actions
+    // ── Cart actions ──────────────────────────────────────────────────────────
     const addToCart = (product) => {
         setCart(prev => {
-            const existing = prev.find(item => item.id === product.id);
+            const existing = prev.find(i => i.id === product.id);
             if (existing) {
-                return prev.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item);
+                if (existing.qty >= product.stock) {
+                    Swal.fire({
+                        icon: 'warning', title: 'Stock Limit',
+                        text: `Only ${product.stock} units available for "${product.name}".`,
+                        background: '#1a1f2e', color: '#fff', confirmButtonColor: '#4ecdc4',
+                    });
+                    return prev;
+                }
+                return prev.map(i => i.id === product.id ? { ...i, qty: i.qty + 1 } : i);
             }
             return [...prev, { ...product, qty: 1 }];
         });
     };
 
-    const removeFromCart = (id) => {
-        setCart(prev => prev.filter(item => item.id !== id));
-    };
+    const removeFromCart = (id) => setCart(prev => prev.filter(i => i.id !== id));
 
     const updateQty = (id, change) => {
-        setCart(prev => prev.map(item => {
-            if (item.id === id) {
+        setCart(prev => {
+            const product = products.find(p => p.id === id);
+            return prev.map(item => {
+                if (item.id !== id) return item;
                 const newQty = item.qty + change;
-                return newQty > 0 ? { ...item, qty: newQty } : item;
-            }
-            return item;
-        }));
+                if (newQty <= 0) return item;
+                if (product && newQty > product.stock) {
+                    Swal.fire({
+                        icon: 'warning', title: 'Stock Limit',
+                        text: `Only ${product.stock} units in stock.`,
+                        background: '#1a1f2e', color: '#fff', confirmButtonColor: '#4ecdc4',
+                    });
+                    return item;
+                }
+                return { ...item, qty: newQty };
+            });
+        });
     };
 
     const clearCart = () => setCart([]);
 
-    // Calculations
-    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-    const tax = subtotal * 0; // Assuming tax included, or add rate here
-    const total = subtotal + tax;
+    // ── Totals ────────────────────────────────────────────────────────────────
+    const subtotal = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
+    const total = subtotal;
+
+    // ── Checkout ──────────────────────────────────────────────────────────────
+    const handleCheckout = async () => {
+        if (cart.length === 0) return;
+        if (!customer.name.trim()) {
+            Swal.fire({
+                icon: 'warning', title: 'Customer Required',
+                text: "Please add the customer's name before completing the sale.",
+                background: '#1a1f2e', color: '#fff', confirmButtonColor: '#4ecdc4',
+            }).then(() => setShowCustomerModal(true));
+            return;
+        }
+        try {
+            setIsProcessing(true);
+            const result = await createPosOrderAPI({
+                customer: {
+                    name: customer.name.trim(),
+                    phone: customer.phone.trim() || null,
+                    email: customer.email.trim() || null,
+                    address: customer.address.trim() || null,
+                },
+                items: cart.map(i => ({ productId: i.id, quantity: i.qty })),
+            });
+            if (result.success) {
+                setReceiptData({
+                    orderRef: result.orderRef,
+                    receiptNumber: result.receiptNumber,
+                    totalAmount: result.totalAmount,
+                    customer: { ...customer },
+                    items: cart.map(i => ({ ...i })),
+                    saleDate: new Date(),
+                });
+                setShowReceiptModal(true);
+            }
+        } catch (err) {
+            Swal.fire({
+                icon: 'error', title: 'Sale Failed',
+                text: err.message || 'Could not complete the sale. Please try again.',
+                background: '#1a1f2e', color: '#fff', confirmButtonColor: '#4ecdc4',
+            });
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    // ── New sale reset ────────────────────────────────────────────────────────
+    const handleNewSale = () => {
+        setShowReceiptModal(false);
+        setCart([]);
+        setCustomer({ name: '', phone: '', email: '', address: '' });
+        setReceiptData(null);
+        setSaleCount(c => c + 1);
+    };
 
     return (
         <div className="pos-container">
-            {/* Left Side - Product Catalog */}
+            {/* ─── Left: Product Catalogue ─────────────────────────────────── */}
             <div className="pos-catalog">
-                {/* Header / Search */}
                 <div className="pos-header">
                     <div className="search-bar">
                         <Search size={20} className="text-muted" />
@@ -80,7 +177,7 @@ const PointOfSale = () => {
                             type="text"
                             placeholder="Search products..."
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={e => setSearchTerm(e.target.value)}
                         />
                     </div>
                     <div className="category-filters">
@@ -96,10 +193,7 @@ const PointOfSale = () => {
                     </div>
                 </div>
 
-                {/* Product Grid */}
-                {/* Product List */}
                 <div className="product-list">
-                    {/* Header Row */}
                     <div className="product-list-header">
                         <span>Product Name</span>
                         <span>Category</span>
@@ -108,30 +202,58 @@ const PointOfSale = () => {
                         <span>Action</span>
                     </div>
 
-                    {filteredProducts.map(product => (
-                        <div key={product.id} className="product-row" onClick={() => addToCart(product)}>
-                            <div className="p-name">{product.name}</div>
-                            <div className="p-cat"><span className="category-pill">{product.category}</span></div>
-                            <div className={`p-stock ${product.stock < 20 ? 'low' : ''}`}>
-                                {product.stock} left
-                            </div>
-                            <div className="p-price">LKR {product.price}</div>
-                            <div className="p-action">
-                                <button className="add-btn-sm"><Plus size={14} /></button>
-                            </div>
+                    {isLoadingProducts ? (
+                        <div className="empty-catalog">
+                            <Loader size={32} style={{ animation: 'spin 1s linear infinite' }} />
+                            <p>Loading products...</p>
                         </div>
-                    ))}
+                    ) : productError ? (
+                        <div className="empty-catalog" style={{ color: '#ef4444' }}>
+                            <AlertCircle size={32} />
+                            <p>{productError}</p>
+                            <button className="cat-btn active" onClick={fetchProducts}>Retry</button>
+                        </div>
+                    ) : filteredProducts.length === 0 ? (
+                        <div className="empty-catalog">
+                            <Package size={32} />
+                            <p>No products found</p>
+                        </div>
+                    ) : (
+                        filteredProducts.map(product => (
+                            <div key={product.id} className="product-row" onClick={() => addToCart(product)}>
+                                <div className="p-name">
+                                    {product.name}
+                                    {product.discount > 0 && (
+                                        <span className="discount-tag">-{product.discount}%</span>
+                                    )}
+                                </div>
+                                <div className="p-cat"><span className="category-pill">{product.category}</span></div>
+                                <div className={`p-stock ${product.stock <= 10 ? 'low' : ''}`}>
+                                    {product.stock} left
+                                </div>
+                                <div className="p-price">
+                                    LKR {product.price.toLocaleString()}
+                                    {product.discount > 0 && (
+                                        <span className="original-price">LKR {product.originalPrice.toLocaleString()}</span>
+                                    )}
+                                </div>
+                                <div className="p-action">
+                                    <button className="add-btn-sm"><Plus size={14} /></button>
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
 
-            {/* Right Side - Cart */}
+            {/* ─── Right: Cart ─────────────────────────────────────────────── */}
             <div className="pos-cart">
                 <div className="cart-header">
                     <h3>Current Order</h3>
                     <div className="cart-actions">
                         <button className="customer-trigger-btn" onClick={() => setShowCustomerModal(true)} title="Add Customer Details">
                             <User size={18} />
-                            {customer.name ? <span className="active-dot"></span> : null}
+                            {customer.name && <span className="active-dot"></span>}
                         </button>
                         <button className="clear-btn" onClick={clearCart} disabled={cart.length === 0}>
                             <RotateCcw size={16} /> Clear
@@ -143,9 +265,9 @@ const PointOfSale = () => {
                     <div className="selected-customer-preview">
                         <div className="sc-info">
                             <span className="sc-name">{customer.name}</span>
-                            <span className="sc-phone">{customer.phone}</span>
+                            <span className="sc-phone">{customer.phone || 'No phone'}</span>
                         </div>
-                        <button className="sc-remove" onClick={() => setCustomer({ name: '', email: '', phone: '', address: '' })}>
+                        <button className="sc-remove" onClick={() => setCustomer({ name: '', phone: '', email: '', address: '' })}>
                             <Trash2 size={14} />
                         </button>
                     </div>
@@ -162,7 +284,7 @@ const PointOfSale = () => {
                             <div key={item.id} className="cart-item">
                                 <div className="item-info">
                                     <h4>{item.name}</h4>
-                                    <p>LKR {item.price}</p>
+                                    <p>LKR {item.price.toLocaleString()}</p>
                                 </div>
                                 <div className="item-controls">
                                     <button onClick={() => updateQty(item.id, -1)}><Minus size={14} /></button>
@@ -170,15 +292,13 @@ const PointOfSale = () => {
                                     <button onClick={() => updateQty(item.id, 1)}><Plus size={14} /></button>
                                 </div>
                                 <div className="item-total">
-                                    LKR {item.price * item.qty}
+                                    LKR {(item.price * item.qty).toLocaleString()}
                                     <button className="remove-btn" onClick={() => removeFromCart(item.id)}><Trash2 size={16} /></button>
                                 </div>
                             </div>
                         ))
                     )}
                 </div>
-
-                {/* Removed Customer Form Section from here */}
 
                 <div className="cart-footer">
                     <div className="summary-row">
@@ -189,19 +309,24 @@ const PointOfSale = () => {
                         <span>Total Amount</span>
                         <span>LKR {total.toLocaleString()}</span>
                     </div>
-
+                    <div className="payment-method-tag">
+                        <Banknote size={16} /> Cash Payment Only
+                    </div>
                     <button
                         className="checkout-btn"
-                        disabled={cart.length === 0}
-                        onClick={() => setShowPaymentModal(true)}
+                        disabled={cart.length === 0 || isProcessing}
+                        onClick={handleCheckout}
                     >
-                        <CreditCard size={20} />
-                        Proceed to Payment
+                        {isProcessing ? (
+                            <><Loader size={20} style={{ animation: 'spin 1s linear infinite' }} /> Processing&hellip;</>
+                        ) : (
+                            <><Banknote size={20} /> Complete Cash Sale</>
+                        )}
                     </button>
                 </div>
             </div>
 
-            {/* Customer Details Modal */}
+            {/* ─── Customer Details Modal ───────────────────────────────────── */}
             {showCustomerModal && (
                 <div className="modal-overlay">
                     <div className="customer-modal">
@@ -210,16 +335,19 @@ const PointOfSale = () => {
                             <button className="close-modal-btn" onClick={() => setShowCustomerModal(false)}>×</button>
                         </div>
                         <div className="modal-body">
+                            <div className="form-note">
+                                <AlertCircle size={14} /> Name is required. Phone, email &amp; address are optional.
+                            </div>
                             <div className="customer-form">
                                 <div className="form-group-full">
-                                    <label>Customer Name</label>
+                                    <label>Customer Name <span style={{ color: '#ef4444' }}>*</span></label>
                                     <div className="input-icon-wrapper">
                                         <User size={18} />
                                         <input
                                             type="text"
-                                            placeholder="Name"
+                                            placeholder="Full name"
                                             value={customer.name}
-                                            onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
+                                            onChange={e => setCustomer({ ...customer, name: e.target.value })}
                                         />
                                     </div>
                                 </div>
@@ -231,7 +359,7 @@ const PointOfSale = () => {
                                             type="tel"
                                             placeholder="07xxxxxxxx"
                                             value={customer.phone}
-                                            onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
+                                            onChange={e => setCustomer({ ...customer, phone: e.target.value })}
                                         />
                                     </div>
                                 </div>
@@ -243,7 +371,7 @@ const PointOfSale = () => {
                                             type="email"
                                             placeholder="customer@example.com"
                                             value={customer.email}
-                                            onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
+                                            onChange={e => setCustomer({ ...customer, email: e.target.value })}
                                         />
                                     </div>
                                 </div>
@@ -253,9 +381,9 @@ const PointOfSale = () => {
                                         <MapPin size={18} />
                                         <input
                                             type="text"
-                                            placeholder="Home Address"
+                                            placeholder="Home / Office Address"
                                             value={customer.address}
-                                            onChange={(e) => setCustomer({ ...customer, address: e.target.value })}
+                                            onChange={e => setCustomer({ ...customer, address: e.target.value })}
                                         />
                                     </div>
                                 </div>
@@ -263,35 +391,44 @@ const PointOfSale = () => {
                         </div>
                         <div className="modal-footer">
                             <button className="cancel-btn" onClick={() => setShowCustomerModal(false)}>Cancel</button>
-                            <button className="save-btn" onClick={() => setShowCustomerModal(false)}>Save Customer</button>
+                            <button
+                                className="save-btn"
+                                disabled={!customer.name.trim()}
+                                onClick={() => setShowCustomerModal(false)}
+                            >
+                                Save Customer
+                            </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Receipt Modal */}
-            {showPaymentModal && (
+            {/* ─── Receipt Modal ───────────────────────────────────────────── */}
+            {showReceiptModal && receiptData && (
                 <div className="modal-overlay">
                     <div className="receipt-modal">
                         <div className="receipt-header">
                             <h2>Methu Aquarium</h2>
                             <p>No 50, Kumaradasa Mawatha, Matara</p>
-                            <p>041-2236848 / 074-3133109</p>
+                            <p>041-2236848 / 074-3143109</p>
                             <p>methuaquarium@gmail.com</p>
                             <div className="receipt-meta">
-                                <span>Date: {new Date().toLocaleDateString()}</span>
-                                <span>Time: {new Date().toLocaleTimeString()}</span>
+                                <span>Date: {receiptData.saleDate.toLocaleDateString()}</span>
+                                <span>Time: {receiptData.saleDate.toLocaleTimeString()}</span>
                             </div>
-                            <div className="receipt-id">Receipt #: {Math.floor(Math.random() * 100000)}</div>
+                            <div className="receipt-id">
+                                <div><strong>Receipt #:</strong> {receiptData.receiptNumber}</div>
+                                <div><strong>Order Ref:</strong> {receiptData.orderRef}</div>
+                                <div><strong>Payment:</strong> Cash</div>
+                            </div>
                         </div>
 
-                        {customer.name && (
-                            <div className="receipt-customer">
-                                <p><strong>Bill To:</strong> {customer.name}</p>
-                                {customer.phone && <p>{customer.phone}</p>}
-                                {customer.address && <p>{customer.address}</p>}
-                            </div>
-                        )}
+                        <div className="receipt-customer">
+                            <p><strong>Bill To:</strong> {receiptData.customer.name}</p>
+                            {receiptData.customer.phone && <p>{receiptData.customer.phone}</p>}
+                            {receiptData.customer.email && <p>{receiptData.customer.email}</p>}
+                            {receiptData.customer.address && <p>{receiptData.customer.address}</p>}
+                        </div>
 
                         <div className="receipt-divider"></div>
 
@@ -306,11 +443,11 @@ const PointOfSale = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {cart.map((item) => (
+                                    {receiptData.items.map(item => (
                                         <tr key={item.id}>
                                             <td className="r-item-name">{item.name}</td>
                                             <td>{item.qty}</td>
-                                            <td>{item.price}</td>
+                                            <td>{item.price.toLocaleString()}</td>
                                             <td>{(item.price * item.qty).toLocaleString()}</td>
                                         </tr>
                                     ))}
@@ -323,11 +460,15 @@ const PointOfSale = () => {
                         <div className="receipt-summary">
                             <div className="r-row">
                                 <span>Subtotal</span>
-                                <span>LKR {subtotal.toLocaleString()}</span>
+                                <span>LKR {receiptData.totalAmount.toLocaleString()}</span>
+                            </div>
+                            <div className="r-row">
+                                <span>Payment Method</span>
+                                <span>Cash</span>
                             </div>
                             <div className="r-row total">
-                                <span>Total</span>
-                                <span>LKR {total.toLocaleString()}</span>
+                                <span>Total Paid</span>
+                                <span>LKR {receiptData.totalAmount.toLocaleString()}</span>
                             </div>
                         </div>
 
@@ -340,14 +481,7 @@ const PointOfSale = () => {
                             <button className="print-btn" onClick={() => window.print()}>
                                 <Package size={16} /> Print Receipt
                             </button>
-                            <button
-                                className="close-btn"
-                                onClick={() => { 
-                                    setShowPaymentModal(false); 
-                                    setCart([]); 
-                                    setCustomer({ name: '', email: '', phone: '', address: '' });
-                                }}
-                            >
+                            <button className="close-btn" onClick={handleNewSale}>
                                 New Sale
                             </button>
                         </div>
@@ -356,9 +490,30 @@ const PointOfSale = () => {
             )}
 
             <style>{`
+                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
                 .pos-container {
-                    display: flex; height: calc(100vh - 100px); /* Adjust based on header/layout */
+                    display: flex; height: calc(100vh - 100px);
                     gap: 1.5rem;
+                }
+
+                .empty-catalog {
+                    display: flex; flex-direction: column; align-items: center; justify-content: center;
+                    gap: 1rem; color: var(--text-muted); padding: 3rem; opacity: 0.7;
+                }
+                .discount-tag { font-size: 0.7rem; background: rgba(16,185,129,0.15); color: #10b981; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-left: 0.4rem; }
+                .original-price { font-size: 0.75rem; text-decoration: line-through; color: var(--text-muted); font-weight: 400; }
+                .payment-method-tag {
+                    display: flex; align-items: center; gap: 0.5rem;
+                    background: rgba(16,185,129,0.1); color: #10b981; font-size: 0.85rem;
+                    padding: 0.5rem 1rem; border-radius: 0.5rem; margin-bottom: 1rem;
+                    border: 1px solid rgba(16,185,129,0.2);
+                }
+                .form-note {
+                    display: flex; align-items: center; gap: 0.5rem;
+                    font-size: 0.8rem; color: var(--text-muted);
+                    background: rgba(255,255,255,0.04); padding: 0.6rem 0.75rem;
+                    border-radius: 0.4rem; margin-bottom: 1.25rem;
                 }
 
                 /* Customer Modal Styles */

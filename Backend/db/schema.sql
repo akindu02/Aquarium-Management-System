@@ -189,6 +189,20 @@ CREATE TABLE IF NOT EXISTS orders (
         total_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- POS Walk-in Customers (non-authenticated customers for in-store sales)
+CREATE TABLE IF NOT EXISTS pos_customers (
+    pos_customer_id SERIAL PRIMARY KEY,
+    name VARCHAR(200) NOT NULL,
+    phone VARCHAR(20),
+    email VARCHAR(255),
+    address TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Link POS customer to order (POS orders will have customer_id NULL)
+ALTER TABLE orders
+ADD COLUMN IF NOT EXISTS pos_customer_id INTEGER REFERENCES pos_customers(pos_customer_id) ON DELETE SET NULL;
 -- Order Items Table
 CREATE TABLE IF NOT EXISTS order_items (
     order_item_id SERIAL PRIMARY KEY,
@@ -258,6 +272,7 @@ CREATE TABLE IF NOT EXISTS reports (
 -- Existing Indexes
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
 CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);
+CREATE INDEX IF NOT EXISTS idx_orders_pos_customer ON orders(pos_customer_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_date ON service_bookings(booking_date);
 -- Time Slot Indexes
 CREATE INDEX IF NOT EXISTS idx_slots_dates ON service_time_slots(start_time, end_time);
@@ -311,3 +326,6 @@ CREATE INDEX IF NOT EXISTS idx_returns_status ON order_returns(status);
 DROP TRIGGER IF EXISTS update_returns_timestamp ON order_returns;
 CREATE TRIGGER update_returns_timestamp BEFORE
 UPDATE ON order_returns FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+
+

@@ -263,3 +263,33 @@ export const updateReturnStatusAPI = async (returnId, status, adminNote = '') =>
     });
 };
 
+// =============================================
+// PRODUCT APIs
+// =============================================
+
+/**
+ * Get all products (public — no auth required)
+ */
+export const getProductsAPI = async (filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.category) params.append('category', filters.category);
+    if (filters.search) params.append('search', filters.search);
+    const qs = params.toString();
+    return apiRequest(`/products${qs ? `?${qs}` : ''}`, { method: 'GET' });
+};
+
+// =============================================
+// POS APIs (Cash-only)
+// =============================================
+
+/**
+ * Staff / Admin - Create a cash-only POS order for a walk-in customer
+ * @param {{ customer: {name:string, phone?:string, email?:string, address?:string}, items: {productId:number, quantity:number}[] }} data
+ */
+export const createPosOrderAPI = async (data) => {
+    return apiRequest('/pos/orders', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+};
+

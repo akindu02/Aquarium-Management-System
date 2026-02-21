@@ -189,10 +189,10 @@ const getOrders = async ({ userId, role, status, search } = {}) => {
             o.total_amount,
             o.order_date,
             o.updated_at,
-            u.name  AS customer_name,
-            u.email AS customer_email,
-            c.phone,
-            c.address AS shipping_address,
+            COALESCE(u.name, pc.name)   AS customer_name,
+            COALESCE(u.email, pc.email) AS customer_email,
+            COALESCE(c.phone, pc.phone) AS phone,
+            COALESCE(c.address, pc.address) AS shipping_address,
             p.status            AS payment_status,
             p.method            AS payment_method,
             p.transaction_reference,
@@ -209,8 +209,9 @@ const getOrders = async ({ userId, role, status, search } = {}) => {
                 '[]'
             ) AS items
         FROM orders o
-        JOIN customers c ON o.customer_id = c.user_id
-        JOIN users     u ON c.user_id     = u.id
+        LEFT JOIN customers c ON o.customer_id = c.user_id
+        LEFT JOIN users     u ON c.user_id     = u.id
+        LEFT JOIN pos_customers pc ON o.pos_customer_id = pc.pos_customer_id
         LEFT JOIN payments   p  ON p.order_id  = o.order_id
         LEFT JOIN order_items oi ON oi.order_id = o.order_id
         LEFT JOIN products   pr ON oi.product_id = pr.product_id
@@ -233,14 +234,25 @@ const getOrders = async ({ userId, role, status, search } = {}) => {
     if (search) {
         params.push(`%${search}%`);
         const idx = params.length;
-        conditions.push(`(u.name ILIKE $${idx} OR u.email ILIKE $${idx} OR CAST(o.order_id AS TEXT) ILIKE $${idx})`);
+        conditions.push(
+            `(
+                u.name ILIKE $${idx}
+                OR u.email ILIKE $${idx}
+                OR pc.name ILIKE $${idx}
+                OR pc.phone ILIKE $${idx}
+                OR pc.email ILIKE $${idx}
+                OR CAST(o.order_id AS TEXT) ILIKE $${idx}
+            )`
+        );
     }
 
     if (conditions.length) sql += ' WHERE ' + conditions.join(' AND ');
 
     sql += `
         GROUP BY
-            o.order_id, u.name, u.email, c.phone, c.address,
+            o.order_id,
+            u.name, u.email, c.phone, c.address,
+            pc.name, pc.email, pc.phone, pc.address,
             p.status, p.method, p.transaction_reference
         ORDER BY o.order_id DESC
     `;
@@ -261,10 +273,10 @@ const getOrderById = async (orderId, userId, role) => {
             o.total_amount,
             o.order_date,
             o.updated_at,
-            u.name  AS customer_name,
-            u.email AS customer_email,
-            c.phone,
-            c.address AS shipping_address,
+            COALESCE(u.name, pc.name)   AS customer_name,
+            COALESCE(u.email, pc.email) AS customer_email,
+            COALESCE(c.phone, pc.phone) AS phone,
+            COALESCE(c.address, pc.address) AS shipping_address,
             p.status            AS payment_status,
             p.method            AS payment_method,
             p.transaction_reference,
@@ -282,8 +294,9 @@ const getOrderById = async (orderId, userId, role) => {
                 '[]'
             ) AS items
         FROM orders o
-        JOIN customers c ON o.customer_id = c.user_id
-        JOIN users     u ON c.user_id     = u.id
+        LEFT JOIN customers c ON o.customer_id = c.user_id
+        LEFT JOIN users     u ON c.user_id     = u.id
+        LEFT JOIN pos_customers pc ON o.pos_customer_id = pc.pos_customer_id
         LEFT JOIN payments   p  ON p.order_id  = o.order_id
         LEFT JOIN order_items oi ON oi.order_id = o.order_id
         LEFT JOIN products   pr ON oi.product_id = pr.product_id
@@ -299,7 +312,9 @@ const getOrderById = async (orderId, userId, role) => {
 
     sql += `
         GROUP BY
-            o.order_id, u.name, u.email, c.phone, c.address,
+            o.order_id,
+            u.name, u.email, c.phone, c.address,
+            pc.name, pc.email, pc.phone, pc.address,
             p.status, p.method, p.transaction_reference
     `;
 
