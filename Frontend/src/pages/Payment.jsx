@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, CreditCard, CheckCircle, Lock, User, Calendar } from 'lucide-react';
+import { ArrowLeft, CreditCard, CheckCircle, Lock, User, Calendar, Loader2 } from 'lucide-react';
+import Swal from 'sweetalert2';
+import { markOrderPaidAPI } from '../utils/api';
 import '../index.css';
 
 const Payment = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const {
+        orderId,
+        orderRef,
+        totalAmount: locationTotal,
         cartItems = [],
         cartTotal = 0,
         shippingData = {}
-    } = location.state || {}; // Expecting shipping data from previous step
+    } = location.state || {};
+
+    const currentTotal = locationTotal || cartTotal || cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
 
     const [cardData, setCardData] = useState({
         cardNumber: '',
@@ -22,12 +29,13 @@ const Payment = () => {
 
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [confirmedRef, setConfirmedRef] = useState('');
 
     const calculateTotal = () => {
         return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
     };
 
-    const currentTotal = cartTotal || calculateTotal();
+    // currentTotal is already declared above from location.state
 
     const handleInputChange = (e) => {
         let { name, value } = e.target;
@@ -50,15 +58,32 @@ const Payment = () => {
         setCardData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!orderId) {
+            Swal.fire({ icon: 'error', title: 'No Order Found', text: 'Please go back and place your order again.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#ef4444' });
+            return;
+        }
         setIsProcessing(true);
-
-        // Simulate Payment Processing API call
-        setTimeout(() => {
+        try {
+            const cardType = cardData.cardType === 'visa' ? 'Visa Card' : 'Mastercard';
+            const result = await markOrderPaidAPI(orderId, cardType);
+            if (result.success) {
+                setConfirmedRef(orderRef || result.orderRef || `ORD-${String(orderId).padStart(5, '0')}`);
+                setIsSuccess(true);
+            }
+        } catch (err) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Payment Failed',
+                text: err.message || 'Payment could not be processed. Please try again.',
+                background: '#1a1f2e',
+                color: '#fff',
+                confirmButtonColor: '#ef4444',
+            });
+        } finally {
             setIsProcessing(false);
-            setIsSuccess(true);
-        }, 2000);
+        }
     };
 
     if (isSuccess) {
@@ -68,10 +93,13 @@ const Payment = () => {
                     <CheckCircle size={64} className="text-success" />
                     <h1>Payment Successful!</h1>
                     <p>Your order has been placed successfully.</p>
-                    <p>A confirmation has been sent to {shippingData.email || 'your email'}.</p>
-                    <div className="order-id-badge">Order ID: #ORD-{Math.floor(Math.random() * 100000)}</div>
+                    <p>A confirmation has been sent to <strong>{shippingData.email || 'your email'}</strong>.</p>
+                    <div className="order-id-badge">{confirmedRef || orderRef || 'Order Confirmed'}</div>
                     <Link to="/store" className="btn btn-primary mt-4">
                         Continue Shopping
+                    </Link>
+                    <Link to="/customer" className="btn btn-outline mt-4" style={{marginLeft:'1rem'}}>
+                        View My Orders
                     </Link>
                 </div>
                 <style>{`
@@ -256,7 +284,10 @@ const Payment = () => {
                                 className="btn btn-primary pay-now-btn"
                                 disabled={isProcessing}
                             >
-                                {isProcessing ? 'Processing Payment...' : `Pay LKR ${currentTotal.toLocaleString()}`}
+                                {isProcessing
+                                    ? <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite', marginRight: 8 }} />Processing…<style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></>
+                                    : `Pay LKR ${currentTotal.toLocaleString()}`
+                                }
                             </button>
 
                             <p className="secure-notice">

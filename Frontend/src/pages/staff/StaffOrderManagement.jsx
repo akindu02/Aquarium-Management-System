@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Filter, Eye, DollarSign, Package, Check, X, Truck, Clock, AlertCircle, ChevronDown, Download, Users, Factory, Plus } from 'lucide-react';
+import Swal from 'sweetalert2';
+import { getOrdersAPI, updateOrderStatusAPI } from '../../utils/api';
 
 const StaffOrderManagement = () => {
     const [activeTab, setActiveTab] = useState('customer'); // 'customer' or 'supplier'
@@ -14,13 +16,35 @@ const StaffOrderManagement = () => {
     });
 
     // --- Customer Orders Data ---
-    const initialCustomerOrders = [
-        { id: 'ORD-5001', customer: 'Kasun Perera', email: 'kasun@gmail.com', items: 'Goldfish (x2), Fish Food', date: '2025-10-24', total: 950, paymentStatus: 'Paid', status: 'Delivered', address: '123 Beach Rd, Matara' },
-        { id: 'ORD-5002', customer: 'Nimali Silva', email: 'nimali@yahoo.com', items: 'Glass Tank 30L', date: '2025-10-25', total: 8500, paymentStatus: 'Paid', status: 'Processing', address: '45 Galle Rd, Colombo' },
-        { id: 'ORD-5003', customer: 'Saman Kumara', email: 'saman@hotmail.com', items: 'Canister Filter', date: '2025-10-25', total: 15000, paymentStatus: 'Pending', status: 'Pending', address: '88 Main St, Kandy' },
-        { id: 'ORD-5004', customer: 'Chathuri Bandara', email: 'chathuri@gmail.com', items: 'Plant Fertilizer, LED Light', date: '2025-10-26', total: 4400, paymentStatus: 'Paid', status: 'Shipped', address: '12 Flower Rd, Galle' },
-    ];
-    const [customerOrders, setCustomerOrders] = useState(initialCustomerOrders);
+    const [customerOrders, setCustomerOrders] = useState([]);
+    const [isLoadingOrders, setIsLoadingOrders] = useState(true);
+
+    const fetchCustomerOrders = useCallback(async () => {
+        try {
+            setIsLoadingOrders(true);
+            const res = await getOrdersAPI();
+            if (res.success) {
+                setCustomerOrders(res.data.map(o => ({
+                    _orderId: o.order_id,
+                    id: o.order_ref,
+                    customer: o.customer_name,
+                    email: o.customer_email,
+                    items: Array.isArray(o.items) ? o.items.map(i => `${i.name} (x${i.quantity})`).join(', ') : '',
+                    date: o.order_date ? o.order_date.split('T')[0] : '',
+                    total: parseFloat(o.total_amount),
+                    paymentStatus: o.payment_status === 'Completed' ? 'Paid' : o.payment_status === 'Refunded' ? 'Refunded' : o.payment_status === 'Failed' ? 'Failed' : 'Pending',
+                    status: o.status,
+                    address: o.shipping_address || '',
+                })));
+            }
+        } catch (err) {
+            console.error('fetchCustomerOrders error:', err);
+        } finally {
+            setIsLoadingOrders(false);
+        }
+    }, []);
+
+    useEffect(() => { fetchCustomerOrders(); }, [fetchCustomerOrders]);
 
     // --- Supplier Orders Data ---
     const initialSupplierOrders = [
@@ -44,8 +68,15 @@ const StaffOrderManagement = () => {
     };
 
     // --- Functions ---
-    const updateCustomerStatus = (id, newStatus) => {
-        setCustomerOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
+    const updateCustomerStatus = async (id, newStatus) => {
+        const order = customerOrders.find(o => o.id === id);
+        if (!order) return;
+        try {
+            await updateOrderStatusAPI(order._orderId, newStatus);
+            setCustomerOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
+        } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Update Failed', text: err.message || 'Could not update order status.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#4ecdc4' });
+        }
     };
 
     const updateSupplierStatus = (id, newStatus) => {

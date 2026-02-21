@@ -1,12 +1,23 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, CreditCard, Truck, CheckCircle } from 'lucide-react';
+import { ArrowLeft, CreditCard, Truck, CheckCircle, Loader2 } from 'lucide-react';
+import Swal from 'sweetalert2';
+import { createOrderAPI } from '../utils/api';
 import '../index.css';
+
+const CART_KEY = 'aquarium_cart';
+const loadCart = () => {
+    try { return JSON.parse(localStorage.getItem(CART_KEY) || '[]'); }
+    catch { return []; }
+};
 
 const Checkout = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { cartItems = [], cartTotal = 0 } = location.state || {};
+    // Accept cart from navigation state OR fall back to localStorage
+    const { cartItems: stateItems, cartTotal: stateTotal } = location.state || {};
+    const cartItems = (stateItems && stateItems.length > 0) ? stateItems : loadCart();
+    const cartTotal = stateTotal || cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -15,11 +26,9 @@ const Checkout = () => {
         address: '',
         city: '',
         zipCode: '',
-        paymentMethod: 'card'
     });
 
     const [isProcessing, setIsProcessing] = useState(false);
-    const [isSuccess, setIsSuccess] = useState(false);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -32,16 +41,53 @@ const Checkout = () => {
 
     const currentTotal = cartTotal || calculateTotal();
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Navigate to payment page with form data and cart data
-        navigate('/payment', {
-            state: {
-                shippingData: formData,
-                cartItems: cartItems,
-                cartTotal: currentTotal
+        if (cartItems.length === 0) {
+            Swal.fire({ icon: 'warning', title: 'Empty Cart', text: 'Your cart is empty.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#4ecdc4' });
+            return;
+        }
+
+        setIsProcessing(true);
+        try {
+            const shippingAddress = `${formData.address}, ${formData.city} ${formData.zipCode}`.trim();
+            const items = cartItems.map(item => ({
+                productId: item.product_id,
+                quantity: item.quantity,
+            }));
+
+            const result = await createOrderAPI({
+                items,
+                shippingAddress,
+                phone: formData.phone,
+                totalAmount: currentTotal,
+            });
+
+            if (result.success) {
+                // Clear cart from localStorage
+                localStorage.removeItem(CART_KEY);
+                navigate('/payment', {
+                    state: {
+                        orderId: result.orderId,
+                        orderRef: result.orderRef,
+                        totalAmount: result.totalAmount,
+                        shippingData: { ...formData, shippingAddress },
+                        cartItems,
+                    }
+                });
             }
-        });
+        } catch (err) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Order Failed',
+                text: err.message || 'Could not place your order. Please try again.',
+                background: '#1a1f2e',
+                color: '#fff',
+                confirmButtonColor: '#ef4444',
+            });
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     if (cartItems.length === 0) {
@@ -192,8 +238,12 @@ const Checkout = () => {
                                 type="submit"
                                 form="checkout-form"
                                 className="btn btn-primary place-order-btn"
+                                disabled={isProcessing}
                             >
-                                Proceed to Payment
+                                {isProcessing
+                                    ? <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite', marginRight: 8 }} />Placing Order…<style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></>
+                                    : 'Proceed to Payment'
+                                }
                             </button>
 
                             <p className="secure-notice">

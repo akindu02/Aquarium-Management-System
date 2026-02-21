@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Search, Eye, DollarSign, Package, Check, X, Truck, Clock,
     AlertCircle, ChevronDown, RotateCcw, CheckCircle,
@@ -6,20 +6,11 @@ import {
     MessageSquare, User, ShoppingBag, Hash, Calendar, CreditCard, Filter
 } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { getOrdersAPI, updateOrderStatusAPI } from '../../utils/api';
 
 const OrderManagement = () => {
 
     // ─── Orders State ─────────────────────────────────────────────
-    const initialOrders = [
-        { id: 'ORD-5001', customer: 'Kasun Perera', email: 'kasun@gmail.com', items: 'Goldfish (x2), Fish Food', date: '2025-10-24', total: 950, paymentStatus: 'Paid', status: 'Delivered', address: '123 Beach Rd, Matara' },
-        { id: 'ORD-5002', customer: 'Nimali Silva', email: 'nimali@yahoo.com', items: 'Glass Tank 30L', date: '2025-10-25', total: 8500, paymentStatus: 'Paid', status: 'Processing', address: '45 Galle Rd, Colombo' },
-        { id: 'ORD-5003', customer: 'Saman Kumara', email: 'saman@hotmail.com', items: 'Canister Filter', date: '2025-10-25', total: 15000, paymentStatus: 'Pending', status: 'Pending', address: '88 Main St, Kandy' },
-        { id: 'ORD-5004', customer: 'Chathuri Bandara', email: 'chathuri@gmail.com', items: 'Plant Fertilizer, LED Light', date: '2025-10-26', total: 4400, paymentStatus: 'Paid', status: 'Shipped', address: '12 Flower Rd, Galle' },
-        { id: 'ORD-5005', customer: 'Ruwan Dissanayake', email: 'ruwan@outlook.com', items: 'Anti-Fungal Treatment', date: '2025-10-26', total: 800, paymentStatus: 'Failed', status: 'Cancelled', address: '56 Lake Dr, Nuwara Eliya' },
-        { id: 'ORD-5006', customer: 'Dilshan Fernando', email: 'dilshan@gmail.com', items: 'Neon Tetra (x10)', date: '2025-10-27', total: 1200, paymentStatus: 'Paid', status: 'Processing', address: '78 Hill St, Badulla' },
-        { id: 'ORD-5007', customer: 'Anoma Rathnayake', email: 'anoma@yahoo.com', items: 'Fish Food Flakes (x3)', date: '2025-10-27', total: 1350, paymentStatus: 'Paid', status: 'Delivered', address: '34 Sea view, Negombo' },
-        { id: 'ORD-5008', customer: 'Mahesh Gunawardena', email: 'mahesh@gmail.com', items: 'Glass Tank 30L, LED Light', date: '2025-10-28', total: 11700, paymentStatus: 'Paid', status: 'Shipped', address: '90 Garden Ln, Kurunegala' },
-    ];
 
     // ─── Returns State ────────────────────────────────────────────
     const initialReturns = [
@@ -78,7 +69,8 @@ const OrderManagement = () => {
     ];
 
     const [activeTab, setActiveTab] = useState('orders');     // 'orders' | 'returns'
-    const [orders, setOrders] = useState(initialOrders);
+    const [orders, setOrders] = useState([]);
+    const [isLoadingOrders, setIsLoadingOrders] = useState(true);
     const [returns, setReturns] = useState(initialReturns);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('All');
@@ -87,6 +79,34 @@ const OrderManagement = () => {
     const [selectedReturn, setSelectedReturn] = useState(null);
     const [adminNote, setAdminNote] = useState('');
 
+    // ─── Fetch Orders ─────────────────────────────────────────────
+    const fetchOrders = useCallback(async () => {
+        try {
+            setIsLoadingOrders(true);
+            const res = await getOrdersAPI();
+            if (res.success) {
+                setOrders(res.data.map(o => ({
+                    _orderId: o.order_id,
+                    id: o.order_ref,
+                    customer: o.customer_name,
+                    email: o.customer_email,
+                    items: Array.isArray(o.items) ? o.items.map(i => `${i.name} (x${i.quantity})`).join(', ') : '',
+                    date: o.order_date ? o.order_date.split('T')[0] : '',
+                    total: parseFloat(o.total_amount),
+                    paymentStatus: o.payment_status === 'Completed' ? 'Paid' : o.payment_status === 'Refunded' ? 'Refunded' : o.payment_status === 'Failed' ? 'Failed' : 'Pending',
+                    status: o.status,
+                    address: o.shipping_address || '',
+                })));
+            }
+        } catch (err) {
+            console.error('fetchOrders error:', err);
+        } finally {
+            setIsLoadingOrders(false);
+        }
+    }, []);
+
+    useEffect(() => { fetchOrders(); }, [fetchOrders]);
+
     // ─── Orders Logic ─────────────────────────────────────────────
     const filteredOrders = orders.filter(o => {
         const matchesSearch = o.customer.toLowerCase().includes(searchTerm.toLowerCase()) || o.id.toLowerCase().includes(searchTerm.toLowerCase());
@@ -94,8 +114,15 @@ const OrderManagement = () => {
         return matchesSearch && matchesStatus;
     });
 
-    const updateOrderStatus = (id, newStatus) => {
-        setOrders(orders.map(o => o.id === id ? { ...o, status: newStatus } : o));
+    const updateOrderStatus = async (id, newStatus) => {
+        const order = orders.find(o => o.id === id);
+        if (!order) return;
+        try {
+            await updateOrderStatusAPI(order._orderId, newStatus);
+            setOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
+        } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Update Failed', text: err.message || 'Could not update order status.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#4ecdc4' });
+        }
     };
 
     // ─── Returns Logic ────────────────────────────────────────────
@@ -242,6 +269,9 @@ const OrderManagement = () => {
                     </div>
 
                     <div className="om-table-container">
+                        {isLoadingOrders ? (
+                            <div style={{ textAlign: 'center', padding: '3rem', color: '#9ca3af' }}>Loading orders…</div>
+                        ) : (
                         <table className="om-table">
                             <thead>
                                 <tr>
@@ -294,6 +324,7 @@ const OrderManagement = () => {
                                 })}
                             </tbody>
                         </table>
+                        )}
                     </div>
                 </>
             )}

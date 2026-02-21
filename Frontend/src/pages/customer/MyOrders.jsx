@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Package, Truck, CheckCircle, Clock, ChevronRight, ShoppingBag,
     XCircle, Search, RotateCcw, AlertCircle, ArrowLeft, ChevronDown,
     CheckSquare, Square, FileText, RefreshCw, ThumbsUp, ThumbsDown, Banknote
 } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { getOrdersAPI } from '../../utils/api';
 
 const MyOrders = () => {
     const [filter, setFilter] = useState('all');
@@ -31,50 +32,49 @@ const MyOrders = () => {
         }
     ]);
 
-    const orders = [
-        {
-            id: 'ORD-2023-1001',
-            date: '2023-10-25',
-            items: [
-                { name: 'Neon Tetra', qty: 10, price: 120 },
-                { name: 'Goldfish Food Flakes', qty: 1, price: 450 }
-            ],
-            total: 1650,
-            status: 'processing',
-            paymentStatus: 'paid'
-        },
-        {
-            id: 'ORD-2023-0988',
-            date: '2023-10-20',
-            items: [
-                { name: 'Glass Tank 30L', qty: 1, price: 8500 },
-                { name: 'Decor Stones (1kg)', qty: 2, price: 350 }
-            ],
-            total: 9200,
-            status: 'shipped',
-            paymentStatus: 'paid'
-        },
-        {
-            id: 'ORD-2023-0950',
-            date: '2023-10-15',
-            items: [
-                { name: 'Anti-Chlorine', qty: 1, price: 600 }
-            ],
-            total: 600,
-            status: 'delivered',
-            paymentStatus: 'paid'
-        },
-        {
-            id: 'ORD-2023-0820',
-            date: '2023-09-30',
-            items: [
-                { name: 'Betta Fish', qty: 2, price: 250 }
-            ],
-            total: 500,
-            status: 'cancelled',
-            paymentStatus: 'refunded'
-        }
-    ];
+    const [orders, setOrders] = useState([]);
+    const [isLoadingOrders, setIsLoadingOrders] = useState(true);
+
+    useEffect(() => {
+        const fetchOrders = async () => {
+            try {
+                setIsLoadingOrders(true);
+                const res = await getOrdersAPI();
+                if (res.success) {
+                    const statusMap = {
+                        Pending: 'processing',
+                        Processing: 'processing',
+                        Shipped: 'shipped',
+                        Delivered: 'delivered',
+                        Cancelled: 'cancelled',
+                        Returned: 'cancelled',
+                    };
+                    const paymentMap = {
+                        Completed: 'paid',
+                        Pending: 'pending',
+                        Failed: 'failed',
+                        Refunded: 'refunded',
+                    };
+                    setOrders(res.data.map(o => ({
+                        id: o.order_ref,
+                        _orderId: o.order_id,
+                        date: o.order_date ? o.order_date.split('T')[0] : '',
+                        items: Array.isArray(o.items)
+                            ? o.items.map(i => ({ name: i.name, qty: i.quantity, price: parseFloat(i.unit_price) }))
+                            : [],
+                        total: parseFloat(o.total_amount),
+                        status: statusMap[o.status] || 'processing',
+                        paymentStatus: paymentMap[o.payment_status] || 'pending',
+                    })));
+                }
+            } catch (err) {
+                console.error('fetchOrders error:', err);
+            } finally {
+                setIsLoadingOrders(false);
+            }
+        };
+        fetchOrders();
+    }, []);
 
     const returnReasons = [
         'Defective / Dead on Arrival',
@@ -272,7 +272,9 @@ const MyOrders = () => {
             ) : (
                 /* Orders List */
                 <div className="orders-list">
-                    {filteredOrders.length === 0 ? (
+                    {isLoadingOrders ? (
+                        <div className="empty-state"><RefreshCw size={32} style={{ animation: 'spin 1s linear infinite' }} /><p>Loading your orders…</p></div>
+                    ) : filteredOrders.length === 0 ? (
                         <div className="empty-state">
                             <ShoppingBag size={48} />
                             <h3>No orders found</h3>

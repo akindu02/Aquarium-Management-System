@@ -158,3 +158,65 @@ export const adminDeleteUserAPI = async (userId) => {
     });
 };
 
+// =============================================
+// ORDER APIs
+// =============================================
+
+/**
+ * Customer - Place a new order
+ * @param {{ items: {productId,quantity}[], shippingAddress:string, phone:string, totalAmount:number }} orderData
+ */
+export const createOrderAPI = async (orderData) => {
+    return apiRequest('/orders', {
+        method: 'POST',
+        body: JSON.stringify(orderData),
+    });
+};
+
+/**
+ * Customer / Admin / Staff - Get orders list
+ *  - Customer gets only their own
+ *  - Admin / Staff get all (with optional filters)
+ */
+export const getOrdersAPI = async (filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.status && filters.status !== 'All') params.append('status', filters.status);
+    if (filters.search) params.append('search', filters.search);
+    const qs = params.toString();
+    return apiRequest(`/orders${qs ? `?${qs}` : ''}`, { method: 'GET' });
+};
+
+/**
+ * Get a single order by ID
+ */
+export const getOrderByIdAPI = async (orderId) => {
+    return apiRequest(`/orders/${orderId}`, { method: 'GET' });
+};
+
+/**
+ * Customer - Mark an order as paid (calls the mock payment handler)
+ */
+export const markOrderPaidAPI = async (orderId, paymentMethod = 'Card') => {
+    return apiRequest(`/orders/${orderId}/pay`, {
+        method: 'PATCH',
+        body: JSON.stringify({ paymentMethod }),
+    });
+};
+
+/**
+ * Admin / Staff - Update order workflow status
+ */
+export const updateOrderStatusAPI = async (orderId, status) => {
+    return apiRequest(`/orders/${orderId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+    });
+};
+
+/**
+ * Admin / Staff - Get order statistics summary
+ */
+export const getOrderStatsAPI = async () => {
+    return apiRequest('/orders/stats', { method: 'GET' });
+};
+

@@ -1,139 +1,113 @@
 
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Eye, Search, X, Plus, Minus, ArrowLeft } from 'lucide-react';
+import { ShoppingCart, Eye, Search, X, Plus, Minus, ArrowLeft, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { isAuthenticated } from '../utils/auth';
 import './Store.css';
 
-// Initial dummy data
-const PRODUCTS = [
-    {
-        id: 1,
-        name: 'Goldfish (Medium)',
-        category: 'Fish',
-        price: 4250,
-        stock: 50,
-        image: '/store/Goldfish (Medium).jpg',
-        isNew: true
-    },
-    {
-        id: 2,
-        name: 'Glass Tank 30L',
-        category: 'Tanks',
-        price: 12000,
-        stock: 5,
-        image: '/store/Glass Tank 30L.jpg',
-        isNew: false
-    },
-    {
-        id: 3,
-        name: 'Sponge Filter (Small)',
-        category: 'Filters',
-        price: 2500,
-        stock: 2,
-        image: '/store/Sponge Filter (Small).jpg',
-        isNew: false
-    },
-    {
-        id: 4,
-        name: 'Goldfish Pellets 150g',
-        category: 'Food',
-        price: 600,
-        stock: 100,
-        image: '/store/Goldfish Pellets 150g.jpg',
-        isNew: true
-    },
-    {
-        id: 5,
-        name: 'Betta Fish',
-        category: 'Fish',
-        price: 250,
-        stock: 12,
-        image: '/store/Betta Fish.jpg',
-        isNew: true
-    },
-    {
-        id: 6,
-        name: 'Aquatic Plant Fertilizer',
-        category: 'Medicine',
-        price: 2300,
-        stock: 0,
-        image: '/store/Aquatic Plant Fertilizer.jpg',
-        isNew: false
-    },
-    {
-        id: 7,
-        name: 'LED Spectrum Light',
-        category: 'Accessories',
-        price: 1250,
-        stock: 15,
-        image: '/store/LED Spectrum Light.jpg',
-        isNew: false
-    },
-    {
-        id: 8,
-        name: 'Anti-Fungal Treatment',
-        category: 'Medicine',
-        price: 4500,
-        stock: 45,
-        image: '/store/Anti-Fungal Treatment.jpg',
-        isNew: false
-    }
-];
+const BACKEND_URL = 'http://localhost:5001';
+const CART_KEY = 'aquarium_cart';
+
+/** Prefix relative image paths with the backend origin */
+const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return null;
+    if (imageUrl.startsWith('http')) return imageUrl;
+    return `${BACKEND_URL}${imageUrl}`;
+};
+
+/** Load persisted cart from localStorage */
+const loadCart = () => {
+    try {
+        const saved = localStorage.getItem(CART_KEY);
+        return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+};
 
 const Store = () => {
     const navigate = useNavigate();
-    const [products, setProducts] = useState(PRODUCTS);
-    const [filteredProducts, setFilteredProducts] = useState(PRODUCTS);
+    const [products, setProducts] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [filteredProducts, setFilteredProducts] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [sortBy, setSortBy] = useState('newest');
-    const [cartItems, setCartItems] = useState([]);
+    const [cartItems, setCartItems] = useState(loadCart);
     const [showCart, setShowCart] = useState(false);
     const [showToast, setShowToast] = useState(false);
+
+    // Fetch real products from backend on mount
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                setIsLoading(true);
+                const res = await fetch(`${BACKEND_URL}/api/products`);
+                const data = await res.json();
+                if (data.success) setProducts(data.data);
+            } catch (err) {
+                console.error('Failed to fetch products:', err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchProducts();
+    }, []);
+
+    // Persist cart to localStorage whenever it changes
+    useEffect(() => {
+        localStorage.setItem(CART_KEY, JSON.stringify(cartItems));
+    }, [cartItems]);
+
+    // Derive category list from fetched products
+    const categories = ['All', ...new Set(products.map(p => p.category))].filter(Boolean);
 
     // Filter and Sort Logic
     useEffect(() => {
         let result = [...products];
 
-        // Search
         if (searchQuery) {
             result = result.filter(p =>
                 p.name.toLowerCase().includes(searchQuery.toLowerCase())
             );
         }
 
-        // Category
         if (selectedCategory !== 'All') {
             result = result.filter(p => p.category === selectedCategory);
         }
 
-        // Sort
         if (sortBy === 'price-low') {
-            result.sort((a, b) => a.price - b.price);
+            result.sort((a, b) => parseFloat(a.sale_price || a.price) - parseFloat(b.sale_price || b.price));
         } else if (sortBy === 'price-high') {
-            result.sort((a, b) => b.price - a.price);
-        } else if (sortBy === 'newest') {
-            result.sort((a, b) => (b.isNew === a.isNew) ? 0 : b.isNew ? 1 : -1);
+            result.sort((a, b) => parseFloat(b.sale_price || b.price) - parseFloat(a.sale_price || a.price));
+        } else {
+            result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         }
 
         setFilteredProducts(result);
     }, [products, searchQuery, selectedCategory, sortBy]);
 
-    // Cart Functions
+    // ── Cart helpers ────────────────────────────────────────────────────────
     const addToCart = (product) => {
-        if (product.stock <= 0) return;
+        if (product.stock_quantity <= 0) return;
+        const unitPrice = parseFloat(product.sale_price || product.price);
 
         setCartItems(prev => {
-            const existing = prev.find(item => item.id === product.id);
+            const existing = prev.find(item => item.product_id === product.product_id);
             if (existing) {
+                if (existing.quantity >= product.stock_quantity) return prev;
                 return prev.map(item =>
-                    item.id === product.id
+                    item.product_id === product.product_id
                         ? { ...item, quantity: item.quantity + 1 }
                         : item
                 );
             }
-            return [...prev, { ...product, quantity: 1 }];
+            return [...prev, {
+                product_id: product.product_id,
+                name: product.name,
+                price: unitPrice,
+                image_url: product.image_url,
+                stock_quantity: product.stock_quantity,
+                quantity: 1,
+            }];
         });
 
         setShowToast(true);
@@ -141,29 +115,33 @@ const Store = () => {
     };
 
     const removeFromCart = (productId) => {
-        setCartItems(prev => prev.filter(item => item.id !== productId));
+        setCartItems(prev => prev.filter(item => item.product_id !== productId));
     };
 
     const updateQuantity = (productId, newQuantity) => {
-        if (newQuantity < 1) {
-            removeFromCart(productId);
-            return;
-        }
+        if (newQuantity < 1) { removeFromCart(productId); return; }
         setCartItems(prev =>
             prev.map(item =>
-                item.id === productId
-                    ? { ...item, quantity: newQuantity }
+                item.product_id === productId
+                    ? { ...item, quantity: Math.min(newQuantity, item.stock_quantity) }
                     : item
             )
         );
     };
 
-    const getCartTotal = () => {
-        return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-    };
+    const getCartTotal = () =>
+        cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
 
-    const getCartCount = () => {
-        return cartItems.reduce((count, item) => count + item.quantity, 0);
+    const getCartCount = () =>
+        cartItems.reduce((count, item) => count + item.quantity, 0);
+
+    const handleCheckout = () => {
+        setShowCart(false);
+        if (!isAuthenticated()) {
+            navigate('/signin', { state: { from: '/store' } });
+            return;
+        }
+        navigate('/checkout', { state: { cartItems, cartTotal: getCartTotal() } });
     };
 
     return (
@@ -187,18 +165,15 @@ const Store = () => {
                         />
                     </div>
 
+                    {/* Dynamic categories derived from real products */}
                     <select
                         className="toolbar-select"
                         value={selectedCategory}
                         onChange={(e) => setSelectedCategory(e.target.value)}
                     >
-                        <option value="All">All Categories</option>
-                        <option value="Fish">Fish</option>
-                        <option value="Tanks">Tanks</option>
-                        <option value="Filters">Filters</option>
-                        <option value="Food">Food</option>
-                        <option value="Medicine">Medicine</option>
-                        <option value="Accessories">Accessories</option>
+                        {categories.map(cat => (
+                            <option key={cat} value={cat}>{cat === 'All' ? 'All Categories' : cat}</option>
+                        ))}
                     </select>
                 </div>
 
@@ -217,55 +192,95 @@ const Store = () => {
                     <button className="cart-btn" onClick={() => setShowCart(true)}>
                         <ShoppingCart size={18} />
                         <span>Cart</span>
-                        <span className="cart-badge">{getCartCount()}</span>
+                        {getCartCount() > 0 && <span className="cart-badge">{getCartCount()}</span>}
                     </button>
                 </div>
             </div>
 
-            <div className="product-grid">
-                {filteredProducts.map(product => (
-                    <div key={product.id} className="product-card">
-
-                        <div className="card-media">
-                            <button className="btn-quick-view" title="Quick View">
-                                <Eye size={18} />
-                            </button>
-
-                            <img src={product.image} alt={product.name} className="product-image" />
-
-                            {product.stock <= 0 && (
-                                <div className="stock-overlay">Out of Stock</div>
-                            )}
-                        </div>
-
-                        <div className="card-info">
-                            <h3 className="product-name">{product.name}</h3>
-                            <div className="product-price">LKR {product.price.toLocaleString()}</div>
-                        </div>
-
-                        <button
-                            className="add-to-cart-btn"
-                            disabled={product.stock <= 0}
-                            onClick={() => addToCart(product)}
-                        >
-                            <ShoppingCart size={18} />
-                            {product.stock > 0 ? 'Add To Cart' : 'Out of Stock'}
-                        </button>
-                    </div>
-                ))}
-            </div>
-
-            {filteredProducts.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-                    No products found matching your criteria.
+            {/* Loading skeleton */}
+            {isLoading ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
+                    <Loader2 size={32} className="spin" style={{ animation: 'spin 1s linear infinite' }} />
+                    <span style={{ marginLeft: '1rem', fontSize: '1.1rem' }}>Loading products…</span>
+                    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
                 </div>
-            )}
+            ) : (
+                <>
+                    <div className="product-grid">
+                        {filteredProducts.map(product => {
+                            const displayPrice = parseFloat(product.sale_price || product.price);
+                            const hasDiscount = parseFloat(product.discount_percent) > 0;
+                            const outOfStock = product.stock_quantity <= 0;
 
-            <div className="pagination">
-                <button className="btn btn-outline load-more-btn">
-                    Load More Products
-                </button>
-            </div>
+                            return (
+                                <div key={product.product_id} className="product-card">
+                                    <div className="card-media">
+                                        <button className="btn-quick-view" title="Quick View">
+                                            <Eye size={18} />
+                                        </button>
+
+                                        {getImageUrl(product.image_url) ? (
+                                            <img
+                                                src={getImageUrl(product.image_url)}
+                                                alt={product.name}
+                                                className="product-image"
+                                                onError={(e) => { e.target.style.display = 'none'; }}
+                                            />
+                                        ) : (
+                                            <div className="product-image" style={{
+                                                background: 'rgba(78,205,196,0.1)',
+                                                display: 'flex', alignItems: 'center',
+                                                justifyContent: 'center', fontSize: '3rem'
+                                            }}>🐠</div>
+                                        )}
+
+                                        {outOfStock && (
+                                            <div className="stock-overlay">Out of Stock</div>
+                                        )}
+                                        {!outOfStock && product.stock_quantity <= 10 && (
+                                            <div className="stock-overlay" style={{ background: 'rgba(245,158,11,0.85)' }}>
+                                                Low Stock
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="card-info">
+                                        <h3 className="product-name">{product.name}</h3>
+                                        <div className="product-price">
+                                            LKR {displayPrice.toLocaleString()}
+                                            {hasDiscount && (
+                                                <span style={{
+                                                    marginLeft: '0.5rem',
+                                                    textDecoration: 'line-through',
+                                                    color: 'var(--text-muted)',
+                                                    fontSize: '0.85em',
+                                                }}>
+                                                    LKR {parseFloat(product.price).toLocaleString()}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        className="add-to-cart-btn"
+                                        disabled={outOfStock}
+                                        onClick={() => addToCart(product)}
+                                    >
+                                        <ShoppingCart size={18} />
+                                        {outOfStock ? 'Out of Stock' : 'Add To Cart'}
+                                    </button>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {filteredProducts.length === 0 && (
+                        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                            No products found matching your criteria.
+                        </div>
+                    )}
+                </>
+            )}
 
             {/* Cart Overlay */}
             <div className={`cart-overlay ${showCart ? 'active' : ''}`} onClick={() => setShowCart(false)}></div>
@@ -298,15 +313,24 @@ const Store = () => {
                             </div>
 
                             {cartItems.map(item => (
-                                <div key={item.id} className="cart-item">
+                                <div key={item.product_id} className="cart-item">
                                     <div className="cart-item-product">
                                         <button
                                             className="cart-item-remove"
-                                            onClick={() => removeFromCart(item.id)}
+                                            onClick={() => removeFromCart(item.product_id)}
                                         >
                                             <X size={16} />
                                         </button>
-                                        <img src={item.image} alt={item.name} className="cart-item-image" />
+                                        {getImageUrl(item.image_url) ? (
+                                            <img
+                                                src={getImageUrl(item.image_url)}
+                                                alt={item.name}
+                                                className="cart-item-image"
+                                                onError={(e) => { e.target.style.display = 'none'; }}
+                                            />
+                                        ) : (
+                                            <div className="cart-item-image" style={{ fontSize: '1.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🐠</div>
+                                        )}
                                         <span className="cart-item-name">{item.name}</span>
                                     </div>
                                     <div className="cart-item-price">
@@ -315,14 +339,14 @@ const Store = () => {
                                     <div className="cart-item-quantity">
                                         <button
                                             className="qty-btn"
-                                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                            onClick={() => updateQuantity(item.product_id, item.quantity - 1)}
                                         >
                                             <Minus size={14} />
                                         </button>
                                         <span className="qty-value">{item.quantity.toString().padStart(2, '0')}</span>
                                         <button
                                             className="qty-btn"
-                                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                            onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
                                         >
                                             <Plus size={14} />
                                         </button>
@@ -355,27 +379,7 @@ const Store = () => {
                                 <span>Total:</span>
                                 <span>LKR {getCartTotal().toLocaleString()}</span>
                             </div>
-                            <button
-                                className="checkout-btn"
-                                onClick={() => {
-                                    if (isAuthenticated()) {
-                                        navigate('/checkout', {
-                                            state: {
-                                                cartItems: cartItems,
-                                                cartTotal: getCartTotal()
-                                            }
-                                        });
-                                    } else {
-                                        navigate('/signin', {
-                                            state: {
-                                                from: '/checkout',
-                                                cartItems: cartItems,
-                                                cartTotal: getCartTotal()
-                                            }
-                                        });
-                                    }
-                                }}
-                            >
+                            <button className="checkout-btn" onClick={handleCheckout}>
                                 Proceed to Checkout
                             </button>
                         </div>
