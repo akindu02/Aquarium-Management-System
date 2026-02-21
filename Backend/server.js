@@ -5,6 +5,7 @@ const path = require('path');
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+const returnRoutes = require('./routes/returnRoutes');
 const { pool } = require('./config/db');
 
 const app = express();
@@ -80,6 +81,9 @@ app.use('/api/products', productRoutes);
 
 // Order routes
 app.use('/api/orders', orderRoutes);
+
+// Return routes
+app.use('/api/returns', returnRoutes);
 
 // Suppliers list (for dropdowns)
 app.get('/api/suppliers', async (req, res) => {

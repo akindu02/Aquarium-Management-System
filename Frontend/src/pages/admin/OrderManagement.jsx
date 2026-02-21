@@ -6,7 +6,7 @@ import {
     MessageSquare, User, ShoppingBag, Hash, Calendar, CreditCard, Filter
 } from 'lucide-react';
 import Swal from 'sweetalert2';
-import { getOrdersAPI, updateOrderStatusAPI } from '../../utils/api';
+import { getOrdersAPI, updateOrderStatusAPI, getAllReturnsAPI, updateReturnStatusAPI } from '../../utils/api';
 
 const OrderManagement = () => {
 
@@ -71,7 +71,8 @@ const OrderManagement = () => {
     const [activeTab, setActiveTab] = useState('orders');     // 'orders' | 'returns'
     const [orders, setOrders] = useState([]);
     const [isLoadingOrders, setIsLoadingOrders] = useState(true);
-    const [returns, setReturns] = useState(initialReturns);
+    const [returns, setReturns] = useState([]);
+    const [isLoadingReturns, setIsLoadingReturns] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('All');
     const [returnFilterStatus, setReturnFilterStatus] = useState('All');
@@ -106,6 +107,36 @@ const OrderManagement = () => {
     }, []);
 
     useEffect(() => { fetchOrders(); }, [fetchOrders]);
+
+    // ─── Fetch Returns ─────────────────────────────────────────────
+    const fetchReturns = useCallback(async () => {
+        try {
+            setIsLoadingReturns(true);
+            const res = await getAllReturnsAPI();
+            if (res.success) {
+                setReturns(res.data.map(r => ({
+                    _returnId: r.returnId,
+                    id: r.returnRef,
+                    orderId: r.orderRef,
+                    customer: r.customerName,
+                    email: r.customerEmail,
+                    submittedDate: r.submittedDate,
+                    items: r.itemsSummary,
+                    reason: r.reason,
+                    description: r.description,
+                    refundAmount: r.refundAmount,
+                    status: r.status,
+                    adminNote: r.adminNote,
+                })));
+            }
+        } catch (err) {
+            console.error('fetchReturns error:', err);
+        } finally {
+            setIsLoadingReturns(false);
+        }
+    }, []);
+
+    useEffect(() => { fetchReturns(); }, [fetchReturns]);
 
     // ─── Orders Logic ─────────────────────────────────────────────
     const filteredOrders = orders.filter(o => {
@@ -157,24 +188,29 @@ const OrderManagement = () => {
             confirmButtonText: label,
             background: '#1a1f2e',
             color: '#fff',
-        }).then((result) => {
+        }).then(async (result) => {
             if (result.isConfirmed) {
-                setReturns(prev => prev.map(r =>
-                    r.id === selectedReturn.id
-                        ? { ...r, status: newStatus, adminNote }
-                        : r
-                ));
-                setSelectedReturn(prev => ({ ...prev, status: newStatus, adminNote }));
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Status Updated',
-                    text: `Return ${selectedReturn.id} is now "${newStatus}".`,
-                    background: '#1a1f2e',
-                    color: '#fff',
-                    confirmButtonColor: '#4ecdc4',
-                    timer: 2000,
-                    showConfirmButton: false,
-                });
+                try {
+                    await updateReturnStatusAPI(selectedReturn._returnId, newStatus, adminNote);
+                    setReturns(prev => prev.map(r =>
+                        r.id === selectedReturn.id
+                            ? { ...r, status: newStatus, adminNote }
+                            : r
+                    ));
+                    setSelectedReturn(prev => ({ ...prev, status: newStatus, adminNote }));
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Status Updated',
+                        text: `Return ${selectedReturn.id} is now "${newStatus}".`,
+                        background: '#1a1f2e',
+                        color: '#fff',
+                        confirmButtonColor: '#4ecdc4',
+                        timer: 2000,
+                        showConfirmButton: false,
+                    });
+                } catch (err) {
+                    Swal.fire({ icon: 'error', title: 'Update Failed', text: err.message || 'Could not update return status.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#4ecdc4' });
+                }
             }
         });
     };
@@ -379,6 +415,9 @@ const OrderManagement = () => {
 
                     {/* Returns Table */}
                     <div className="om-table-container">
+                        {isLoadingReturns ? (
+                            <div style={{ textAlign: 'center', padding: '3rem', color: '#9ca3af' }}>Loading returns…</div>
+                        ) : (
                         <table className="om-table">
                             <thead>
                                 <tr>
@@ -443,6 +482,7 @@ const OrderManagement = () => {
                                 })}
                             </tbody>
                         </table>
+                        )}
                     </div>
                 </>
             )}

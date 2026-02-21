@@ -5,7 +5,7 @@ import {
     CheckSquare, Square, FileText, RefreshCw, ThumbsUp, ThumbsDown, Banknote
 } from 'lucide-react';
 import Swal from 'sweetalert2';
-import { getOrdersAPI } from '../../utils/api';
+import { getOrdersAPI, createReturnAPI, getMyReturnsAPI } from '../../utils/api';
 
 const MyOrders = () => {
     const [filter, setFilter] = useState('all');
@@ -19,18 +19,44 @@ const MyOrders = () => {
     const [returnDescription, setReturnDescription] = useState('');
 
     // Track submitted returns
-    const [returns, setReturns] = useState([
-        {
-            id: 'RET-2023-001',
-            orderId: 'ORD-2023-0820',
-            date: '2023-10-05',
-            items: [{ name: 'Betta Fish', qty: 2, price: 250 }],
-            reason: 'Defective / Dead on Arrival',
-            description: 'Both fish were dead when the package arrived.',
-            status: 'approved', // submitted, under_review, approved, rejected, refunded
-            refundAmount: 500,
-        }
-    ]);
+    const [returns, setReturns] = useState([]);
+    const [isLoadingReturns, setIsLoadingReturns] = useState(true);
+    const [isSubmittingReturn, setIsSubmittingReturn] = useState(false);
+
+    useEffect(() => {
+        const fetchReturns = async () => {
+            try {
+                setIsLoadingReturns(true);
+                const res = await getMyReturnsAPI();
+                if (res.success) {
+                    const statusMap = {
+                        'Pending': 'submitted',
+                        'Under Review': 'under_review',
+                        'Approved': 'approved',
+                        'Rejected': 'rejected',
+                        'Refunded': 'refunded',
+                    };
+                    setReturns(res.data.map(r => ({
+                        id: r.returnRef,
+                        _returnId: r.returnId,
+                        orderId: r.orderRef,
+                        date: r.submittedDate,
+                        items: r.items,
+                        reason: r.reason,
+                        description: r.description,
+                        status: statusMap[r.status] || 'submitted',
+                        refundAmount: r.refundAmount,
+                        adminNote: r.adminNote,
+                    })));
+                }
+            } catch (err) {
+                console.error('fetchReturns error:', err);
+            } finally {
+                setIsLoadingReturns(false);
+            }
+        };
+        fetchReturns();
+    }, []);
 
     const [orders, setOrders] = useState([]);
     const [isLoadingOrders, setIsLoadingOrders] = useState(true);
@@ -121,7 +147,7 @@ const MyOrders = () => {
     const openReturnModal = (order) => {
         setSelectedOrder(order);
         setReturnStep(1);
-        setSelectedItems([]);
+        setSelectedItems(order.items.map(i => i.name)); // pre-select all items (full-order return)
         setReturnReason('');
         setReturnDescription('');
         setShowReturnModal(true);
@@ -135,29 +161,48 @@ const MyOrders = () => {
         );
     };
 
-    const handleSubmitReturn = () => {
-        const newReturn = {
-            id: `RET-${Date.now()}`,
-            orderId: selectedOrder.id,
-            date: new Date().toISOString().split('T')[0],
-            items: selectedOrder.items.filter(i => selectedItems.includes(i.name)),
-            reason: returnReason,
-            description: returnDescription,
-            status: 'submitted',
-            refundAmount: selectedOrder.items
-                .filter(i => selectedItems.includes(i.name))
-                .reduce((sum, i) => sum + i.price * i.qty, 0),
-        };
-        setReturns(prev => [newReturn, ...prev]);
-        setShowReturnModal(false);
-        Swal.fire({
-            icon: 'success',
-            title: 'Return Request Submitted!',
-            text: 'We\'ll review your request within 2-3 business days and contact you.',
-            background: '#1a1f2e',
-            color: '#fff',
-            confirmButtonColor: '#4ecdc4',
-        });
+    const handleSubmitReturn = async () => {
+        setIsSubmittingReturn(true);
+        try {
+            const res = await createReturnAPI({
+                orderId: selectedOrder._orderId,
+                reason: returnReason,
+                description: returnDescription,
+            });
+            const newReturn = {
+                id: res.returnRef,
+                _returnId: res.returnId,
+                orderId: selectedOrder.id,
+                date: new Date().toISOString().split('T')[0],
+                items: selectedOrder.items,
+                reason: returnReason,
+                description: returnDescription,
+                status: 'submitted',
+                refundAmount: selectedOrder.total,
+                adminNote: '',
+            };
+            setReturns(prev => [newReturn, ...prev]);
+            setShowReturnModal(false);
+            Swal.fire({
+                icon: 'success',
+                title: 'Return Request Submitted!',
+                text: 'We\'ll review your request within 2-3 business days and contact you.',
+                background: '#1a1f2e',
+                color: '#fff',
+                confirmButtonColor: '#4ecdc4',
+            });
+        } catch (err) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Submission Failed',
+                text: err.message || 'Could not submit return request.',
+                background: '#1a1f2e',
+                color: '#fff',
+                confirmButtonColor: '#4ecdc4',
+            });
+        } finally {
+            setIsSubmittingReturn(false);
+        }
     };
 
     const canGoNext = () => {
@@ -199,7 +244,9 @@ const MyOrders = () => {
             {/* Returns Tab Content */}
             {filter === 'returns' ? (
                 <div className="orders-list">
-                    {returns.length === 0 ? (
+                    {isLoadingReturns ? (
+                        <div className="empty-state"><RefreshCw size={32} style={{ animation: 'spin 1s linear infinite' }} /><p>Loading return requests…</p></div>
+                    ) : returns.length === 0 ? (
                         <div className="empty-state">
                             <RotateCcw size={48} />
                             <h3>No Return Requests</h3>
@@ -492,8 +539,14 @@ const MyOrders = () => {
                                     Continue <ChevronRight size={15} />
                                 </button>
                             ) : (
-                                <button className="btn-submit-return" onClick={handleSubmitReturn}>
-                                    <RotateCcw size={15} /> Submit Return Request
+                                <button
+                                    className="btn-submit-return"
+                                    onClick={handleSubmitReturn}
+                                    disabled={isSubmittingReturn}
+                                    style={{ opacity: isSubmittingReturn ? 0.7 : 1 }}
+                                >
+                                    <RotateCcw size={15} style={{ animation: isSubmittingReturn ? 'spin 1s linear infinite' : 'none' }} />
+                                    {isSubmittingReturn ? 'Submitting…' : 'Submit Return Request'}
                                 </button>
                             )}
                         </div>

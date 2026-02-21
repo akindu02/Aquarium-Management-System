@@ -220,3 +220,46 @@ export const getOrderStatsAPI = async () => {
     return apiRequest('/orders/stats', { method: 'GET' });
 };
 
+// =============================================
+// RETURN APIs
+// =============================================
+
+/**
+ * Customer - Submit a full-order return request
+ * @param {{ orderId: number, reason: string, description: string }} data
+ */
+export const createReturnAPI = async (data) => {
+    return apiRequest('/returns', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+};
+
+/**
+ * Customer - Get their own return requests
+ */
+export const getMyReturnsAPI = async () => {
+    return apiRequest('/returns/my', { method: 'GET' });
+};
+
+/**
+ * Admin / Staff - Get all return requests (with optional filters)
+ */
+export const getAllReturnsAPI = async (filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.status && filters.status !== 'All') params.append('status', filters.status);
+    if (filters.search) params.append('search', filters.search);
+    const qs = params.toString();
+    return apiRequest(`/returns${qs ? `?${qs}` : ''}`, { method: 'GET' });
+};
+
+/**
+ * Admin / Staff - Update return status and admin note
+ */
+export const updateReturnStatusAPI = async (returnId, status, adminNote = '') => {
+    return apiRequest(`/returns/${returnId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status, adminNote }),
+    });
+};
+
