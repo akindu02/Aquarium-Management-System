@@ -237,11 +237,6 @@ const Store = () => {
                                         {outOfStock && (
                                             <div className="stock-overlay">Out of Stock</div>
                                         )}
-                                        {!outOfStock && product.stock_quantity <= 10 && (
-                                            <div className="stock-overlay" style={{ background: 'rgba(245,158,11,0.85)' }}>
-                                                Low Stock
-                                            </div>
-                                        )}
                                     </div>
 
                                     <div className="card-info">
