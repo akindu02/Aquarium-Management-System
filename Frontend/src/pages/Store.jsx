@@ -35,6 +35,14 @@ const Store = () => {
     const [showCart, setShowCart] = useState(false);
     const [showToast, setShowToast] = useState(false);
     const [quickViewProduct, setQuickViewProduct] = useState(null);
+    const [showFloatingCart, setShowFloatingCart] = useState(false);
+
+    // Show floating cart button when user scrolls past the toolbar
+    useEffect(() => {
+        const handleScroll = () => setShowFloatingCart(window.scrollY > 200);
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     // Fetch real products from backend on mount
     useEffect(() => {
@@ -390,6 +398,18 @@ const Store = () => {
             <div className={`toast ${showToast ? 'show' : ''}`}>
                 Added to cart successfully!
             </div>
+
+            {/* ── Floating Cart Button (visible on scroll) ── */}
+            <button
+                className={`floating-cart-btn ${showFloatingCart && !showCart ? 'visible' : ''}`}
+                onClick={() => setShowCart(true)}
+                aria-label="View Cart"
+            >
+                <ShoppingCart size={22} />
+                {getCartCount() > 0 && (
+                    <span className="floating-cart-badge">{getCartCount()}</span>
+                )}
+            </button>
 
             {/* ── Quick View Modal ── */}
             {quickViewProduct && (
