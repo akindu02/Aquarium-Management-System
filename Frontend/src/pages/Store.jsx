@@ -34,6 +34,7 @@ const Store = () => {
     const [cartItems, setCartItems] = useState(loadCart);
     const [showCart, setShowCart] = useState(false);
     const [showToast, setShowToast] = useState(false);
+    const [quickViewProduct, setQuickViewProduct] = useState(null);
 
     // Fetch real products from backend on mount
     useEffect(() => {
@@ -215,7 +216,11 @@ const Store = () => {
                             return (
                                 <div key={product.product_id} className="product-card">
                                     <div className="card-media">
-                                        <button className="btn-quick-view" title="Quick View">
+                                        <button
+                                            className="btn-quick-view"
+                                            title="Quick View"
+                                            onClick={() => setQuickViewProduct(product)}
+                                        >
                                             <Eye size={18} />
                                         </button>
 
@@ -385,6 +390,82 @@ const Store = () => {
             <div className={`toast ${showToast ? 'show' : ''}`}>
                 Added to cart successfully!
             </div>
+
+            {/* ── Quick View Modal ── */}
+            {quickViewProduct && (
+                <div className="qv-overlay" onClick={() => setQuickViewProduct(null)}>
+                    <div className="qv-modal" onClick={e => e.stopPropagation()}>
+                        <button className="qv-close" onClick={() => setQuickViewProduct(null)}>
+                            <X size={22} />
+                        </button>
+
+                        <div className="qv-body">
+                            {/* Left – Image */}
+                            <div className="qv-image-wrap">
+                                {getImageUrl(quickViewProduct.image_url) ? (
+                                    <img
+                                        src={getImageUrl(quickViewProduct.image_url)}
+                                        alt={quickViewProduct.name}
+                                        className="qv-image"
+                                        onError={e => { e.target.style.display = 'none'; }}
+                                    />
+                                ) : (
+                                    <div className="qv-image-placeholder">🐠</div>
+                                )}
+                            </div>
+
+                            {/* Right – Details */}
+                            <div className="qv-details">
+                                {quickViewProduct.category && (
+                                    <span className="qv-category">{quickViewProduct.category}</span>
+                                )}
+                                <h2 className="qv-name">{quickViewProduct.name}</h2>
+
+                                <div className="qv-price-row">
+                                    <span className="qv-price">
+                                        LKR {parseFloat(quickViewProduct.sale_price || quickViewProduct.price).toLocaleString()}
+                                    </span>
+                                    {parseFloat(quickViewProduct.discount_percent) > 0 && (
+                                        <>
+                                            <span className="qv-original-price">
+                                                LKR {parseFloat(quickViewProduct.price).toLocaleString()}
+                                            </span>
+                                            <span className="qv-discount-badge">
+                                                -{quickViewProduct.discount_percent}% OFF
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
+
+                                <p className="qv-description">
+                                    {quickViewProduct.description
+                                        ? quickViewProduct.description
+                                        : 'No description available for this product.'}
+                                </p>
+
+                                <div className="qv-stock-row">
+                                    <span className={`qv-stock-badge ${quickViewProduct.stock_quantity <= 0 ? 'out' : quickViewProduct.stock_quantity <= 10 ? 'low' : 'in'}`}>
+                                        {quickViewProduct.stock_quantity <= 0
+                                            ? 'Out of Stock'
+                                            : quickViewProduct.stock_quantity <= 10
+                                                ? `Low Stock — ${quickViewProduct.stock_quantity} left`
+                                                : 'In Stock'}
+                                    </span>
+                                </div>
+
+                                <button
+                                    className="qv-add-btn"
+                                    disabled={quickViewProduct.stock_quantity <= 0}
+                                    onClick={() => { addToCart(quickViewProduct); setQuickViewProduct(null); }}
+                                >
+                                    <ShoppingCart size={18} />
+                                    {quickViewProduct.stock_quantity <= 0 ? 'Out of Stock' : 'Add To Cart'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
