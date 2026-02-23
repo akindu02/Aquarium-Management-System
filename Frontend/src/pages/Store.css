@@ -235,6 +235,7 @@
     justify-content: center;
     align-items: center;
     min-height: 250px;
+    flex-grow: 1;
 }
 
 .product-image {
@@ -293,11 +294,13 @@
 
 /* Info Section - kept minimal inside card */
 .card-info {
-    padding: 0.5rem 1rem;
+    padding: 1rem;
     text-align: center;
-    background-color: #f8f9fa;
-    flex-grow: 1;
-    /* Pushes button to bottom */
+    background-color: #e5e7eb; /* Slightly darker gray to contrast with white images */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 90px;
 }
 
 .product-name {
@@ -306,6 +309,10 @@
     /* Dark text for light card */
     margin-bottom: 0.25rem;
     font-size: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .product-price {
