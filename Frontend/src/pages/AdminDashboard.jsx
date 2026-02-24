@@ -116,9 +116,10 @@ const AdminDashboard = () => {
           <div className="header-left"></div>
           <div className="header-right">
             <button className="notification-btn" title="Notifications">
-              <Bell className="notification-icon" />
+              <Bell size={18} className="notification-icon" />
               <span className="notification-badge">3</span>
             </button>
+            <div className="header-divider" />
             <div className="header-profile" onClick={() => setShowProfileModal(true)} title="Profile settings">
               <div className="header-avatar">
                 {getInitials(user?.name)}
@@ -127,7 +128,6 @@ const AdminDashboard = () => {
                 <p className="header-user-name">{user?.name || 'Admin'}</p>
                 <p className="header-user-role">Administrator</p>
               </div>
-              <Settings size={14} style={{ color: 'var(--text-muted)' }} />
             </div>
           </div>
         </header>
@@ -365,65 +365,71 @@ const AdminDashboard = () => {
                 .header-right {
                     display: flex;
                     align-items: center;
-                    gap: 1.5rem;
+                    gap: 1rem;
                 }
 
                 /* Notification Button */
                 .notification-btn {
                     position: relative;
-                    width: 40px;
-                    height: 40px;
-                    border-radius: 50%;
-                    background: rgba(255, 255, 255, 0.05);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    background: none;
+                    border: none;
+                    padding: 6px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     cursor: pointer;
-                    transition: all 0.2s ease;
+                    color: var(--text-muted);
+                    border-radius: 8px;
+                    transition: color 0.15s;
                 }
 
                 .notification-btn:hover {
-                    background: rgba(255, 255, 255, 0.1);
+                    color: var(--text-main);
                 }
 
                 .notification-icon {
-                    color: var(--text-main);
-                    font-weight: 600;
-                    font-size: 0.9rem;
+                    color: inherit;
                 }
 
                 .notification-badge {
                     position: absolute;
-                    top: -5px;
-                    right: -5px;
-                    width: 20px;
-                    height: 20px;
-                    border-radius: 50%;
-                    background: #FF6B6B;
+                    top: 2px;
+                    right: 2px;
+                    min-width: 16px;
+                    height: 16px;
+                    padding: 0 4px;
+                    border-radius: 8px;
+                    background: #ef4444;
                     color: white;
-                    font-size: 0.7rem;
+                    font-size: 0.62rem;
                     font-weight: 700;
                     display: flex;
                     align-items: center;
                     justify-content: center;
+                    line-height: 1;
+                }
+
+                .header-divider {
+                    width: 1px;
+                    height: 28px;
+                    background: rgba(255, 255, 255, 0.08);
                 }
 
                 /* Header Profile */
                 .header-profile {
                     display: flex;
                     align-items: center;
-                    gap: 0.75rem;
-                    padding: 0.5rem 1rem;
-                    background: rgba(255, 255, 255, 0.03);
-                    border: 1px solid rgba(255, 255, 255, 0.08);
-                    border-radius: 50px;
+                    gap: 0.65rem;
+                    padding: 4px 6px;
+                    background: none;
+                    border: none;
+                    border-radius: 10px;
                     cursor: pointer;
-                    transition: all 0.2s ease;
+                    transition: background 0.15s;
                 }
 
                 .header-profile:hover {
-                    background: rgba(255, 255, 255, 0.08);
+                    background: rgba(255, 255, 255, 0.05);
                 }
 
                 .header-avatar {
