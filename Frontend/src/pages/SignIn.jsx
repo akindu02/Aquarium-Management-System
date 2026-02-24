@@ -144,36 +144,36 @@ const SignIn = () => {
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 8rem 2rem 2rem;
+          padding: 6rem 2rem 2rem;
         }
 
         .signin-container {
-          max-width: 500px;
+          max-width: 420px;
           width: 100%;
         }
 
         .signin-header {
           text-align: center;
-          margin-bottom: 2rem;
+          margin-bottom: 1.5rem;
         }
 
         .signin-subtitle {
           color: var(--text-muted);
-          font-size: 1rem;
+          font-size: 0.9rem;
         }
 
         .section-heading {
           text-align: center;
-          font-size: 2rem;
+          font-size: 1.65rem;
           font-weight: 600;
           color: var(--text-main);
-          margin-bottom: 0.5rem;
+          margin-bottom: 0.4rem;
         }
 
         .signin-form {
           width: 100%;
-          padding: 2.5rem;
-          border-radius: 16px;
+          padding: 2rem;
+          border-radius: 14px;
           animation: slideIn 0.3s ease;
         }
 
@@ -190,10 +190,10 @@ const SignIn = () => {
 
         .form-heading {
           text-align: center;
-          font-size: 1.5rem;
+          font-size: 1.25rem;
           font-weight: 600;
           color: var(--text-main);
-          margin-bottom: 2rem;
+          margin-bottom: 1.5rem;
         }
 
         .error-message {
@@ -208,25 +208,25 @@ const SignIn = () => {
         }
 
         .form-group {
-          margin-bottom: 1.5rem;
+          margin-bottom: 1.1rem;
         }
 
         .form-label {
           display: block;
           color: var(--text-main);
           font-weight: 500;
-          margin-bottom: 0.5rem;
-          font-size: 0.95rem;
+          margin-bottom: 0.4rem;
+          font-size: 0.875rem;
         }
 
         .form-input {
           width: 100%;
-          padding: 0.875rem 1rem;
+          padding: 0.65rem 0.875rem;
           background: rgba(255, 255, 255, 0.05);
           border: 1px solid var(--glass-border);
-          border-radius: 10px;
+          border-radius: 8px;
           color: var(--text-main);
-          font-size: 1rem;
+          font-size: 0.925rem;
           font-family: var(--font-main);
           transition: all 0.3s ease;
         }
@@ -245,8 +245,8 @@ const SignIn = () => {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 2rem;
-          font-size: 0.9rem;
+          margin-bottom: 1.5rem;
+          font-size: 0.85rem;
         }
 
         .remember-me {
@@ -276,17 +276,17 @@ const SignIn = () => {
 
         .signin-btn {
           width: 100%;
-          padding: 1rem;
-          font-size: 1rem;
+          padding: 0.8rem;
+          font-size: 0.95rem;
           font-weight: 600;
           letter-spacing: 0.5px;
         }
 
         .signup-link {
           text-align: center;
-          margin-top: 2rem;
+          margin-top: 1.5rem;
           color: var(--text-muted);
-          font-size: 0.95rem;
+          font-size: 0.875rem;
         }
 
         .signup-link a {
