@@ -492,49 +492,100 @@ const OrderManagement = () => {
             {/* ═══════════════════════════════════════════════════════ */}
             {selectedOrder && (
                 <div className="modal-overlay" onClick={() => setSelectedOrder(null)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h3>Order Details</h3>
-                            <button className="modal-close" onClick={() => setSelectedOrder(null)}><X size={20} /></button>
-                        </div>
-                        <div className="modal-body">
-                            <div className="order-summary-header">
+                    <div className="od-modal" onClick={e => e.stopPropagation()}>
+
+                        {/* ── Hero Header ── */}
+                        <div className="od-hero">
+                            <div className="od-hero-top">
+                                <div className="od-id-pill">
+                                    <ShoppingBag size={13} />
+                                    {selectedOrder.id}
+                                </div>
+                                {(() => {
+                                    const statusMap = {
+                                        Processing: { color: '#60a5fa', bg: 'rgba(96,165,250,0.15)', Icon: Clock },
+                                        Shipped:    { color: '#fb923c', bg: 'rgba(251,146,60,0.15)',  Icon: Truck },
+                                        Delivered:  { color: '#4ade80', bg: 'rgba(74,222,128,0.15)',  Icon: Check },
+                                        Cancelled:  { color: '#f87171', bg: 'rgba(248,113,113,0.15)', Icon: X },
+                                    };
+                                    const { color, bg, Icon: SI } = statusMap[selectedOrder.status] || { color: '#94a3b8', bg: 'rgba(148,163,184,0.15)', Icon: Clock };
+                                    return (
+                                        <span className="od-status-badge" style={{ color, background: bg }}>
+                                            <SI size={12} />{selectedOrder.status}
+                                        </span>
+                                    );
+                                })()}
+                            </div>
+                            <div className="od-hero-bottom">
                                 <div>
-                                    <h2 className="summary-id">{selectedOrder.id}</h2>
-                                    <p className="summary-date">Placed on {selectedOrder.date}</p>
+                                    <div className="od-total">LKR {selectedOrder.total.toLocaleString()}</div>
+                                    <div className="od-date"><Calendar size={13} /> Placed on {selectedOrder.date}</div>
                                 </div>
-                                <div className="summary-total">LKR {selectedOrder.total.toLocaleString()}</div>
+                                <button className="od-close-btn" onClick={() => setSelectedOrder(null)}><X size={18} /></button>
                             </div>
-                            <div className="grid-2-col">
-                                <div className="detail-box">
-                                    <h4>Customer Information</h4>
-                                    <p>{selectedOrder.customer}</p>
-                                    <p>{selectedOrder.email}</p>
+                        </div>
+
+                        {/* ── Body ── */}
+                        <div className="od-body">
+
+                            {/* Info Grid */}
+                            <div className="od-info-grid">
+                                <div className="od-info-card">
+                                    <div className="od-card-label"><User size={13} />Customer</div>
+                                    <div className="od-card-value">{selectedOrder.customer}</div>
+                                    <div className="od-card-sub">{selectedOrder.email}</div>
                                 </div>
-                                <div className="detail-box">
-                                    <h4>Shipping Address</h4>
-                                    <p>{selectedOrder.address}</p>
+                                <div className="od-info-card">
+                                    <div className="od-card-label"><Truck size={13} />Shipping Address</div>
+                                    <div className="od-card-value" style={{ fontSize: '0.9rem' }}>
+                                        {selectedOrder.address || <span style={{ color:'var(--text-muted)', fontStyle:'italic' }}>No address provided</span>}
+                                    </div>
                                 </div>
                             </div>
-                            <div className="items-box">
-                                <h4>Items Ordered</h4>
-                                <p>{selectedOrder.items}</p>
-                            </div>
-                            <div className="status-actions">
-                                <h4>Update Status</h4>
-                                <div className="status-buttons">
-                                    {['Processing', 'Shipped', 'Delivered', 'Cancelled'].map(s => (
-                                        <button
-                                            key={s}
-                                            className={`status-btn ${selectedOrder.status === s ? 'active' : ''}`}
-                                            onClick={() => {
-                                                updateOrderStatus(selectedOrder.id, s);
-                                                setSelectedOrder({ ...selectedOrder, status: s });
-                                            }}
-                                        >{s}</button>
+
+                            {/* Items */}
+                            <div className="od-section">
+                                <div className="od-section-label"><Package size={13} />Items Ordered</div>
+                                <div className="od-items-list">
+                                    {String(selectedOrder.items).split(',').map((item, i) => (
+                                        <div key={i} className="od-item-row">
+                                            <span className="od-item-dot" />
+                                            <span>{item.trim()}</span>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
+
+                            {/* Update Status */}
+                            <div className="od-section">
+                                <div className="od-section-label"><RefreshCw size={13} />Update Order Status</div>
+                                <div className="od-status-grid">
+                                    {[
+                                        { label: 'Processing', Icon: Clock,  color: '#60a5fa', active: 'rgba(96,165,250,0.18)'  },
+                                        { label: 'Shipped',    Icon: Truck,  color: '#fb923c', active: 'rgba(251,146,60,0.18)'  },
+                                        { label: 'Delivered',  Icon: Check,  color: '#4ade80', active: 'rgba(74,222,128,0.18)'  },
+                                        { label: 'Cancelled',  Icon: X,      color: '#f87171', active: 'rgba(248,113,113,0.18)' },
+                                    ].map(({ label, Icon: SI, color, active }) => {
+                                        const isActive = selectedOrder.status === label;
+                                        return (
+                                            <button
+                                                key={label}
+                                                className={`od-status-btn ${isActive ? 'od-status-btn--active' : ''}`}
+                                                style={isActive ? { background: active, borderColor: color, color } : {}}
+                                                onClick={() => {
+                                                    updateOrderStatus(selectedOrder.id, label);
+                                                    setSelectedOrder({ ...selectedOrder, status: label });
+                                                }}
+                                            >
+                                                <SI size={14} />
+                                                {label}
+                                                {isActive && <span className="od-active-dot" style={{ background: color }} />}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -835,28 +886,27 @@ const OrderManagement = () => {
                 }
                 .btn-icon:hover { background: rgba(255,255,255,0.12); }
 
-                /* Order Modal */
+                /* ── Shared overlay & return modal reuse ── */
                 .modal-overlay {
                     position: fixed; inset: 0;
-                    background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+                    background: rgba(0,0,0,0.72); backdrop-filter: blur(6px);
                     display: flex; align-items: center; justify-content: center;
                     z-index: 200; padding: 1rem;
                     animation: fadeIn 0.2s ease;
                 }
                 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes slideUp {
+                    from { transform: translateY(24px) scale(0.98); opacity: 0; }
+                    to   { transform: translateY(0)     scale(1);    opacity: 1; }
+                }
 
+                /* Legacy classes kept for Return modal */
                 .modal-content {
                     background: #1a1f2e; width: 600px; max-width: 100%;
                     border-radius: 1rem; border: 1px solid rgba(255,255,255,0.1);
                     overflow: hidden; animation: slideUp 0.25s ease;
                 }
-                @keyframes slideUp {
-                    from { transform: translateY(20px); opacity: 0; }
-                    to { transform: translateY(0); opacity: 1; }
-                }
-
                 .ret-modal { width: 660px; max-height: 90vh; overflow-y: auto; }
-
                 .modal-header {
                     padding: 1.5rem;
                     border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -866,57 +916,164 @@ const OrderManagement = () => {
                 .ret-modal-id { font-family: monospace; color: #fb923c; font-size: 0.85rem; display: block; margin-top: 2px; }
                 .modal-close { background: transparent; border: none; color: var(--text-muted); cursor: pointer; }
                 .modal-close:hover { color: #f87171; }
-
                 .modal-body { padding: 1.5rem; }
                 .ret-modal-body { display: flex; flex-direction: column; gap: 1.25rem; padding: 1.25rem 1.5rem; }
-
-                /* Return Review Modal Internals */
-                .ret-status-banner {
-                    display: flex; align-items: center; gap: 8px;
-                    padding: 0.75rem 1rem; border-radius: 8px;
-                    border: 1px solid; font-size: 0.9rem;
-                }
-
-                .order-summary-header {
-                    display: flex; justify-content: space-between; align-items: flex-start;
-                    margin-bottom: 2rem; padding-bottom: 1rem;
-                    border-bottom: 1px dashed rgba(255,255,255,0.1);
-                }
-                .summary-id { color: var(--color-primary); font-family: monospace; margin: 0 0 0.25rem; }
-                .summary-date { font-size: 0.9rem; color: var(--text-muted); margin: 0; }
-                .summary-total { font-size: 1.75rem; font-weight: 700; color: var(--text-main); }
-
+                .ret-status-banner { display: flex; align-items: center; gap: 8px; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid; font-size: 0.9rem; }
                 .grid-2-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-
-                .detail-box {
-                    background: rgba(255,255,255,0.03);
-                    border: 1px solid rgba(255,255,255,0.07);
-                    border-radius: 10px; padding: 1rem;
-                }
-                .detail-box h4 {
-                    display: flex; align-items: center;
-                    font-size: 0.75rem; text-transform: uppercase;
-                    color: var(--text-muted); margin: 0 0 0.6rem; letter-spacing: 0.06em;
-                }
+                .detail-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 1rem; }
+                .detail-box h4 { display: flex; align-items: center; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin: 0 0 0.6rem; letter-spacing: 0.06em; }
                 .detail-box p { margin: 0.2rem 0; color: var(--text-main); font-size: 0.9rem; }
                 .detail-name { font-weight: 600 !important; }
                 .detail-sub { color: var(--text-muted) !important; font-size: 0.82rem !important; }
                 .ret-refund-big { font-size: 1.2rem !important; font-weight: 800 !important; color: #4ade80 !important; }
-
-                .items-box {
-                    background: rgba(255,255,255,0.03); padding: 1rem;
-                    border-radius: 10px; border: 1px solid rgba(255,255,255,0.07);
-                }
-                .items-box h4 {
-                    display: flex; align-items: center;
-                    font-size: 0.75rem; text-transform: uppercase;
-                    color: var(--text-muted); margin: 0 0 0.5rem; letter-spacing: 0.06em;
-                }
+                .items-box { background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.07); }
+                .items-box h4 { display: flex; align-items: center; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin: 0 0 0.5rem; letter-spacing: 0.06em; }
                 .items-box p { margin: 0; color: var(--text-main); }
-
                 .ret-reason-box { margin: 0; }
                 .ret-reason-title { font-weight: 700; color: var(--text-main); margin: 0 0 0.4rem; }
                 .ret-reason-desc { color: var(--text-muted); font-size: 0.88rem; font-style: italic; margin: 0; }
+
+                /* ═══════════════════════════════════════
+                   ORDER DETAILS MODAL — redesigned
+                ═══════════════════════════════════════ */
+                .od-modal {
+                    background: #13172299;
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
+                    border: 1px solid rgba(255,255,255,0.1);
+                    border-radius: 20px;
+                    width: 520px; max-width: 100%;
+                    overflow: hidden;
+                    animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+                    box-shadow: 0 25px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06);
+                }
+
+                /* Hero banner */
+                .od-hero {
+                    background: linear-gradient(135deg, #0f1724 0%, #1a2540 60%, #0d1f35 100%);
+                    padding: 1.5rem 1.5rem 1.25rem;
+                    border-bottom: 1px solid rgba(255,255,255,0.07);
+                }
+                .od-hero-top {
+                    display: flex; align-items: center; justify-content: space-between;
+                    margin-bottom: 1.1rem;
+                }
+                .od-id-pill {
+                    display: inline-flex; align-items: center; gap: 6px;
+                    background: rgba(78,205,196,0.12);
+                    border: 1px solid rgba(78,205,196,0.25);
+                    color: #4ecdc4; font-family: monospace;
+                    font-size: 0.82rem; font-weight: 700;
+                    padding: 0.3rem 0.75rem; border-radius: 50px;
+                    letter-spacing: 0.04em;
+                }
+                .od-status-badge {
+                    display: inline-flex; align-items: center; gap: 5px;
+                    font-size: 0.78rem; font-weight: 700;
+                    padding: 0.28rem 0.7rem; border-radius: 50px;
+                    letter-spacing: 0.02em;
+                }
+                .od-hero-bottom {
+                    display: flex; align-items: flex-end; justify-content: space-between;
+                }
+                .od-total {
+                    font-size: 2rem; font-weight: 800;
+                    color: #fff; letter-spacing: -0.02em; line-height: 1;
+                    margin-bottom: 0.35rem;
+                }
+                .od-date {
+                    display: flex; align-items: center; gap: 5px;
+                    font-size: 0.82rem; color: rgba(255,255,255,0.45);
+                }
+                .od-close-btn {
+                    background: rgba(255,255,255,0.08);
+                    border: 1px solid rgba(255,255,255,0.1);
+                    color: rgba(255,255,255,0.5);
+                    width: 34px; height: 34px; border-radius: 50%;
+                    display: flex; align-items: center; justify-content: center;
+                    cursor: pointer; flex-shrink: 0; align-self: flex-start;
+                    transition: all 0.2s;
+                }
+                .od-close-btn:hover { background: rgba(239,68,68,0.2); color: #f87171; border-color: rgba(239,68,68,0.3); }
+
+                /* Body */
+                .od-body {
+                    padding: 1.25rem 1.5rem 1.5rem;
+                    display: flex; flex-direction: column; gap: 1.25rem;
+                }
+
+                /* Info grid */
+                .od-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+                .od-info-card {
+                    background: rgba(255,255,255,0.04);
+                    border: 1px solid rgba(255,255,255,0.07);
+                    border-radius: 12px; padding: 1rem;
+                    transition: border-color 0.2s;
+                }
+                .od-info-card:hover { border-color: rgba(255,255,255,0.13); }
+                .od-card-label {
+                    display: flex; align-items: center; gap: 5px;
+                    font-size: 0.72rem; font-weight: 700;
+                    text-transform: uppercase; letter-spacing: 0.07em;
+                    color: var(--text-muted); margin-bottom: 0.5rem;
+                }
+                .od-card-value { font-weight: 600; color: var(--text-main); font-size: 0.95rem; margin-bottom: 0.2rem; }
+                .od-card-sub { font-size: 0.8rem; color: var(--text-muted); }
+
+                /* Section generic */
+                .od-section {
+                    background: rgba(255,255,255,0.03);
+                    border: 1px solid rgba(255,255,255,0.07);
+                    border-radius: 12px; padding: 1rem;
+                }
+                .od-section-label {
+                    display: flex; align-items: center; gap: 5px;
+                    font-size: 0.72rem; font-weight: 700;
+                    text-transform: uppercase; letter-spacing: 0.07em;
+                    color: var(--text-muted); margin-bottom: 0.75rem;
+                }
+
+                /* Items list */
+                .od-items-list { display: flex; flex-direction: column; gap: 0.4rem; }
+                .od-item-row {
+                    display: flex; align-items: center; gap: 0.6rem;
+                    color: var(--text-main); font-size: 0.92rem; padding: 0.3rem 0;
+                    border-bottom: 1px solid rgba(255,255,255,0.04);
+                }
+                .od-item-row:last-child { border-bottom: none; }
+                .od-item-dot {
+                    width: 6px; height: 6px; border-radius: 50%;
+                    background: var(--color-primary); flex-shrink: 0;
+                }
+
+                /* Status buttons */
+                .od-status-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 0.6rem; }
+                .od-status-btn {
+                    display: flex; flex-direction: column; align-items: center; gap: 5px;
+                    padding: 0.65rem 0.5rem;
+                    background: rgba(255,255,255,0.04);
+                    border: 1px solid rgba(255,255,255,0.09);
+                    border-radius: 10px; color: var(--text-muted);
+                    font-size: 0.8rem; font-weight: 600;
+                    cursor: pointer; transition: all 0.2s; position: relative;
+                }
+                .od-status-btn:hover {
+                    background: rgba(255,255,255,0.08);
+                    border-color: rgba(255,255,255,0.18);
+                    color: var(--text-main);
+                    transform: translateY(-1px);
+                }
+                .od-status-btn--active { font-weight: 700; }
+                .od-active-dot {
+                    width: 5px; height: 5px; border-radius: 50%;
+                    position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%);
+                }
+
+                @media (max-width: 560px) {
+                    .od-modal { border-radius: 16px; }
+                    .od-info-grid { grid-template-columns: 1fr; }
+                    .od-status-grid { grid-template-columns: repeat(2,1fr); }
+                }
 
                 /* Admin Note */
                 .admin-note-section { display: flex; flex-direction: column; gap: 0.5rem; }
