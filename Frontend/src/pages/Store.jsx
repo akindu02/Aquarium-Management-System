@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Eye, Search, X, Plus, Minus, ArrowLeft, Loader2 } from 'lucide-react';
+import { ShoppingCart, Eye, Search, X, Plus, Minus, ArrowLeft, Loader2, Trash2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import { isAuthenticated } from '../utils/auth';
 import './Store.css';
 
@@ -370,6 +371,27 @@ const Store = () => {
                             <button className="btn btn-outline" onClick={() => setShowCart(false)}>
                                 <ArrowLeft size={18} />
                                 Return To Shop
+                            </button>
+                            <button
+                                className="btn btn-clear-cart"
+                                onClick={() => {
+                                    Swal.fire({
+                                        title: 'Clear Cart?',
+                                        text: 'All items will be removed from your cart.',
+                                        icon: 'warning',
+                                        showCancelButton: true,
+                                        confirmButtonText: 'Yes, clear it',
+                                        cancelButtonText: 'Cancel',
+                                        confirmButtonColor: '#ef4444',
+                                        cancelButtonColor: '#6b7280',
+                                        borderRadius: '12px',
+                                    }).then((result) => {
+                                        if (result.isConfirmed) setCartItems([]);
+                                    });
+                                }}
+                            >
+                                <Trash2 size={16} />
+                                Clear Cart
                             </button>
                         </div>
 

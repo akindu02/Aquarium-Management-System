@@ -652,13 +652,36 @@
     padding: 1rem 1.5rem;
     border-top: 1px solid #e5e7eb;
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
 }
 
 .cart-actions .btn {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.btn-clear-cart {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 1rem;
+    border-radius: 99px;
+    background: transparent;
+    border: 1px solid #ef4444;
+    color: #ef4444;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-clear-cart:hover {
+    background: #ef4444;
+    color: #ffffff;
 }
 
 /* Cart Summary */
