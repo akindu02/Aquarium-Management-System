@@ -3,6 +3,7 @@ import { LayoutDashboard, ShoppingBag, CalendarDays, CalendarCheck, Settings, Be
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
+import ProfileModal from '../components/ProfileModal';
 import MyBookings from './customer/MyBookings';
 import MyOrders from './customer/MyOrders';
 import '../index.css';
@@ -11,7 +12,13 @@ const CustomerDashboard = () => {
   const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const user = getUserData();
+  const [user, setUser] = useState(getUserData());
+  const [showProfileModal, setShowProfileModal] = useState(false);
+
+  const getInitials = (name) => {
+    if (!name) return '?';
+    return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  };
 
   const handleLogout = async () => {
     try {
@@ -99,14 +106,15 @@ const CustomerDashboard = () => {
               <Bell className="notification-icon" />
               <span className="notification-badge">2</span>
             </button>
-            <div className="header-profile">
+            <div className="header-profile" onClick={() => setShowProfileModal(true)} title="Profile settings">
               <div className="header-avatar">
-                {user?.firstName?.[0]}{user?.lastName?.[0]}
+                {getInitials(user?.name)}
               </div>
               <div className="header-user-info">
-                <p className="header-user-name">{user?.firstName} {user?.lastName}</p>
+                <p className="header-user-name">{user?.name || 'Customer'}</p>
                 <p className="header-user-role">Customer</p>
               </div>
+              <Settings size={14} style={{ color: 'var(--text-muted)' }} />
             </div>
           </div>
         </header>
@@ -116,6 +124,16 @@ const CustomerDashboard = () => {
           {renderContent()}
         </div>
       </main>
+
+      <ProfileModal
+        show={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        user={user}
+        setUser={setUser}
+        accentColor="#4ECDC4"
+        accentGradient="linear-gradient(135deg, #4ECDC4, #44A08D)"
+        roleEmoji="👤"
+      />
 
       <style>{`
                 .customer-layout {

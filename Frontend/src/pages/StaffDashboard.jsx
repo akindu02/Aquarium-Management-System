@@ -3,6 +3,7 @@ import { LayoutDashboard, ClipboardList, Package, Settings, Bell, LogOut, CheckC
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
+import ProfileModal from '../components/ProfileModal';
 import BookingManagement from './admin/BookingManagement';
 import InventoryManagement from './admin/InventoryManagement';
 import PointOfSale from './staff/PointOfSale';
@@ -13,7 +14,10 @@ const StaffDashboard = () => {
   const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const user = getUserData();
+  const [user, setUser] = useState(getUserData());
+  const [showProfileModal, setShowProfileModal] = useState(false);
+
+  const getInitials = (name) => { if (!name) return '?'; const p = name.trim().split(/\s+/); return p.length >= 2 ? (p[0][0] + p[p.length-1][0]).toUpperCase() : p[0][0].toUpperCase(); };
 
   const handleLogout = async () => {
     try {
@@ -107,14 +111,15 @@ const StaffDashboard = () => {
               <Bell className="notification-icon" />
               <span className="notification-badge">7</span>
             </button>
-            <div className="header-profile">
+            <div className="header-profile" onClick={() => setShowProfileModal(true)} title="Profile settings">
               <div className="header-avatar">
-                {user?.firstName?.[0]}{user?.lastName?.[0]}
+                {getInitials(user?.name)}
               </div>
               <div className="header-user-info">
-                <p className="header-user-name">{user?.firstName} {user?.lastName}</p>
+                <p className="header-user-name">{user?.name || 'Staff'}</p>
                 <p className="header-user-role">Staff Member</p>
               </div>
+              <Settings size={14} style={{ color: 'var(--text-muted)' }} />
             </div>
           </div>
         </header>
@@ -124,6 +129,16 @@ const StaffDashboard = () => {
           {renderContent()}
         </div>
       </main>
+
+      <ProfileModal
+        show={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        user={user}
+        setUser={setUser}
+        accentColor="#4ECDC4"
+        accentGradient="linear-gradient(135deg, #4ECDC4, #44A08D)"
+        roleEmoji="👨‍💼"
+      />
 
       <style>{`
                 .staff-layout {
@@ -492,7 +507,6 @@ const StaffDashboard = () => {
 
                 /* ===== RESPONSIVE ===== */
                 @media (max-width: 768px) {
-                    .staff-sidebar {
                         transform: translateX(-100%);
                     }
 

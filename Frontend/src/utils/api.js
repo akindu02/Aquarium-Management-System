@@ -303,3 +303,27 @@ export const createPosOrderAPI = async (data) => {
     });
 };
 
+// =============================================
+// PROFILE APIs
+// =============================================
+
+/**
+ * Update current user profile (name)
+ */
+export const updateProfileAPI = async (data) => {
+    return apiRequest('/auth/profile', {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    });
+};
+
+/**
+ * Change current user password
+ */
+export const changePasswordAPI = async (currentPassword, newPassword) => {
+    return apiRequest('/auth/change-password', {
+        method: 'PUT',
+        body: JSON.stringify({ currentPassword, newPassword }),
+    });
+};
+

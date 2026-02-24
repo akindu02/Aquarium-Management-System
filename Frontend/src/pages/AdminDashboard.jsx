@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Bell, Settings, LogOut, CalendarClock, AlertTriangle, Clock, CheckCircle, Activity, Coins } from "lucide-react";
+import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Bell, Settings, LogOut, CalendarClock, AlertTriangle, Clock, CheckCircle, Activity, Coins, ChevronRight } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
+import ProfileModal from '../components/ProfileModal';
 import UserManagement from './admin/UserManagement';
 import BookingManagement from './admin/BookingManagement';
 import InventoryManagement from './admin/InventoryManagement';
@@ -14,7 +15,14 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const user = getUserData();
+  const [user, setUser] = useState(getUserData());
+  const [showProfileModal, setShowProfileModal] = useState(false);
+
+  const getInitials = (name) => {
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    return parts.length >= 2 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : parts[0][0].toUpperCase();
+  };
 
   const handleLogout = async () => {
     try {
@@ -111,14 +119,15 @@ const AdminDashboard = () => {
               <Bell className="notification-icon" />
               <span className="notification-badge">3</span>
             </button>
-            <div className="header-profile">
+            <div className="header-profile" onClick={() => setShowProfileModal(true)} title="Profile settings">
               <div className="header-avatar">
-                {user?.firstName?.[0]}{user?.lastName?.[0]}
+                {getInitials(user?.name)}
               </div>
               <div className="header-user-info">
-                <p className="header-user-name">{user?.firstName} {user?.lastName}</p>
+                <p className="header-user-name">{user?.name || 'Admin'}</p>
                 <p className="header-user-role">Administrator</p>
               </div>
+              <Settings size={14} style={{ color: 'var(--text-muted)' }} />
             </div>
           </div>
         </header>
@@ -128,6 +137,16 @@ const AdminDashboard = () => {
           {renderContent()}
         </div>
       </main>
+
+      <ProfileModal
+        show={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        user={user}
+        setUser={setUser}
+        accentColor="#FF6B6B"
+        accentGradient="linear-gradient(135deg, #FF6B6B, #FF8E53)"
+        roleEmoji="👑"
+      />
 
       <style>{`
                 .admin-layout {

@@ -87,3 +87,13 @@ export const hasAnyRole = (requiredRoles) => {
     const userRole = getUserRole();
     return requiredRoles.includes(userRole);
 };
+
+/**
+ * Update user data in localStorage (merge partial fields)
+ */
+export const updateUserData = (updatedFields) => {
+    const current = getUserData();
+    if (current) {
+        localStorage.setItem(USER_DATA_KEY, JSON.stringify({ ...current, ...updatedFields }));
+    }
+};
