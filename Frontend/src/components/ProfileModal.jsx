@@ -1,11 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { User, Lock, Eye, EyeOff, Check, X, LogOut, Mail, Shield } from 'lucide-react';
-import { getUserData, updateUserData, clearAuthData, getRefreshToken } from '../utils/auth';
-import { updateProfileAPI, changePasswordAPI, logoutAPI } from '../utils/api';
-import { useNavigate } from 'react-router-dom';
+﻿import React, { useState, useRef, useEffect } from 'react';
+import { UserRound, Lock, KeyRound, Eye, EyeOff, Check, CheckCircle2, XCircle, X, Mail, Shield } from 'lucide-react';
+import { getUserData, updateUserData } from '../utils/auth';
+import { updateProfileAPI, changePasswordAPI } from '../utils/api';
 
-const ProfileModal = ({ show, onClose, user, setUser, accentColor = '#4ECDC4', accentGradient = 'linear-gradient(135deg, #4ECDC4, #44A08D)', roleEmoji = '👤' }) => {
-  const navigate = useNavigate();
+const ProfileModal = ({ show, onClose, user, setUser, accentColor = '#06b6d4', accentGradient = 'linear-gradient(135deg, #06b6d4, #3b82f6)', roleEmoji = '👤' }) => {
+
   const modalRef = useRef(null);
   const [activeTab, setActiveTab] = useState('profile');
   const [profileName, setProfileName] = useState(user?.name || '');
@@ -94,17 +93,7 @@ const ProfileModal = ({ show, onClose, user, setUser, accentColor = '#4ECDC4', a
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      const refreshToken = getRefreshToken();
-      if (refreshToken) await logoutAPI(refreshToken);
-    } catch (err) {
-      console.error('Logout error:', err);
-    } finally {
-      clearAuthData();
-      navigate('/signin');
-    }
-  };
+
 
   const getStrength = () => {
     const len = pwForm.newPw.length;
@@ -121,34 +110,32 @@ const ProfileModal = ({ show, onClose, user, setUser, accentColor = '#4ECDC4', a
   if (!show) return null;
 
   const strength = getStrength();
+  const nameUnchanged = profileName.trim() === (user?.name || '');
 
   return (
     <>
       <div className="pm-overlay" />
       <div className="pm-container">
         <div className="pm-modal" ref={modalRef}>
+
           {/* Header */}
           <div className="pm-header">
             <div className="pm-avatar">{getInitials(user?.name)}</div>
             <div className="pm-header-info">
-              <h3 className="pm-name">{user?.name || 'User'}</h3>
+              <p className="pm-name">{user?.name || 'User'}</p>
               <p className="pm-email">{user?.email}</p>
               <span className="pm-role-badge">{roleEmoji} {user?.role}</span>
             </div>
-            <button className="pm-close" onClick={onClose} title="Close">
-              <X size={18} />
-            </button>
+            <button className="pm-close" onClick={onClose}><X size={16} /></button>
           </div>
 
           {/* Tabs */}
           <div className="pm-tabs">
             <button className={`pm-tab ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
-              <User size={15} />
-              <span>Profile</span>
+              <UserRound size={14} /> Profile
             </button>
             <button className={`pm-tab ${activeTab === 'security' ? 'active' : ''}`} onClick={() => setActiveTab('security')}>
-              <Lock size={15} />
-              <span>Security</span>
+              <KeyRound size={14} /> Security
             </button>
           </div>
 
@@ -158,543 +145,245 @@ const ProfileModal = ({ show, onClose, user, setUser, accentColor = '#4ECDC4', a
               <div className="pm-section">
                 <div className="pm-field">
                   <label className="pm-label">Full Name</label>
-                  <input
-                    className="pm-input"
-                    value={profileName}
-                    onChange={e => setProfileName(e.target.value)}
-                    placeholder="Enter your full name"
-                  />
+                  <div className="pm-input-wrap">
+                    <UserRound size={14} className="pm-input-icon" />
+                    <input className="pm-input pm-input-iconic" value={profileName} onChange={e => setProfileName(e.target.value)} placeholder="Your full name" />
+                  </div>
                 </div>
                 <div className="pm-field">
-                  <label className="pm-label">Email Address</label>
-                  <div className="pm-input-disabled">
-                    <Mail size={14} className="pm-input-icon" />
-                    <span>{user?.email || '—'}</span>
+                  <label className="pm-label">Email</label>
+                  <div className="pm-input-ro">
+                    <Mail size={14} /><span>{user?.email || '—'}</span>
                   </div>
                   <p className="pm-hint">Contact an administrator to change your email</p>
                 </div>
                 <div className="pm-field">
                   <label className="pm-label">Role</label>
-                  <div className="pm-input-disabled">
-                    <Shield size={14} className="pm-input-icon" />
-                    <span style={{ textTransform: 'capitalize' }}>{user?.role || '—'}</span>
+                  <div className="pm-input-ro">
+                    <Shield size={14} /><span style={{ textTransform: 'capitalize' }}>{user?.role || '—'}</span>
                   </div>
                 </div>
                 {profileMsg && (
                   <div className={`pm-msg ${profileMsg.type}`}>
-                    {profileMsg.type === 'success' ? <Check size={14} /> : <X size={14} />}
-                    {profileMsg.text}
+                    {profileMsg.type === 'success' ? <CheckCircle2 size={14} /> : <XCircle size={14} />} {profileMsg.text}
                   </div>
                 )}
-                <button className="pm-save-btn" onClick={handleSaveProfile} disabled={profileSaving || profileName.trim() === (user?.name || '')}>
-                  {profileSaving ? (
-                    <><span className="pm-spinner" /> Saving...</>
-                  ) : (
-                    <><Check size={15} /> Save Changes</>
-                  )}
+                <button className="pm-btn" onClick={handleSaveProfile} disabled={profileSaving || nameUnchanged}>
+                  {profileSaving ? <><span className="pm-spinner" /> Saving...</> : <><Check size={14} /> Save Changes</>}
                 </button>
               </div>
             )}
 
             {activeTab === 'security' && (
               <div className="pm-section">
-                <div className="pm-field">
-                  <label className="pm-label">Current Password</label>
-                  <div className="pm-pw-wrap">
-                    <input
-                      className="pm-input"
-                      type={showPw.current ? 'text' : 'password'}
-                      value={pwForm.current}
-                      onChange={e => setPwForm(p => ({ ...p, current: e.target.value }))}
-                      placeholder="Enter current password"
-                    />
-                    <button className="pm-pw-eye" onClick={() => setShowPw(s => ({ ...s, current: !s.current }))}>
-                      {showPw.current ? <EyeOff size={15} /> : <Eye size={15} />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="pm-field">
-                  <label className="pm-label">New Password</label>
-                  <div className="pm-pw-wrap">
-                    <input
-                      className="pm-input"
-                      type={showPw.newPw ? 'text' : 'password'}
-                      value={pwForm.newPw}
-                      onChange={e => setPwForm(p => ({ ...p, newPw: e.target.value }))}
-                      placeholder="Enter new password"
-                    />
-                    <button className="pm-pw-eye" onClick={() => setShowPw(s => ({ ...s, newPw: !s.newPw }))}>
-                      {showPw.newPw ? <EyeOff size={15} /> : <Eye size={15} />}
-                    </button>
-                  </div>
-                  {pwForm.newPw && (
-                    <div className="pm-strength">
-                      <div className="pm-strength-track">
-                        <div className="pm-strength-fill" style={{ width: strength.width, background: strength.color }} />
-                      </div>
-                      <span className="pm-strength-label" style={{ color: strength.color }}>{strength.label}</span>
+                {[
+                  { key: 'current', label: 'Current Password', placeholder: 'Current password' },
+                  { key: 'newPw',   label: 'New Password',     placeholder: 'New password (min. 6)' },
+                  { key: 'confirm', label: 'Confirm Password', placeholder: 'Repeat new password' },
+                ].map(({ key, label, placeholder }) => (
+                  <div className="pm-field" key={key}>
+                    <label className="pm-label">{label}</label>
+                    <div className="pm-pw-wrap">
+                      <input className="pm-input" type={showPw[key] ? 'text' : 'password'}
+                        value={pwForm[key]} placeholder={placeholder}
+                        onChange={e => setPwForm(p => ({ ...p, [key]: e.target.value }))} />
+                      <button className="pm-pw-eye" onClick={() => setShowPw(s => ({ ...s, [key]: !s[key] }))}>
+                        {showPw[key] ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
                     </div>
-                  )}
-                </div>
-
-                <div className="pm-field">
-                  <label className="pm-label">Confirm New Password</label>
-                  <div className="pm-pw-wrap">
-                    <input
-                      className="pm-input"
-                      type={showPw.confirm ? 'text' : 'password'}
-                      value={pwForm.confirm}
-                      onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))}
-                      placeholder="Confirm new password"
-                    />
-                    <button className="pm-pw-eye" onClick={() => setShowPw(s => ({ ...s, confirm: !s.confirm }))}>
-                      {showPw.confirm ? <EyeOff size={15} /> : <Eye size={15} />}
-                    </button>
+                    {key === 'newPw' && pwForm.newPw && (
+                      <div className="pm-strength">
+                        <div className="pm-strength-track">
+                          <div className="pm-strength-fill" style={{ width: strength.width, background: strength.color }} />
+                        </div>
+                        <span className="pm-strength-label" style={{ color: strength.color }}>{strength.label}</span>
+                      </div>
+                    )}
+                    {key === 'confirm' && pwForm.confirm && pwForm.newPw !== pwForm.confirm && (
+                      <p className="pm-hint pm-hint-err">Passwords do not match</p>
+                    )}
                   </div>
-                  {pwForm.confirm && pwForm.newPw && pwForm.confirm !== pwForm.newPw && (
-                    <p className="pm-hint pm-hint-error">Passwords do not match</p>
-                  )}
-                </div>
-
+                ))}
                 {pwMsg && (
                   <div className={`pm-msg ${pwMsg.type}`}>
-                    {pwMsg.type === 'success' ? <Check size={14} /> : <X size={14} />}
-                    {pwMsg.text}
+                    {pwMsg.type === 'success' ? <CheckCircle2 size={14} /> : <XCircle size={14} />} {pwMsg.text}
                   </div>
                 )}
-                <button className="pm-save-btn pm-save-security" onClick={handleChangePassword} disabled={pwSaving || !pwForm.current || !pwForm.newPw || !pwForm.confirm}>
-                  {pwSaving ? (
-                    <><span className="pm-spinner" /> Changing...</>
-                  ) : (
-                    <><Lock size={15} /> Change Password</>
-                  )}
+                <button className="pm-btn pm-btn-sec" onClick={handleChangePassword}
+                  disabled={pwSaving || !pwForm.current || !pwForm.newPw || !pwForm.confirm}>
+                  {pwSaving ? <><span className="pm-spinner" /> Updating...</> : <><Lock size={14} /> Change Password</>}
                 </button>
               </div>
             )}
           </div>
 
-          {/* Footer */}
-          <div className="pm-footer">
-            <button className="pm-logout-btn" onClick={handleLogout}>
-              <LogOut size={15} />
-              Sign out of account
-            </button>
-          </div>
         </div>
       </div>
 
       <style>{`
         .pm-overlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.6);
-          backdrop-filter: blur(8px);
+          position: fixed; inset: 0;
+          background: rgba(0,0,0,0.55);
+          backdrop-filter: blur(4px);
           z-index: 9998;
-          animation: pmFadeIn 0.2s ease;
+          animation: pmFade 0.18s ease;
         }
-
         .pm-container {
-          position: fixed;
-          inset: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 9999;
-          padding: 1.5rem;
-          animation: pmFadeIn 0.2s ease;
+          position: fixed; inset: 0;
+          display: flex; align-items: center; justify-content: center;
+          z-index: 9999; padding: 1.5rem;
         }
-
-        @keyframes pmFadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
+        @keyframes pmFade { from { opacity: 0; } to { opacity: 1; } }
 
         .pm-modal {
-          width: 440px;
-          max-width: 100%;
-          max-height: 85vh;
-          background: linear-gradient(180deg, #111928 0%, #0f1520 100%);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 20px;
-          display: flex;
-          flex-direction: column;
-          box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
-          animation: pmSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          width: 420px; max-width: 100%; max-height: 86vh;
+          background: #0f1621;
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 16px;
+          display: flex; flex-direction: column;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+          animation: pmUp 0.22s cubic-bezier(0.3,1,0.4,1);
           overflow: hidden;
         }
-
-        @keyframes pmSlideUp {
-          from { opacity: 0; transform: translateY(30px) scale(0.96); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
+        @keyframes pmUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* ── Header ── */
+        /* Header */
         .pm-header {
-          padding: 1.5rem 1.5rem 1.25rem;
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-          background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+          display: flex; align-items: center; gap: 0.85rem;
+          padding: 1.25rem 1.25rem 1.1rem;
+          border-bottom: 1px solid rgba(255,255,255,0.07);
         }
-
         .pm-avatar {
-          width: 56px;
-          height: 56px;
-          border-radius: 50%;
-          background: ${accentGradient};
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 800;
-          font-size: 1.15rem;
-          color: white;
-          flex-shrink: 0;
-          letter-spacing: 0.5px;
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+          width: 44px; height: 44px; border-radius: 50%;
+          background: linear-gradient(135deg, #06b6d4, #3b82f6);
+          display: flex; align-items: center; justify-content: center;
+          font-size: 0.95rem; font-weight: 700; color: #fff; flex-shrink: 0;
         }
-
-        .pm-header-info {
-          flex: 1;
-          min-width: 0;
-        }
-
-        .pm-name {
-          font-size: 1.15rem;
-          font-weight: 700;
-          color: var(--text-main, #fff);
-          margin: 0;
-          line-height: 1.3;
-        }
-
-        .pm-email {
-          font-size: 0.8rem;
-          color: var(--text-muted, #8899a6);
-          margin: 2px 0 8px;
-        }
-
+        .pm-header-info { flex: 1; min-width: 0; }
+        .pm-name { font-size: 0.98rem; font-weight: 600; color: #f1f5f9; margin: 0 0 2px; }
+        .pm-email { font-size: 0.78rem; color: #64748b; margin: 0 0 6px; }
         .pm-role-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          padding: 3px 12px;
-          border-radius: 20px;
-          font-size: 0.72rem;
-          font-weight: 600;
-          background: ${accentColor}20;
-          color: ${accentColor};
-          text-transform: capitalize;
-          letter-spacing: 0.3px;
+          display: inline-block; padding: 2px 10px; border-radius: 99px;
+          font-size: 0.7rem; font-weight: 600;
+          background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.2);
+          color: #06b6d4; text-transform: capitalize;
         }
-
         .pm-close {
-          width: 32px;
-          height: 32px;
-          border-radius: 10px;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          color: var(--text-muted, #8899a6);
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          transition: all 0.2s;
+          width: 28px; height: 28px; border-radius: 7px;
+          background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+          color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0; transition: all 0.15s;
         }
+        .pm-close:hover { background: rgba(239,68,68,0.1); color: #f87171; }
 
-        .pm-close:hover {
-          background: rgba(255, 107, 107, 0.15);
-          border-color: rgba(255, 107, 107, 0.3);
-          color: #FF6B6B;
-        }
-
-        /* ── Tabs ── */
+        /* Tabs */
         .pm-tabs {
-          display: flex;
-          padding: 0 1.5rem;
-          gap: 0.5rem;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-          flex-shrink: 0;
+          display: flex; border-bottom: 1px solid rgba(255,255,255,0.07); flex-shrink: 0;
         }
-
         .pm-tab {
-          flex: 1;
-          padding: 0.85rem 0.75rem;
-          background: none;
-          border: none;
-          border-bottom: 2.5px solid transparent;
-          color: var(--text-muted, #8899a6);
-          cursor: pointer;
-          font-size: 0.88rem;
-          font-weight: 500;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          transition: all 0.2s;
+          flex: 1; padding: 0.7rem; background: none; border: none;
+          border-bottom: 2px solid transparent; margin-bottom: -1px;
+          color: #64748b; cursor: pointer; font-size: 0.84rem; font-weight: 500;
+          display: flex; align-items: center; justify-content: center; gap: 6px;
+          transition: color 0.15s, border-color 0.15s;
         }
+        .pm-tab:hover { color: #94a3b8; }
+        .pm-tab.active { color: #06b6d4; border-bottom-color: #06b6d4; font-weight: 600; }
 
-        .pm-tab:hover {
-          color: var(--text-main, #fff);
-          background: rgba(255, 255, 255, 0.02);
-        }
-
-        .pm-tab.active {
-          color: ${accentColor};
-          border-bottom-color: ${accentColor};
-          font-weight: 600;
-        }
-
-        /* ── Body ── */
+        /* Body */
         .pm-body {
-          flex: 1;
-          overflow-y: auto;
-          padding: 1.5rem;
+          flex: 1; overflow-y: auto; padding: 1.1rem 1.25rem;
+          scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.06) transparent;
         }
-
-        .pm-section {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
-
-        .pm-field {
-          display: flex;
-          flex-direction: column;
-          gap: 0.4rem;
-        }
-
+        .pm-section { display: flex; flex-direction: column; gap: 0.85rem; }
+        .pm-field { display: flex; flex-direction: column; gap: 0.3rem; }
         .pm-label {
-          font-size: 0.78rem;
-          font-weight: 600;
-          color: var(--text-muted, #8899a6);
-          text-transform: uppercase;
-          letter-spacing: 0.8px;
+          font-size: 0.71rem; font-weight: 600; color: #475569;
+          text-transform: uppercase; letter-spacing: 0.7px;
         }
-
         .pm-input {
-          width: 100%;
-          padding: 0.75rem 1rem;
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 12px;
-          color: var(--text-main, #fff);
-          font-size: 0.92rem;
-          outline: none;
-          transition: border-color 0.2s, background 0.2s;
-          box-sizing: border-box;
+          width: 100%; padding: 0.65rem 0.9rem; box-sizing: border-box;
+          background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 9px; color: #e2e8f0; font-size: 0.88rem; font-family: inherit;
+          outline: none; transition: border-color 0.15s;
         }
+        .pm-input:focus { border-color: rgba(6,182,212,0.45); }
+        .pm-input::placeholder { color: #334155; }
 
-        .pm-input:focus {
-          border-color: ${accentColor};
-          background: rgba(255, 255, 255, 0.06);
+        /* Icon-wrapped editable input */
+        .pm-input-wrap {
+          position: relative; display: flex; align-items: center;
         }
-
-        .pm-input::placeholder {
-          color: rgba(255, 255, 255, 0.25);
-        }
-
-        .pm-input-disabled {
-          display: flex;
-          align-items: center;
-          gap: 0.6rem;
-          padding: 0.75rem 1rem;
-          background: rgba(255, 255, 255, 0.02);
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          border-radius: 12px;
-          color: var(--text-muted, #8899a6);
-          font-size: 0.92rem;
-        }
-
         .pm-input-icon {
-          opacity: 0.5;
-          flex-shrink: 0;
+          position: absolute; left: 10px; color: #475569; pointer-events: none; flex-shrink: 0;
+        }
+        .pm-input-iconic { padding-left: 2.1rem; }
+
+        /* Read-only row */
+        .pm-input-ro {
+          display: flex; align-items: center; gap: 0.6rem;
+          padding: 0.65rem 0.9rem; border-radius: 9px;
+          background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);
+          color: #475569; font-size: 0.88rem;
         }
 
-        .pm-hint {
-          font-size: 0.75rem;
-          color: rgba(255, 255, 255, 0.3);
-          margin: 0;
-        }
+        .pm-hint { font-size: 0.73rem; color: #334155; margin: 0; }
+        .pm-hint-err { color: #f87171; }
 
-        .pm-hint-error {
-          color: #FF6B6B;
-        }
-
-        /* ── Password ── */
-        .pm-pw-wrap {
-          position: relative;
-        }
-
-        .pm-pw-wrap .pm-input {
-          padding-right: 2.75rem;
-        }
-
+        /* Password */
+        .pm-pw-wrap { position: relative; }
+        .pm-pw-wrap .pm-input { padding-right: 2.5rem; }
         .pm-pw-eye {
-          position: absolute;
-          right: 12px;
-          top: 50%;
-          transform: translateY(-50%);
-          background: none;
-          border: none;
-          color: var(--text-muted, #8899a6);
-          cursor: pointer;
-          padding: 4px;
-          display: flex;
-          transition: color 0.15s;
+          position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+          background: none; border: none; color: #475569; cursor: pointer; padding: 3px;
+          display: flex; transition: color 0.15s;
         }
+        .pm-pw-eye:hover { color: #94a3b8; }
 
-        .pm-pw-eye:hover {
-          color: ${accentColor};
-        }
-
-        .pm-strength {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          margin-top: 2px;
-        }
-
+        /* Strength bar */
+        .pm-strength { display: flex; align-items: center; gap: 0.6rem; margin-top: 3px; }
         .pm-strength-track {
-          flex: 1;
-          height: 4px;
-          background: rgba(255, 255, 255, 0.08);
-          border-radius: 2px;
-          overflow: hidden;
+          flex: 1; height: 3px; background: rgba(255,255,255,0.07);
+          border-radius: 2px; overflow: hidden;
         }
+        .pm-strength-fill { height: 100%; border-radius: 2px; transition: width 0.3s ease, background 0.3s ease; }
+        .pm-strength-label { font-size: 0.68rem; font-weight: 600; min-width: 36px; text-align: right; text-transform: uppercase; letter-spacing: 0.4px; }
 
-        .pm-strength-fill {
-          height: 100%;
-          border-radius: 2px;
-          transition: all 0.3s ease;
-        }
-
-        .pm-strength-label {
-          font-size: 0.72rem;
-          font-weight: 600;
-          letter-spacing: 0.3px;
-          min-width: 42px;
-          text-align: right;
-        }
-
-        /* ── Messages ── */
+        /* Messages */
         .pm-msg {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 0.7rem 1rem;
-          border-radius: 10px;
-          font-size: 0.85rem;
-          font-weight: 500;
-          animation: pmFadeIn 0.2s ease;
+          display: flex; align-items: center; gap: 7px;
+          padding: 0.6rem 0.85rem; border-radius: 8px;
+          font-size: 0.82rem; font-weight: 500;
         }
+        .pm-msg.success { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.15); color: #34d399; }
+        .pm-msg.error   { background: rgba(239,68,68,0.08);  border: 1px solid rgba(239,68,68,0.15);  color: #f87171; }
 
-        .pm-msg.success {
-          background: rgba(16, 185, 129, 0.1);
-          border: 1px solid rgba(16, 185, 129, 0.2);
-          color: #10b981;
+        /* Buttons */
+        .pm-btn {
+          width: 100%; padding: 0.68rem; border: none; border-radius: 9px;
+          background: #0891b2; color: #fff;
+          font-size: 0.87rem; font-weight: 600; font-family: inherit;
+          cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px;
+          margin-top: 0.25rem; transition: background 0.15s, opacity 0.15s;
         }
-
-        .pm-msg.error {
-          background: rgba(255, 107, 107, 0.1);
-          border: 1px solid rgba(255, 107, 107, 0.2);
-          color: #FF6B6B;
-        }
-
-        /* ── Buttons ── */
-        .pm-save-btn {
-          width: 100%;
-          padding: 0.8rem 1.25rem;
-          background: ${accentGradient};
-          border: none;
-          border-radius: 12px;
-          color: white;
-          font-size: 0.92rem;
-          font-weight: 600;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          margin-top: 0.5rem;
-          transition: all 0.2s;
-        }
-
-        .pm-save-btn:hover:not(:disabled) {
-          transform: translateY(-1px);
-          box-shadow: 0 6px 20px ${accentColor}40;
-        }
-
-        .pm-save-btn:active:not(:disabled) {
-          transform: translateY(0);
-        }
-
-        .pm-save-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .pm-save-security {
-          background: linear-gradient(135deg, #667eea, #764ba2);
-        }
-
-        .pm-save-security:hover:not(:disabled) {
-          box-shadow: 0 6px 20px rgba(102, 126, 234, 0.35);
-        }
+        .pm-btn:hover:not(:disabled) { background: #06b6d4; }
+        .pm-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .pm-btn-sec { background: #2563eb; }
+        .pm-btn-sec:hover:not(:disabled) { background: #3b82f6; }
 
         .pm-spinner {
-          width: 16px;
-          height: 16px;
-          border: 2px solid rgba(255,255,255,0.3);
-          border-top-color: white;
-          border-radius: 50%;
-          animation: pmSpin 0.6s linear infinite;
+          width: 14px; height: 14px;
+          border: 2px solid rgba(255,255,255,0.25); border-top-color: #fff;
+          border-radius: 50%; animation: pmSpin 0.55s linear infinite;
         }
+        @keyframes pmSpin { to { transform: rotate(360deg); } }
 
-        @keyframes pmSpin {
-          to { transform: rotate(360deg); }
-        }
-
-        /* ── Footer ── */
-        .pm-footer {
-          padding: 1rem 1.5rem;
-          border-top: 1px solid rgba(255, 255, 255, 0.08);
-          flex-shrink: 0;
-        }
-
-        .pm-logout-btn {
-          width: 100%;
-          padding: 0.75rem;
-          background: rgba(255, 107, 107, 0.08);
-          border: 1px solid rgba(255, 107, 107, 0.2);
-          border-radius: 12px;
-          color: #FF6B6B;
-          font-size: 0.88rem;
-          font-weight: 600;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          transition: all 0.2s;
-        }
-
-        .pm-logout-btn:hover {
-          background: rgba(255, 107, 107, 0.15);
-          border-color: rgba(255, 107, 107, 0.35);
-        }
-
-        /* ── Responsive ── */
         @media (max-width: 480px) {
-          .pm-modal {
-            width: 100%;
-            max-height: 90vh;
-            border-radius: 16px;
-          }
-          .pm-header { padding: 1.25rem; }
-          .pm-body { padding: 1.25rem; }
-          .pm-avatar { width: 48px; height: 48px; font-size: 1rem; }
+          .pm-modal { width: 100%; max-height: 90vh; border-radius: 14px 14px 0 0; }
+          .pm-container { align-items: flex-end; padding: 0; }
         }
       `}</style>
     </>
@@ -702,3 +391,4 @@ const ProfileModal = ({ show, onClose, user, setUser, accentColor = '#4ECDC4', a
 };
 
 export default ProfileModal;
+
