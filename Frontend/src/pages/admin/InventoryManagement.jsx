@@ -519,6 +519,11 @@ const InventoryManagement = () => {
                     padding: 0.6rem 2rem 0.6rem 1rem; color: var(--text-main);
                     cursor: pointer; outline: none; min-width: 180px;
                 }
+                .select-wrapper select option {
+                    background: #1e293b;
+                    color: #f1f5f9;
+                    padding: 0.5rem;
+                }
 
                 /* Table */
                 .im-table-container {

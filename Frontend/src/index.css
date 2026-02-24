@@ -118,3 +118,9 @@ ul {
   max-width: 600px;
   margin: 0 auto 3rem;
 }
+
+/* ── Global dropdown option styles ── */
+select option {
+  background: #1e293b;
+  color: #f1f5f9;
+}
