@@ -158,6 +158,16 @@ export const adminDeleteUserAPI = async (userId) => {
     });
 };
 
+/**
+ * Admin - Update a user (name, email, role)
+ */
+export const adminUpdateUserAPI = async (userId, userData) => {
+    return apiRequest(`/auth/admin/users/${userId}`, {
+        method: 'PUT',
+        body: JSON.stringify(userData),
+    });
+};
+
 // =============================================
 // ORDER APIs
 // =============================================

@@ -163,4 +163,7 @@ router.get('/admin/users', authenticate, adminOnly, authController.getAllUsers);
 // DELETE /api/auth/admin/users/:id - Delete a user
 router.delete('/admin/users/:id', authenticate, adminOnly, authController.deleteUser);
 
+// PUT /api/auth/admin/users/:id - Update a user
+router.put('/admin/users/:id', authenticate, adminOnly, authController.updateUser);
+
 module.exports = router;

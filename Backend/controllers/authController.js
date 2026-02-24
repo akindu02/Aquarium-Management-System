@@ -424,6 +424,35 @@ class AuthController {
     }
 
     /**
+     * Update a user (admin only)
+     * PUT /api/auth/admin/users/:id
+     */
+    async updateUser(req, res) {
+        try {
+            const userId = req.params.id;
+            const { name, email, role } = req.body;
+
+            if (!name && !email && !role) {
+                return res.status(400).json({ success: false, message: 'At least one field is required to update.' });
+            }
+
+            const result = await authService.updateUser(userId, { name, email, role });
+
+            if (!result.success) {
+                return res.status(400).json(result);
+            }
+
+            return res.status(200).json(result);
+        } catch (error) {
+            console.error('Update user error:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'An error occurred while updating the user',
+            });
+        }
+    }
+
+    /**
      * Get all users (admin only)
      * GET /api/auth/admin/users
      */

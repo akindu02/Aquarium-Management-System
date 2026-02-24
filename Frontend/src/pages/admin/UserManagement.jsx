@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Plus, Trash2, Edit, Filter, MoreVertical, Shield, User, Truck, Briefcase, Eye, EyeOff, X, UserPlus, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import Swal from 'sweetalert2';
-import { adminGetUsersAPI, adminCreateUserAPI, adminDeleteUserAPI } from '../../utils/api';
+import { adminGetUsersAPI, adminCreateUserAPI, adminDeleteUserAPI, adminUpdateUserAPI } from '../../utils/api';
 
 const UserManagement = () => {
     const [activeTab, setActiveTab] = useState('all');
@@ -9,6 +9,13 @@ const UserManagement = () => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Edit User State
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editingUser, setEditingUser] = useState(null);
+    const [editFormData, setEditFormData] = useState({ name: '', email: '', role: '' });
+    const [editErrors, setEditErrors] = useState({});
+    const [isEditSubmitting, setIsEditSubmitting] = useState(false);
 
     // Add User Form State
     const [formData, setFormData] = useState({
@@ -147,6 +154,71 @@ const UserManagement = () => {
         setFormErrors({});
         setFormTouched({});
         setShowPassword(false);
+    };
+
+    // Handle Edit
+    const handleOpenEdit = (user) => {
+        setEditingUser(user);
+        setEditFormData({ name: user.name, email: user.email, role: user.role });
+        setEditErrors({});
+        setShowEditModal(true);
+    };
+
+    const handleCloseEditModal = () => {
+        setShowEditModal(false);
+        setEditingUser(null);
+        setEditFormData({ name: '', email: '', role: '' });
+        setEditErrors({});
+    };
+
+    const handleEditInputChange = (e) => {
+        const { name, value } = e.target;
+        setEditFormData(prev => ({ ...prev, [name]: value }));
+        if (editErrors[name]) setEditErrors(prev => ({ ...prev, [name]: '' }));
+    };
+
+    const handleUpdateUser = async () => {
+        // Validate
+        const errors = {};
+        if (!editFormData.name.trim()) errors.name = 'Full name is required';
+        if (!editFormData.email.trim()) errors.email = 'Email is required';
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editFormData.email)) errors.email = 'Enter a valid email';
+        if (!editFormData.role) errors.role = 'Role is required';
+        if (Object.keys(errors).length > 0) { setEditErrors(errors); return; }
+
+        setIsEditSubmitting(true);
+        try {
+            const response = await adminUpdateUserAPI(editingUser.id, {
+                name: editFormData.name.trim(),
+                email: editFormData.email.trim(),
+                role: editFormData.role,
+            });
+            if (response.success) {
+                handleCloseEditModal();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'User Updated!',
+                    text: `${editFormData.name} has been updated successfully.`,
+                    background: '#1a1f2e',
+                    color: '#fff',
+                    confirmButtonColor: '#4ecdc4',
+                    timer: 2000,
+                    showConfirmButton: false,
+                });
+                fetchUsers();
+            }
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Update Failed',
+                text: error.message || 'Could not update the user.',
+                background: '#1a1f2e',
+                color: '#fff',
+                confirmButtonColor: '#4ecdc4',
+            });
+        } finally {
+            setIsEditSubmitting(false);
+        }
     };
 
     // Handle Delete
@@ -294,7 +366,7 @@ const UserManagement = () => {
                                         </td>
                                         <td>{new Date(user.date).toLocaleDateString()}</td>
                                         <td style={{ textAlign: 'right' }}>
-                                            <button className="action-btn edit" title="Edit">
+                                            <button className="action-btn edit" title="Edit" onClick={() => handleOpenEdit(user)}>
                                                 <Edit size={16} />
                                             </button>
                                             <button
@@ -458,6 +530,96 @@ const UserManagement = () => {
                             <button className="btn-save" onClick={handleAddUser} disabled={isSubmitting}>
                                 {isSubmitting ? <Loader2 size={16} className="spin-icon" /> : <UserPlus size={16} />}
                                 {isSubmitting ? 'Adding...' : 'Add User'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ===== Edit User Modal ===== */}
+            {showEditModal && editingUser && (
+                <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && handleCloseEditModal()}>
+                    <div className="modal-content add-user-modal">
+                        <div className="modal-header">
+                            <div className="modal-header-left">
+                                <div className="modal-icon-wrapper" style={{ background: 'linear-gradient(135deg, rgba(96,165,250,0.15), rgba(96,165,250,0.05))', borderColor: 'rgba(96,165,250,0.2)', color: '#60a5fa' }}>
+                                    <Edit size={22} />
+                                </div>
+                                <div>
+                                    <h3 className="modal-title">Edit User</h3>
+                                    <p className="modal-description">Update details for <strong style={{ color: 'var(--text-main)' }}>{editingUser.name}</strong></p>
+                                </div>
+                            </div>
+                            <button className="modal-close-btn" onClick={handleCloseEditModal} title="Close">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="modal-divider"></div>
+
+                        <div className="modal-body">
+                            {/* Name */}
+                            <div className={`form-group ${editErrors.name ? 'has-error' : ''}`}>
+                                <label htmlFor="edit-name">Full Name</label>
+                                <input
+                                    type="text"
+                                    id="edit-name"
+                                    name="name"
+                                    value={editFormData.name}
+                                    onChange={handleEditInputChange}
+                                    placeholder="e.g. Kasun Perera"
+                                    autoFocus
+                                />
+                                {editErrors.name && (
+                                    <span className="field-error"><AlertCircle size={14} />{editErrors.name}</span>
+                                )}
+                            </div>
+
+                            {/* Email */}
+                            <div className={`form-group ${editErrors.email ? 'has-error' : ''}`}>
+                                <label htmlFor="edit-email">Email Address</label>
+                                <input
+                                    type="email"
+                                    id="edit-email"
+                                    name="email"
+                                    value={editFormData.email}
+                                    onChange={handleEditInputChange}
+                                    placeholder="e.g. kasun@example.com"
+                                />
+                                {editErrors.email && (
+                                    <span className="field-error"><AlertCircle size={14} />{editErrors.email}</span>
+                                )}
+                            </div>
+
+                            {/* Role */}
+                            <div className={`form-group ${editErrors.role ? 'has-error' : ''}`}>
+                                <label htmlFor="edit-role">User Role</label>
+                                <select
+                                    id="edit-role"
+                                    name="role"
+                                    value={editFormData.role}
+                                    onChange={handleEditInputChange}
+                                >
+                                    <option value="admin">Admin</option>
+                                    <option value="staff">Staff</option>
+                                    <option value="supplier">Supplier</option>
+                                    <option value="customer">Customer</option>
+                                </select>
+                                {editErrors.role && (
+                                    <span className="field-error"><AlertCircle size={14} />{editErrors.role}</span>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="modal-divider"></div>
+
+                        <div className="modal-actions">
+                            <button className="btn-cancel" onClick={handleCloseEditModal} disabled={isEditSubmitting}>
+                                Cancel
+                            </button>
+                            <button className="btn-save" onClick={handleUpdateUser} disabled={isEditSubmitting} style={{ background: 'linear-gradient(135deg, #60a5fa, #3b82f6)' }}>
+                                {isEditSubmitting ? <Loader2 size={16} className="spin-icon" /> : <CheckCircle size={16} />}
+                                {isEditSubmitting ? 'Saving...' : 'Save Changes'}
                             </button>
                         </div>
                     </div>

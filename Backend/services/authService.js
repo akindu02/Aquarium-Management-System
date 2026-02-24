@@ -700,6 +700,52 @@ class AuthService {
     }
 
     /**
+     * Update a user (admin only)
+     * @param {number} userId - User ID to update
+     * @param {Object} updateData - Fields to update
+     * @returns {Object} { success, user, message }
+     */
+    async updateUser(userId, { name, email, role }) {
+        // Check if user exists
+        const userResult = await query(
+            'SELECT id, name, email, role FROM users WHERE id = $1',
+            [userId]
+        );
+
+        if (userResult.rows.length === 0) {
+            return { success: false, message: 'User not found' };
+        }
+
+        // If email changed, ensure it's not taken by another user
+        if (email) {
+            const emailCheck = await query(
+                'SELECT id FROM users WHERE email = $1 AND id != $2',
+                [email.toLowerCase(), userId]
+            );
+            if (emailCheck.rows.length > 0) {
+                return { success: false, message: 'Email is already in use by another account' };
+            }
+        }
+
+        const updated = await query(
+            `UPDATE users
+             SET name = COALESCE($1, name),
+                 email = COALESCE($2, email),
+                 role = COALESCE($3, role),
+                 updated_at = NOW()
+             WHERE id = $4
+             RETURNING id, name, email, role`,
+            [name || null, email ? email.toLowerCase() : null, role || null, userId]
+        );
+
+        return {
+            success: true,
+            message: 'User updated successfully',
+            user: updated.rows[0],
+        };
+    }
+
+    /**
      * Delete a user (admin only)
      * @param {number} userId - User ID to delete
      * @param {number} adminId - ID of the admin performing the deletion
