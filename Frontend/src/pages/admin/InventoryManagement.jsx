@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     Search, Plus, Edit, Trash2, Package, AlertTriangle,
     CheckCircle, XCircle, ChevronDown, Tag, DollarSign,
-    Layers, Image, FileText, Percent, User, RefreshCw
+    Layers, Image, FileText, Percent, User, RefreshCw, X
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 
@@ -32,6 +32,13 @@ const InventoryManagement = () => {
     const [formData, setFormData] = useState(EMPTY_FORM);
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // ── Edit modal state ──────────────────────────────────────────
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editingProduct, setEditingProduct] = useState(null);
+    const [editFormData, setEditFormData] = useState(EMPTY_FORM);
+    const [editErrors, setEditErrors] = useState({});
+    const [isEditSubmitting, setIsEditSubmitting] = useState(false);
 
     // ── Fetch products from backend ───────────────────────────────
     const fetchProducts = async () => {
@@ -179,6 +186,107 @@ const InventoryManagement = () => {
         setErrors({});
     };
 
+    // ── Edit handlers ─────────────────────────────────────────────
+    const handleOpenEdit = async (product) => {
+        try {
+            const res = await fetch(`${API}/products/${product.id}`);
+            const json = await res.json();
+            if (!json.success) throw new Error('Failed to load product details.');
+            const p = json.data;
+            setEditingProduct(product);
+            setEditFormData({
+                name: p.name || '',
+                category: p.category || '',
+                description: p.description || '',
+                price: p.price || '',
+                discount_percent: p.discount_percent ?? '0',
+                stock_quantity: p.stock_quantity ?? '',
+                supplier_id: p.supplier_id || '',
+                image: null,
+                imagePreview: p.image_url ? `http://localhost:5001${p.image_url}` : null,
+            });
+            setEditErrors({});
+            setShowEditModal(true);
+        } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Error', text: err.message, background: '#1a1f2e', color: '#fff', confirmButtonColor: '#ef4444' });
+        }
+    };
+
+    const handleCloseEditModal = () => {
+        setShowEditModal(false);
+        setEditingProduct(null);
+        setEditFormData(EMPTY_FORM);
+        setEditErrors({});
+    };
+
+    const handleEditChange = (e) => {
+        const { name, value } = e.target;
+        setEditFormData(prev => ({ ...prev, [name]: value }));
+        if (editErrors[name]) setEditErrors(prev => ({ ...prev, [name]: '' }));
+    };
+
+    const handleEditImageChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setEditFormData(prev => ({
+            ...prev,
+            image: file,
+            imagePreview: URL.createObjectURL(file),
+        }));
+    };
+
+    const validateEditForm = () => {
+        const newErrors = {};
+        if (!editFormData.name.trim()) newErrors.name = 'Product name is required.';
+        if (!editFormData.category) newErrors.category = 'Please select a category.';
+        if (!editFormData.price || Number(editFormData.price) < 0)
+            newErrors.price = 'Enter a valid price.';
+        if (editFormData.discount_percent < 0 || editFormData.discount_percent > 100)
+            newErrors.discount_percent = 'Discount must be 0–100%.';
+        if (editFormData.stock_quantity === '' || Number(editFormData.stock_quantity) < 0)
+            newErrors.stock_quantity = 'Enter a valid stock quantity.';
+        setEditErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleUpdateProduct = async () => {
+        if (!validateEditForm()) return;
+        setIsEditSubmitting(true);
+        try {
+            const token = localStorage.getItem('auth_token');
+            const body = new FormData();
+            body.append('name', editFormData.name);
+            body.append('category', editFormData.category);
+            body.append('description', editFormData.description);
+            body.append('price', editFormData.price);
+            body.append('discount_percent', editFormData.discount_percent);
+            body.append('stock_quantity', editFormData.stock_quantity);
+            body.append('supplier_id', editFormData.supplier_id);
+            if (editFormData.image) body.append('image', editFormData.image);
+
+            const res = await fetch(`${API}/products/${editingProduct.id}`, {
+                method: 'PUT',
+                headers: { Authorization: `Bearer ${token}` },
+                body,
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.message || 'Failed to update product.');
+
+            await fetchProducts();
+            handleCloseEditModal();
+            Swal.fire({
+                icon: 'success', title: 'Product Updated!',
+                text: `"${editFormData.name}" has been updated successfully.`,
+                background: '#1a1f2e', color: '#fff',
+                confirmButtonColor: '#4ecdc4', timer: 2500, showConfirmButton: false,
+            });
+        } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Error', text: err.message, background: '#1a1f2e', color: '#fff', confirmButtonColor: '#ef4444' });
+        } finally {
+            setIsEditSubmitting(false);
+        }
+    };
+
     // ── Delete ────────────────────────────────────────────────────
     const handleDelete = (id) => {
         Swal.fire({
@@ -300,7 +408,7 @@ const InventoryManagement = () => {
                                     </td>
                                     <td>
                                         <div className="action-buttons">
-                                            <button className="btn-icon edit" title="Edit"><Edit size={15} /></button>
+                                            <button className="btn-icon edit" title="Edit" onClick={() => handleOpenEdit(product)}><Edit size={15} /></button>
                                             <button className="btn-icon delete" title="Delete" onClick={() => handleDelete(product.id)}><Trash2 size={15} /></button>
                                         </div>
                                     </td>
@@ -471,6 +579,181 @@ const InventoryManagement = () => {
                                     <><span className="spinner" /> Saving...</>
                                 ) : (
                                     <><Plus size={16} /> Add Product</>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ══════════════════════════════════════════════════ */}
+            {/* EDIT PRODUCT MODAL                                   */}
+            {/* ══════════════════════════════════════════════════ */}
+            {showEditModal && editingProduct && (
+                <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && handleCloseEditModal()}>
+                    <div className="ap-modal" onClick={e => e.stopPropagation()}>
+
+                        {/* Modal Header */}
+                        <div className="ap-modal-header">
+                            <div>
+                                <h3 style={{ display:'flex', alignItems:'center', gap:8 }}>
+                                    <Edit size={18} style={{ color:'#60a5fa' }} /> Edit Product
+                                </h3>
+                                <p>Updating: <strong style={{ color:'var(--text-main)' }}>{editingProduct.name}</strong></p>
+                            </div>
+                            <button className="modal-close-btn" onClick={handleCloseEditModal}>✕</button>
+                        </div>
+
+                        <div className="ap-modal-body">
+
+                            {/* Image Upload */}
+                            <div className="image-upload-section">
+                                <div className="image-preview-box" onClick={() => document.getElementById('edit-image-input').click()}>
+                                    {editFormData.imagePreview ? (
+                                        <img src={editFormData.imagePreview} alt="Preview" className="image-preview-img" />
+                                    ) : (
+                                        <div className="image-placeholder">
+                                            <Image size={32} color="var(--text-muted)" />
+                                            <span>Click to change image</span>
+                                            <span className="image-hint">PNG, JPG up to 5MB</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <input id="edit-image-input" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleEditImageChange} />
+                            </div>
+
+                            {/* Product Name */}
+                            <div className="ap-form-group">
+                                <label><FileText size={13} /> Product Name <span className="required">*</span></label>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    placeholder="e.g. Goldfish (Medium)"
+                                    value={editFormData.name}
+                                    onChange={handleEditChange}
+                                    className={editErrors.name ? 'input-error' : ''}
+                                    maxLength={100}
+                                    autoFocus
+                                />
+                                {editErrors.name && <span className="error-msg">{editErrors.name}</span>}
+                            </div>
+
+                            {/* Category */}
+                            <div className="ap-form-group">
+                                <label><Tag size={13} /> Category <span className="required">*</span></label>
+                                <div className="select-wrap-full">
+                                    <select
+                                        name="category"
+                                        value={editFormData.category}
+                                        onChange={handleEditChange}
+                                        className={editErrors.category ? 'input-error' : ''}
+                                    >
+                                        <option value="">-- Select a Category --</option>
+                                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                    </select>
+                                    <ChevronDown size={14} className="sel-arrow" />
+                                </div>
+                                {editErrors.category && <span className="error-msg">{editErrors.category}</span>}
+                            </div>
+
+                            {/* Description */}
+                            <div className="ap-form-group">
+                                <label><FileText size={13} /> Description</label>
+                                <textarea
+                                    name="description"
+                                    rows={3}
+                                    placeholder="Describe the product (species, care instructions, specifications...)"
+                                    value={editFormData.description}
+                                    onChange={handleEditChange}
+                                />
+                            </div>
+
+                            {/* Price + Discount */}
+                            <div className="ap-form-row">
+                                <div className="ap-form-group">
+                                    <label><DollarSign size={13} /> Price (LKR) <span className="required">*</span></label>
+                                    <input
+                                        type="number"
+                                        name="price"
+                                        placeholder="0.00"
+                                        min="0"
+                                        step="0.01"
+                                        value={editFormData.price}
+                                        onChange={handleEditChange}
+                                        className={editErrors.price ? 'input-error' : ''}
+                                    />
+                                    {editErrors.price && <span className="error-msg">{editErrors.price}</span>}
+                                </div>
+                                <div className="ap-form-group">
+                                    <label><Percent size={13} /> Discount (%)</label>
+                                    <input
+                                        type="number"
+                                        name="discount_percent"
+                                        placeholder="0"
+                                        min="0"
+                                        max="100"
+                                        step="0.01"
+                                        value={editFormData.discount_percent}
+                                        onChange={handleEditChange}
+                                        className={editErrors.discount_percent ? 'input-error' : ''}
+                                    />
+                                    {editErrors.discount_percent && <span className="error-msg">{editErrors.discount_percent}</span>}
+                                </div>
+                            </div>
+
+                            {/* Sale Price Preview */}
+                            {editFormData.price && Number(editFormData.discount_percent) > 0 && (
+                                <div className="sale-preview">
+                                    <span>Sale Price:</span>
+                                    <strong>LKR {(Number(editFormData.price) - (Number(editFormData.price) * Number(editFormData.discount_percent) / 100)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+                                    <span className="sale-badge">-{editFormData.discount_percent}% OFF</span>
+                                </div>
+                            )}
+
+                            {/* Stock Quantity + Supplier */}
+                            <div className="ap-form-row">
+                                <div className="ap-form-group">
+                                    <label><Layers size={13} /> Stock Quantity <span className="required">*</span></label>
+                                    <input
+                                        type="number"
+                                        name="stock_quantity"
+                                        placeholder="0"
+                                        min="0"
+                                        step="1"
+                                        value={editFormData.stock_quantity}
+                                        onChange={handleEditChange}
+                                        className={editErrors.stock_quantity ? 'input-error' : ''}
+                                    />
+                                    {editErrors.stock_quantity && <span className="error-msg">{editErrors.stock_quantity}</span>}
+                                </div>
+                                <div className="ap-form-group">
+                                    <label><User size={13} /> Supplier</label>
+                                    <div className="select-wrap-full">
+                                        <select name="supplier_id" value={editFormData.supplier_id} onChange={handleEditChange}>
+                                            <option value="">-- No Supplier --</option>
+                                            {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                        </select>
+                                        <ChevronDown size={14} className="sel-arrow" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="ap-modal-footer">
+                            <button className="btn-cancel-modal" onClick={handleCloseEditModal} disabled={isEditSubmitting}>
+                                Cancel
+                            </button>
+                            <button
+                                className="btn-save-product"
+                                onClick={handleUpdateProduct}
+                                disabled={isEditSubmitting}
+                                style={{ background: 'linear-gradient(135deg, #60a5fa, #3b82f6)', boxShadow: '0 4px 15px rgba(96,165,250,0.25)' }}
+                            >
+                                {isEditSubmitting ? (
+                                    <><span className="spinner" style={{ borderTopColor:'#fff', borderColor:'rgba(255,255,255,0.3)' }} /> Saving...</>
+                                ) : (
+                                    <><CheckCircle size={16} /> Save Changes</>
                                 )}
                             </button>
                         </div>

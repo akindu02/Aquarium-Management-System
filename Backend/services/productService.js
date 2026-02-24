@@ -97,21 +97,33 @@ const createProduct = async ({ name, category, description, price, discount_perc
 const updateProduct = async (productId, fields) => {
     const { name, category, description, price, discount_percent, stock_quantity, supplier_id, image_url } = fields;
 
+    // supplier_id and description are intentionally nullable (can be cleared).
+    // Use COALESCE only for non-nullable fields; always write nullable ones directly.
     const { rows } = await pool.query(`
         UPDATE products
         SET
             name             = COALESCE($1, name),
             category         = COALESCE($2, category),
-            description      = COALESCE($3, description),
+            description      = $3,
             price            = COALESCE($4, price),
             discount_percent = COALESCE($5, discount_percent),
             stock_quantity   = COALESCE($6, stock_quantity),
-            supplier_id      = COALESCE($7, supplier_id),
+            supplier_id      = $7,
             image_url        = COALESCE($8, image_url),
             updated_at       = CURRENT_TIMESTAMP
         WHERE product_id = $9
         RETURNING *
-    `, [name, category, description, price, discount_percent, stock_quantity, supplier_id, image_url, productId]);
+    `, [
+        name        ?? null,
+        category    ?? null,
+        description ?? null,
+        price       ?? null,
+        discount_percent ?? null,
+        stock_quantity   ?? null,
+        supplier_id      ?? null,
+        image_url        ?? null,
+        productId,
+    ]);
 
     if (!rows[0]) return null;
     return { ...rows[0], stock_status: getStockStatus(rows[0].stock_quantity) };

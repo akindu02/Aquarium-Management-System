@@ -85,11 +85,14 @@ const updateProduct = async (req, res) => {
         }
 
         const product = await productService.updateProduct(req.params.id, {
-            name, category, description,
-            price: price !== undefined ? parseFloat(price) : undefined,
-            discount_percent: discount_percent !== undefined ? parseFloat(discount_percent) : undefined,
-            stock_quantity: stock_quantity !== undefined ? parseInt(stock_quantity) : undefined,
-            supplier_id,
+            name:             name        ? name.trim()                    : undefined,
+            category:         category    ? category                       : undefined,
+            description:      description ? description.trim()             : null,
+            price:            price       !== undefined && price !== ''    ? parseFloat(price)          : undefined,
+            discount_percent: discount_percent !== undefined && discount_percent !== '' ? parseFloat(discount_percent) : undefined,
+            stock_quantity:   stock_quantity   !== undefined && stock_quantity   !== '' ? parseInt(stock_quantity)    : undefined,
+            // Convert empty string → null so PostgreSQL FK constraint is satisfied
+            supplier_id:      supplier_id && supplier_id !== '' ? parseInt(supplier_id) : null,
             image_url,
         });
 
