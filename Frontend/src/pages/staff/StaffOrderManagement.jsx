@@ -140,11 +140,6 @@ const StaffOrderManagement = () => {
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                {activeTab === 'supplier' && (
-                    <button className="new-req-btn" onClick={() => setShowRequestModal(true)}>
-                        <Plus size={18} /> New Request
-                    </button>
-                )}
             </div>
 
             {/* Table */}
