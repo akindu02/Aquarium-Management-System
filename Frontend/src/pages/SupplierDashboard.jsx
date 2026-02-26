@@ -7,7 +7,6 @@ import ProfileModal from '../components/ProfileModal';
 import SupplierOrderRequests from './supplier/SupplierOrderRequests';
 import SupplierOrderHistory from './supplier/SupplierOrderHistory';
 import SupplierEarnings from './supplier/SupplierEarnings';
-import SupplierRestock from './supplier/SupplierRestock';
 import SupplierMyDetails from './supplier/SupplierMyDetails';
 import '../index.css';
 
@@ -40,7 +39,6 @@ const SupplierDashboard = () => {
   const menuItems = [
     { id: 'dashboard',    label: 'Dashboard',        icon: LayoutDashboard },
     { id: 'new_requests', label: 'New Order Request', icon: ClipboardList },
-    { id: 'restock',      label: 'Restock',           icon: Package },
     { id: 'order_history',label: 'Order History',     icon: History },
     { id: 'earnings',     label: 'Performance',       icon: Banknote },
     { id: 'my_details',   label: 'My Details',        icon: UserCircle },
@@ -52,8 +50,6 @@ const SupplierDashboard = () => {
         return <DashboardContent onNavigate={setActiveMenu} />;
       case 'new_requests':
         return <SupplierOrderRequests />;
-      case 'restock':
-        return <SupplierRestock />;
       case 'order_history':
         return <SupplierOrderHistory />;
       case 'earnings':
