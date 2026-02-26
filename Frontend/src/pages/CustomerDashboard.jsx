@@ -113,7 +113,7 @@ const CustomerDashboard = () => {
               </div>
               <div className="header-user-info">
                 <p className="header-user-name">{user?.name || 'Customer'}</p>
-                <p className="header-user-role">Customer</p>
+                
               </div>
             </div>
           </div>

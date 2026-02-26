@@ -130,7 +130,7 @@ const AdminDashboard = () => {
               </div>
               <div className="header-user-info">
                 <p className="header-user-name">{user?.name || 'Admin'}</p>
-                <p className="header-user-role">Administrator</p>
+                
               </div>
             </div>
           </div>

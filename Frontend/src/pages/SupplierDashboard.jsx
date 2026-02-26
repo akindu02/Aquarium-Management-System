@@ -118,7 +118,7 @@ const SupplierDashboard = () => {
               </div>
               <div className="header-user-info">
                 <p className="header-user-name">{user?.name || 'Supplier'}</p>
-                <p className="header-user-role">Supplier</p>
+                
               </div>
             </div>
           </div>

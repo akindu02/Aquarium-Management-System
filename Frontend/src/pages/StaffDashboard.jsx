@@ -122,7 +122,7 @@ const StaffDashboard = () => {
               </div>
               <div className="header-user-info">
                 <p className="header-user-name">{user?.name || 'Staff'}</p>
-                <p className="header-user-role">Staff Member</p>
+                
               </div>
             </div>
           </div>
