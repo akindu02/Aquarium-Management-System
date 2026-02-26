@@ -119,4 +119,32 @@ const deleteProduct = async (req, res) => {
     }
 };
 
-module.exports = { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct };
+/**
+ * GET /api/products/low-stock
+ * Staff / Admin – products with stock_quantity <= 10
+ */
+const getLowStockProducts = async (req, res) => {
+    try {
+        const products = await productService.getLowStockProducts();
+        res.json({ success: true, data: products });
+    } catch (err) {
+        console.error('getLowStockProducts error:', err);
+        res.status(500).json({ success: false, message: 'Failed to fetch low-stock products.' });
+    }
+};
+
+/**
+ * GET /api/products/:id/suppliers
+ * Staff / Admin – suppliers linked to a product
+ */
+const getProductSuppliers = async (req, res) => {
+    try {
+        const suppliers = await productService.getProductSuppliers(req.params.id);
+        res.json({ success: true, data: suppliers });
+    } catch (err) {
+        console.error('getProductSuppliers error:', err);
+        res.status(500).json({ success: false, message: 'Failed to fetch product suppliers.' });
+    }
+};
+
+module.exports = { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct, getLowStockProducts, getProductSuppliers };

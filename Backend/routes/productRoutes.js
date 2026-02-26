@@ -8,6 +8,12 @@ const upload = require('../config/multerConfig');
 // GET all products (customers can browse)
 router.get('/', productController.getAllProducts);
 
+// GET low-stock products (must be before /:id to avoid route conflict)
+router.get('/low-stock', authenticate, authorize('admin', 'staff'), productController.getLowStockProducts);
+
+// GET suppliers for a specific product
+router.get('/:id/suppliers', authenticate, authorize('admin', 'staff'), productController.getProductSuppliers);
+
 // GET single product
 router.get('/:id', productController.getProductById);
 

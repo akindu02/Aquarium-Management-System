@@ -140,4 +140,46 @@ const deleteProduct = async (productId) => {
     return rowCount > 0;
 };
 
-module.exports = { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct };
+/**
+ * Get low-stock products (stock_quantity <= 10) with their linked suppliers
+ */
+const getLowStockProducts = async () => {
+    const { rows } = await pool.query(`
+        SELECT
+            p.product_id,
+            p.name,
+            p.category,
+            p.price,
+            p.stock_quantity,
+            p.image_url,
+            p.supplier_id,
+            s.company_name AS supplier_name
+        FROM products p
+        LEFT JOIN suppliers s ON p.supplier_id = s.user_id
+        WHERE p.stock_quantity <= 10
+        ORDER BY p.stock_quantity ASC, p.name ASC
+    `);
+    return rows.map(r => ({ ...r, stock_status: getStockStatus(r.stock_quantity) }));
+};
+
+/**
+ * Get suppliers linked to a specific product via product_suppliers bridge table
+ */
+const getProductSuppliers = async (productId) => {
+    const { rows } = await pool.query(`
+        SELECT
+            ps.supplier_id,
+            ps.is_primary,
+            ps.supply_price,
+            u.name AS user_name,
+            s.company_name
+        FROM product_suppliers ps
+        JOIN suppliers s ON s.user_id = ps.supplier_id
+        JOIN users u ON u.id = ps.supplier_id
+        WHERE ps.product_id = $1
+        ORDER BY ps.is_primary DESC, s.company_name ASC
+    `, [productId]);
+    return rows;
+};
+
+module.exports = { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct, getLowStockProducts, getProductSuppliers };

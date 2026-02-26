@@ -8,6 +8,7 @@ import BookingManagement from './admin/BookingManagement';
 import InventoryManagement from './admin/InventoryManagement';
 import PointOfSale from './staff/PointOfSale';
 import StaffOrderManagement from './staff/StaffOrderManagement';
+import ProductRestock from './staff/ProductRestock';
 import '../index.css';
 
 const StaffDashboard = () => {
@@ -38,6 +39,7 @@ const StaffDashboard = () => {
     { id: 'pos', label: 'Point of Sale', icon: Store },
     { id: 'products', label: 'Products / Inventory', icon: Package },
     { id: 'orders', label: 'Process Orders', icon: ClipboardList },
+    { id: 'restock', label: 'Product Restock', icon: AlertTriangle },
     { id: 'bookings', label: 'Bookings', icon: CalendarClock },
     { id: 'settings', label: 'My Settings', icon: Settings },
   ];
@@ -52,6 +54,8 @@ const StaffDashboard = () => {
         return <InventoryManagement />;
       case 'orders':
         return <StaffOrderManagement />;
+      case 'restock':
+        return <ProductRestock />;
       case 'bookings':
         return <BookingManagement />;
       case 'settings':
