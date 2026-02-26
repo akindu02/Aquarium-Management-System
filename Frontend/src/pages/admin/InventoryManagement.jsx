@@ -482,7 +482,7 @@ const InventoryManagement = () => {
                                         onChange={handleChange}
                                         className={errors.category ? 'input-error' : ''}
                                     >
-                                        <option value="">-- Select a Category --</option>
+                                        <option value="">Select a Category</option>
                                         {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
                                     <ChevronDown size={14} className="sel-arrow" />
@@ -546,7 +546,7 @@ const InventoryManagement = () => {
 
                             {/* Stock Quantity */}
                             <div className="ap-form-group">
-                                <label><Layers size={13} /> Stock Quantity <span className="required">*</span></label>
+                                <label><Layers size={13} /> Stock Quantity <span className="required"></span></label>
                                 <input
                                     type="number"
                                     name="stock_quantity"
@@ -566,7 +566,7 @@ const InventoryManagement = () => {
                                     <label><User size={13} /> Primary Supplier</label>
                                     <div className="select-wrap-full">
                                         <select name="supplier_id" value={formData.supplier_id} onChange={handleChange}>
-                                            <option value="">-- No Supplier --</option>
+                                            <option value="">No Supplier</option>
                                             {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                         </select>
                                         <ChevronDown size={14} className="sel-arrow" />
@@ -576,7 +576,7 @@ const InventoryManagement = () => {
                                     <label><User size={13} /> Secondary Supplier</label>
                                     <div className="select-wrap-full">
                                         <select name="secondary_supplier_id" value={formData.secondary_supplier_id} onChange={handleChange}>
-                                            <option value="">-- No Supplier --</option>
+                                            <option value="">No Supplier</option>
                                             {suppliers.filter(s => s.id !== formData.supplier_id).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                         </select>
                                         <ChevronDown size={14} className="sel-arrow" />
@@ -664,7 +664,7 @@ const InventoryManagement = () => {
                                         onChange={handleEditChange}
                                         className={editErrors.category ? 'input-error' : ''}
                                     >
-                                        <option value="">-- Select a Category --</option>
+                                        <option value="">Select a Category</option>
                                         {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
                                     <ChevronDown size={14} className="sel-arrow" />
@@ -728,7 +728,7 @@ const InventoryManagement = () => {
 
                             {/* Stock Quantity */}
                             <div className="ap-form-group">
-                                <label><Layers size={13} /> Stock Quantity <span className="required">*</span></label>
+                                <label><Layers size={13} /> Stock Quantity <span className="required"></span></label>
                                 <input
                                     type="number"
                                     name="stock_quantity"
@@ -748,7 +748,7 @@ const InventoryManagement = () => {
                                     <label><User size={13} /> Primary Supplier</label>
                                     <div className="select-wrap-full">
                                         <select name="supplier_id" value={editFormData.supplier_id} onChange={handleEditChange}>
-                                            <option value="">-- No Supplier --</option>
+                                            <option value="">No Supplier</option>
                                             {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                         </select>
                                         <ChevronDown size={14} className="sel-arrow" />
@@ -758,7 +758,7 @@ const InventoryManagement = () => {
                                     <label><User size={13} /> Secondary Supplier</label>
                                     <div className="select-wrap-full">
                                         <select name="secondary_supplier_id" value={editFormData.secondary_supplier_id} onChange={handleEditChange}>
-                                            <option value="">-- No Supplier --</option>
+                                            <option value="">No Supplier</option>
                                             {suppliers.filter(s => s.id !== editFormData.supplier_id).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                         </select>
                                         <ChevronDown size={14} className="sel-arrow" />

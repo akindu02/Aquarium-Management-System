@@ -322,7 +322,7 @@ const ProductRestock = () => {
 
                             {/* Quantity */}
                             <div className="pr-form-group">
-                                <label><Layers size={13} /> Restock Quantity <span className="pr-required">*</span></label>
+                                <label><Layers size={13} /> Restock Quantity <span className="pr-required"></span></label>
                                 <input
                                     type="number"
                                     name="quantity"
@@ -339,7 +339,7 @@ const ProductRestock = () => {
 
                             {/* Supplier */}
                             <div className="pr-form-group">
-                                <label><User size={13} /> Select Supplier <span className="pr-required">*</span></label>
+                                <label><User size={13} /> Select Supplier <span className="pr-required"></span></label>
                                 {suppliersLoading ? (
                                     <div className="pr-suppliers-loading"><span className="pr-spinner-sm" /> Loading suppliers…</div>
                                 ) : productSuppliers.length === 0 ? (
@@ -372,7 +372,7 @@ const ProductRestock = () => {
 
                             {/* Unit Cost */}
                             <div className="pr-form-group">
-                                <label><DollarSign size={13} /> Unit Cost (LKR) <span className="pr-required">*</span></label>
+                                <label><DollarSign size={13} /> Unit Cost (LKR) <span className="pr-required"></span></label>
                                 <input
                                     type="number"
                                     name="unit_cost"
