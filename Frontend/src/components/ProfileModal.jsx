@@ -124,7 +124,7 @@ const ProfileModal = ({ show, onClose, user, setUser, accentColor = '#06b6d4', a
             <div className="pm-header-info">
               <p className="pm-name">{user?.name || 'User'}</p>
               <p className="pm-email">{user?.email}</p>
-              <span className="pm-role-badge">{roleEmoji} {user?.role}</span>
+              <span className="pm-role-badge">{user?.role}</span>
             </div>
             <button className="pm-close" onClick={onClose}><X size={16} /></button>
           </div>
