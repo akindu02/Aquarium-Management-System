@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, ShoppingBag, CalendarDays, CalendarCheck, Settings, Bell, LogOut, Store } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, CalendarDays, CalendarCheck, Bell, LogOut, Store } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
@@ -38,7 +38,6 @@ const CustomerDashboard = () => {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'orders', label: 'My Orders', icon: ShoppingBag },
     { id: 'booking', label: 'My Booking', icon: CalendarDays },
-    { id: 'settings', label: 'Account Settings', icon: Settings },
   ];
 
   const renderContent = () => {
@@ -49,8 +48,6 @@ const CustomerDashboard = () => {
         return <MyOrders />;
       case 'booking':
         return <MyBookings />;
-      case 'settings':
-        return <PlaceholderContent title="Account Settings" description="Update your profile and preferences" />;
       default:
         return <DashboardContent />;
     }
