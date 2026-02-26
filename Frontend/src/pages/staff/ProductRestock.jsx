@@ -525,12 +525,12 @@ const ProductRestock = () => {
                 .pr-supplier-cell { font-size: 0.88rem; color: var(--text-muted); }
                 .pr-request-btn {
                     display: inline-flex; align-items: center; gap: 0.4rem;
-                    background: linear-gradient(135deg, #4ecdc4, #44a08d);
-                    color: #000; border: none; padding: 0.5rem 1rem;
+                    background: var(--color-primary);
+                    color: #fff; border: none; padding: 0.5rem 1rem;
                     border-radius: 0.5rem; font-size: 0.82rem; font-weight: 700;
                     cursor: pointer; transition: all 0.2s; white-space: nowrap;
                 }
-                .pr-request-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(78,205,196,0.35); }
+                .pr-request-btn:hover { background: var(--color-primary-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(6,182,212,0.3); }
 
                 /* Loading / Empty */
                 .pr-loading, .pr-empty {
@@ -644,12 +644,12 @@ const ProductRestock = () => {
                 .pr-btn-cancel:hover:not(:disabled) { background: rgba(255,255,255,0.1); color: var(--text-main); }
                 .pr-btn-submit {
                     display: flex; align-items: center; gap: 0.4rem;
-                    background: linear-gradient(135deg, #4ecdc4, #44a08d);
-                    color: #000; border: none; padding: 0.6rem 1.4rem;
+                    background: var(--color-primary);
+                    color: #fff; border: none; padding: 0.6rem 1.4rem;
                     border-radius: 0.5rem; font-size: 0.9rem; font-weight: 700;
                     cursor: pointer; transition: all 0.2s;
                 }
-                .pr-btn-submit:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(78,205,196,0.35); }
+                .pr-btn-submit:hover:not(:disabled) { background: var(--color-primary-dark); transform: translateY(-1px); box-shadow: 0 4px 15px rgba(6,182,212,0.3); }
                 .pr-btn-submit:disabled, .pr-btn-cancel:disabled { opacity: 0.6; cursor: not-allowed; }
 
                 @media (max-width: 640px) {
