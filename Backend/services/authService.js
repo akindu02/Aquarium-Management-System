@@ -303,15 +303,39 @@ class AuthService {
      * @param {Object} updates - Fields to update
      * @returns {Object} { success, user, message }
      */
-    async updateProfile(userId, updates) {
-        const { name } = updates;
+    async updateProfile(userId, updates, userRole) {
+        const { name, email } = updates;
+
+        // Only customers are allowed to change their email
+        if (email) {
+            if (userRole !== 'customer') {
+                return {
+                    success: false,
+                    message: 'Only customers can change their email address',
+                };
+            }
+
+            // Check if the new email is already taken by another user
+            const existingUser = await query(
+                'SELECT id FROM users WHERE email = $1 AND id != $2',
+                [email.toLowerCase(), userId]
+            );
+
+            if (existingUser.rows.length > 0) {
+                return {
+                    success: false,
+                    message: 'A user with this email already exists',
+                };
+            }
+        }
 
         const result = await query(
             `UPDATE users 
-       SET name = COALESCE($1, name)
-       WHERE id = $2
+       SET name = COALESCE($1, name),
+           email = COALESCE($2, email)
+       WHERE id = $3
        RETURNING id, email, name, role, is_active, email_verified, created_at, updated_at`,
-            [name, userId]
+            [name, email ? email.toLowerCase() : null, userId]
         );
 
         if (result.rows.length === 0) {

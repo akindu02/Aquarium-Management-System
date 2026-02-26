@@ -228,11 +228,12 @@ class AuthController {
                 });
             }
 
-            const { name } = req.body;
+            const { name, email } = req.body;
 
             const result = await authService.updateProfile(req.user.id, {
                 name,
-            });
+                email,
+            }, req.user.role);
 
             if (!result.success) {
                 return res.status(400).json(result);

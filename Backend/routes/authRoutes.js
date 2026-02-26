@@ -63,6 +63,11 @@ const updateProfileValidation = [
         .trim()
         .isLength({ min: 1, max: 200 })
         .withMessage('Name must be between 1 and 200 characters'),
+    body('email')
+        .optional()
+        .isEmail()
+        .withMessage('Please provide a valid email address')
+        .normalizeEmail(),
 ];
 
 const changePasswordValidation = [

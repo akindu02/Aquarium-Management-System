@@ -8,6 +8,7 @@ const ProfileModal = ({ show, onClose, user, setUser, accentColor = '#06b6d4', a
   const modalRef = useRef(null);
   const [activeTab, setActiveTab] = useState('profile');
   const [profileName, setProfileName] = useState(user?.name || '');
+  const [profileEmail, setProfileEmail] = useState(user?.email || '');
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState(null);
   const [pwForm, setPwForm] = useState({ current: '', newPw: '', confirm: '' });
@@ -18,6 +19,7 @@ const ProfileModal = ({ show, onClose, user, setUser, accentColor = '#06b6d4', a
   useEffect(() => {
     if (show) {
       setProfileName(user?.name || '');
+      setProfileEmail(user?.email || '');
       setProfileMsg(null);
       setPwMsg(null);
       setPwForm({ current: '', newPw: '', confirm: '' });
@@ -45,14 +47,23 @@ const ProfileModal = ({ show, onClose, user, setUser, accentColor = '#06b6d4', a
     return name.split(' ').filter(Boolean).map(w => w[0]).join('').toUpperCase().slice(0, 2);
   };
 
+  const isCustomer = user?.role === 'customer';
+
   const handleSaveProfile = async () => {
     if (!profileName.trim()) return;
+    if (isCustomer && !profileEmail.trim()) return;
     setProfileSaving(true);
     setProfileMsg(null);
     try {
-      const res = await updateProfileAPI({ name: profileName.trim() });
+      const updateData = { name: profileName.trim() };
+      if (isCustomer && profileEmail.trim() !== (user?.email || '')) {
+        updateData.email = profileEmail.trim();
+      }
+      const res = await updateProfileAPI(updateData);
       if (res.success) {
-        updateUserData({ name: profileName.trim() });
+        const updatedFields = { name: profileName.trim() };
+        if (res.user?.email) updatedFields.email = res.user.email;
+        updateUserData(updatedFields);
         setUser(getUserData());
         setProfileMsg({ type: 'success', text: 'Profile updated successfully!' });
       } else {
@@ -111,6 +122,8 @@ const ProfileModal = ({ show, onClose, user, setUser, accentColor = '#06b6d4', a
 
   const strength = getStrength();
   const nameUnchanged = profileName.trim() === (user?.name || '');
+  const emailUnchanged = !isCustomer || profileEmail.trim().toLowerCase() === (user?.email || '').toLowerCase();
+  const nothingChanged = nameUnchanged && emailUnchanged;
 
   return (
     <>
@@ -152,10 +165,19 @@ const ProfileModal = ({ show, onClose, user, setUser, accentColor = '#06b6d4', a
                 </div>
                 <div className="pm-field">
                   <label className="pm-label">Email</label>
-                  <div className="pm-input-ro">
-                    <Mail size={14} /><span>{user?.email || '—'}</span>
-                  </div>
-                  <p className="pm-hint">Contact an administrator to change your email</p>
+                  {isCustomer ? (
+                    <div className="pm-input-wrap">
+                      <Mail size={14} className="pm-input-icon" />
+                      <input className="pm-input pm-input-iconic" value={profileEmail} onChange={e => setProfileEmail(e.target.value)} placeholder="Your email address" type="email" />
+                    </div>
+                  ) : (
+                    <>
+                      <div className="pm-input-ro">
+                        <Mail size={14} /><span>{user?.email || '—'}</span>
+                      </div>
+                      <p className="pm-hint">Contact an administrator to change your email</p>
+                    </>
+                  )}
                 </div>
                 <div className="pm-field">
                   <label className="pm-label">Role</label>
@@ -168,7 +190,7 @@ const ProfileModal = ({ show, onClose, user, setUser, accentColor = '#06b6d4', a
                     {profileMsg.type === 'success' ? <CheckCircle2 size={14} /> : <XCircle size={14} />} {profileMsg.text}
                   </div>
                 )}
-                <button className="pm-btn" onClick={handleSaveProfile} disabled={profileSaving || nameUnchanged}>
+                <button className="pm-btn" onClick={handleSaveProfile} disabled={profileSaving || nothingChanged}>
                   {profileSaving ? <><span className="pm-spinner" /> Saving...</> : <><Check size={14} /> Save Changes</>}
                 </button>
               </div>
