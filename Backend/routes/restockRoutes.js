@@ -15,7 +15,7 @@ router.get('/', authenticate, authorize('admin', 'staff'), restockController.get
 // PUT – staff marks request as Ordered / Received / Cancelled
 router.put('/:id/staff-status', authenticate, authorize('admin', 'staff'), restockController.updateStaffRestockStatus);
 
-// PUT – supplier accepts or rejects a request
-router.put('/:id/status', authenticate, authorize('supplier'), restockController.updateRestockStatus);
+// PUT – supplier or admin accepts or rejects a request
+router.put('/:id/status', authenticate, authorize('supplier', 'admin'), restockController.updateRestockStatus);
 
 module.exports = router;

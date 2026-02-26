@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Bell, Settings, LogOut, CalendarClock, AlertTriangle, Clock, CheckCircle, Activity, Coins, ChevronRight } from "lucide-react";
+import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Bell, Settings, LogOut, CalendarClock, AlertTriangle, Clock, CheckCircle, Activity, Coins, ChevronRight, RefreshCw } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
@@ -9,6 +9,7 @@ import BookingManagement from './admin/BookingManagement';
 import InventoryManagement from './admin/InventoryManagement';
 import OrderManagement from './admin/OrderManagement';
 import ReportsAnalytics from './admin/ReportsAnalytics';
+import ProductRestock from './staff/ProductRestock';
 import '../index.css';
 
 const AdminDashboard = () => {
@@ -43,6 +44,7 @@ const AdminDashboard = () => {
     { id: 'users', label: 'Users Management', icon: Users },
     { id: 'products', label: 'Products / Inventory', icon: Package },
     { id: 'orders', label: 'Order Management', icon: ShoppingCart },
+    { id: 'restock', label: 'Product Restock', icon: RefreshCw },
     { id: 'bookings', label: 'Bookings', icon: CalendarClock },
     { id: 'reports', label: 'Reports & Analytics', icon: BarChart3 },
     { id: 'settings', label: 'Settings', icon: Settings },
@@ -60,6 +62,8 @@ const AdminDashboard = () => {
         return <InventoryManagement />;
       case 'orders':
         return <OrderManagement />;
+      case 'restock':
+        return <ProductRestock />;
       case 'reports':
         return <ReportsAnalytics />;
       case 'settings':
