@@ -56,19 +56,23 @@ const ProductRestock = () => {
 
     useEffect(() => { fetchLowStock(); }, []);
 
-    // ── Fetch suppliers for a specific product ────────────────────
-    const fetchProductSuppliers = async (productId) => {
+    // ── Fetch suppliers for a specific product (with fallback) ─────
+    const fetchProductSuppliers = async (product) => {
         setSuppliersLoading(true);
+        const makeFallback = () => product.supplier_id
+            ? [{ supplier_id: product.supplier_id, company_name: product.supplier_name, user_name: product.supplier_name, is_primary: true, supply_price: null }]
+            : [];
         try {
-            const res = await fetch(`${API}/products/${productId}/suppliers`, {
+            const res = await fetch(`${API}/products/${product.product_id}/suppliers`, {
                 headers: { Authorization: `Bearer ${token()}` },
             });
             const json = await res.json();
-            if (json.success) setProductSuppliers(json.data);
-            else setProductSuppliers([]);
+            const list = json.success ? json.data : [];
+            // If bridge table has no rows, fall back to the product's direct supplier
+            setProductSuppliers(list.length > 0 ? list : makeFallback());
         } catch (err) {
             console.error('Failed to fetch product suppliers:', err);
-            setProductSuppliers([]);
+            setProductSuppliers(makeFallback());
         } finally {
             setSuppliersLoading(false);
         }
@@ -81,7 +85,7 @@ const ProductRestock = () => {
         setErrors({});
         setProductSuppliers([]);
         setShowModal(true);
-        fetchProductSuppliers(product.product_id);
+        fetchProductSuppliers(product);
     };
 
     const handleCloseModal = () => {

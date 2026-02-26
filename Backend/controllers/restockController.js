@@ -67,6 +67,25 @@ const getSupplierRestockRequests = async (req, res) => {
 };
 
 /**
+ * PUT /api/restock/:id/staff-status
+ * Staff – update status to Ordered, Received, or Cancelled.
+ */
+const updateStaffRestockStatus = async (req, res) => {
+    try {
+        const { status } = req.body;
+        if (!status) return res.status(400).json({ success: false, message: 'Status is required.' });
+
+        const updated = await restockService.updateStaffRestockStatus(req.params.id, status);
+        if (!updated) return res.status(404).json({ success: false, message: 'Restock request not found.' });
+
+        res.json({ success: true, message: `Status updated to ${status}.`, data: updated });
+    } catch (err) {
+        console.error('updateStaffRestockStatus error:', err);
+        res.status(400).json({ success: false, message: err.message || 'Failed to update status.' });
+    }
+};
+
+/**
  * PUT /api/restock/:id/status
  * Supplier – accept (Approved) or reject (Rejected) a request.
  */
@@ -90,4 +109,4 @@ const updateRestockStatus = async (req, res) => {
     }
 };
 
-module.exports = { createRestockRequest, getAllRestockRequests, getSupplierRestockRequests, updateRestockStatus };
+module.exports = { createRestockRequest, getAllRestockRequests, getSupplierRestockRequests, updateRestockStatus, updateStaffRestockStatus };

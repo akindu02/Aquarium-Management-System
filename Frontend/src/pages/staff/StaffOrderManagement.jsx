@@ -46,13 +46,44 @@ const StaffOrderManagement = () => {
 
     useEffect(() => { fetchCustomerOrders(); }, [fetchCustomerOrders]);
 
-    // --- Supplier Orders Data ---
-    const initialSupplierOrders = [
-        { id: 'SUP-9001', supplier: 'Aquarium Imports Ltd', items: 'Neon Tetra Batch (500)', date: '2025-10-28', cost: 25000, status: 'Pending', expected: '2025-11-01' },
-        { id: 'SUP-9002', supplier: 'Lanka Tanks Makers', items: 'Glass Tanks 50L (x10)', date: '2025-10-26', cost: 45000, status: 'Received', expected: '2025-10-30' },
-        { id: 'SUP-9003', supplier: 'Global Fish Foods', items: 'Flakes Bulk Pack (x50)', date: '2025-10-25', cost: 12000, status: 'Shipped', expected: '2025-10-31' },
-    ];
-    const [supplierOrders, setSupplierOrders] = useState(initialSupplierOrders);
+    // --- Supplier / Restock Orders Data ---
+    const [supplierOrders, setSupplierOrders] = useState([]);
+    const [supplierLoading, setSupplierLoading] = useState(false);
+
+    const fetchRestockRequests = useCallback(async () => {
+        try {
+            setSupplierLoading(true);
+            const token = localStorage.getItem('auth_token');
+            const res = await fetch('http://localhost:5001/api/restock', {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const json = await res.json();
+            if (json.success) {
+                setSupplierOrders(json.data.map(r => ({
+                    _id:      r.request_id,
+                    id:       `REQ-${String(r.request_id).padStart(4, '0')}`,
+                    supplier: r.supplier_name || '—',
+                    product:  r.product_name  || '—',
+                    quantity: r.quantity,
+                    unit_cost: r.unit_cost,
+                    cost:     r.total_cost,
+                    date:     r.requested_at  ? r.requested_at.split('T')[0]  : '',
+                    expected: r.expected_date ? r.expected_date.split('T')[0] : 'TBD',
+                    status:   r.status,
+                    notes:    r.notes || '',
+                    staff:    r.staff_name || '',
+                })));
+            }
+        } catch (err) {
+            console.error('fetchRestockRequests error:', err);
+        } finally {
+            setSupplierLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (activeTab === 'supplier') fetchRestockRequests();
+    }, [activeTab, fetchRestockRequests]);
 
     // --- Helpers ---
     const getStatusStyle = (status) => {
@@ -79,8 +110,24 @@ const StaffOrderManagement = () => {
         }
     };
 
-    const updateSupplierStatus = (id, newStatus) => {
-        setSupplierOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
+    const updateSupplierStatus = async (id, newStatus) => {
+        const order = supplierOrders.find(o => o.id === id);
+        if (!order) return;
+        try {
+            const token = localStorage.getItem('auth_token');
+            const res = await fetch(`http://localhost:5001/api/restock/${order._id}/staff-status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ status: newStatus }),
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.message || 'Update failed.');
+            setSupplierOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
+            setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : prev);
+            Swal.fire({ icon: 'success', title: 'Status Updated', text: `Request marked as ${newStatus}.`, background: '#1a1f2e', color: '#fff', confirmButtonColor: '#4ecdc4', timer: 2000, showConfirmButton: false });
+        } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Update Failed', text: err.message, background: '#1a1f2e', color: '#fff', confirmButtonColor: '#ef4444' });
+        }
     };
 
     const handleCreateRequest = () => {
@@ -103,7 +150,11 @@ const StaffOrderManagement = () => {
 
     const filteredData = activeTab === 'customer'
         ? customerOrders.filter(o => o.id.toLowerCase().includes(searchTerm.toLowerCase()) || o.customer.toLowerCase().includes(searchTerm.toLowerCase()))
-        : supplierOrders.filter(o => o.id.toLowerCase().includes(searchTerm.toLowerCase()) || o.supplier.toLowerCase().includes(searchTerm.toLowerCase()));
+        : supplierOrders.filter(o =>
+            o.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            o.supplier.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            o.product.toLowerCase().includes(searchTerm.toLowerCase())
+          );
 
     return (
         <div className="staff-orders-container">
@@ -160,17 +211,22 @@ const StaffOrderManagement = () => {
                             <tr>
                                 <th>Request ID</th>
                                 <th>Supplier</th>
-                                <th>Items Details</th>
+                                <th>Product</th>
+                                <th>Qty</th>
                                 <th>Order Date</th>
-                                <th>Exp. Cost</th>
-                                <th>Status</th>
+                                <th>Total Cost</th>
                                 <th>Expected</th>
+                                <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         )}
                     </thead>
                     <tbody>
-                        {filteredData.map(item => {
+                        {supplierLoading && activeTab === 'supplier' ? (
+                            <tr><td colSpan="9" style={{ textAlign:'center', padding:'3rem', color:'rgba(255,255,255,0.4)' }}>Loading restock requests…</td></tr>
+                        ) : filteredData.length === 0 ? (
+                            <tr><td colSpan="9" style={{ textAlign:'center', padding:'3rem', color:'rgba(255,255,255,0.4)' }}>{activeTab === 'supplier' ? 'No restock requests found.' : 'No orders found.'}</td></tr>
+                        ) : filteredData.map(item => {
                             const statusStyle = getStatusStyle(item.status);
                             const StatusIcon = statusStyle.icon;
 
@@ -187,20 +243,25 @@ const StaffOrderManagement = () => {
                                             <span className="supplier-name">{item.supplier}</span>
                                         )}
                                     </td>
-                                    <td className="items-cell" title={item.items}>{item.items}</td>
+                                    {activeTab === 'supplier' ? (
+                                        <>
+                                            <td className="items-cell">{item.product}</td>
+                                            <td>{item.quantity ?? '—'}</td>
+                                        </>
+                                    ) : (
+                                        <td className="items-cell" title={item.items}>{item.items}</td>
+                                    )}
                                     <td>{item.date}</td>
-                                    <td className="font-bold">LKR {(item.total || item.cost).toLocaleString()}</td>
+                                    <td className="font-bold">LKR {Number(item.total ?? item.cost ?? 0).toLocaleString()}</td>
+                                    {activeTab === 'supplier' && (
+                                        <td><div className="supplier-date">{item.expected}</div></td>
+                                    )}
                                     <td>
                                         <div className="status-badge" style={{ backgroundColor: statusStyle.bg, color: statusStyle.color }}>
                                             <StatusIcon size={12} style={{ marginRight: '4px' }} />
                                             {item.status}
                                         </div>
                                     </td>
-                                    {activeTab === 'supplier' && (
-                                        <td>
-                                            <div className="supplier-date">{item.expected}</div>
-                                        </td>
-                                    )}
                                     <td>
                                         <button className="btn-icon" onClick={() => setSelectedOrder({ type: activeTab, ...item })}>
                                             <Eye size={16} />
@@ -224,29 +285,35 @@ const StaffOrderManagement = () => {
                         <div className="modal-body">
                             <div className="summary-header">
                                 <h2 className="summary-id">{selectedOrder.id}</h2>
-                                <span className="summary-date">{selectedOrder.date}</span>
+                                <div style={{ display:'flex', alignItems:'center', gap:'0.75rem' }}>
+                                    <span className="summary-date">{selectedOrder.date}</span>
+                                    {(() => { const s = getStatusStyle(selectedOrder.status); const SI = s.icon; return (
+                                        <span className="status-badge" style={{ backgroundColor: s.bg, color: s.color }}>
+                                            <SI size={12} style={{ marginRight: 4 }}/>{selectedOrder.status}
+                                        </span>
+                                    ); })()}
+                                </div>
                             </div>
 
-                            <div className="detail-grid">
-                                <div>
-                                    <label>Party Name</label>
-                                    <p>{selectedOrder.customer || selectedOrder.supplier}</p>
+                            {selectedOrder.type === 'customer' ? (
+                                <div className="detail-grid">
+                                    <div><label>Customer</label><p>{selectedOrder.customer}</p></div>
+                                    <div><label>Total Amount</label><p className="highlight-price">LKR {Number(selectedOrder.total || 0).toLocaleString()}</p></div>
+                                    <div className="full-width"><label>Items</label><p>{selectedOrder.items}</p></div>
+                                    {selectedOrder.address && <div className="full-width"><label>Shipping Address</label><p>{selectedOrder.address}</p></div>}
                                 </div>
-                                <div>
-                                    <label>{selectedOrder.type === 'customer' ? 'Total Amount' : 'Estimated Cost'}</label>
-                                    <p className="highlight-price">LKR {(selectedOrder.total || selectedOrder.cost).toLocaleString()}</p>
+                            ) : (
+                                <div className="detail-grid">
+                                    <div><label>Supplier</label><p>{selectedOrder.supplier}</p></div>
+                                    <div><label>Requested By</label><p>{selectedOrder.staff || '—'}</p></div>
+                                    <div><label>Product</label><p>{selectedOrder.product}</p></div>
+                                    <div><label>Quantity</label><p>{selectedOrder.quantity ?? '—'} units</p></div>
+                                    <div><label>Unit Cost</label><p>LKR {Number(selectedOrder.unit_cost || 0).toLocaleString()}</p></div>
+                                    <div><label>Total Cost</label><p className="highlight-price">LKR {Number(selectedOrder.cost || 0).toLocaleString()}</p></div>
+                                    <div><label>Expected Delivery</label><p>{selectedOrder.expected}</p></div>
+                                    {selectedOrder.notes && <div className="full-width"><label>Notes</label><p>{selectedOrder.notes}</p></div>}
                                 </div>
-                                <div className="full-width">
-                                    <label>Items List</label>
-                                    <p>{selectedOrder.items}</p>
-                                </div>
-                                {selectedOrder.address && (
-                                    <div className="full-width">
-                                        <label>Shipping Address</label>
-                                        <p>{selectedOrder.address}</p>
-                                    </div>
-                                )}
-                            </div>
+                            )}
 
                             <div className="action-section">
                                 <h4>Update Status</h4>
@@ -257,13 +324,19 @@ const StaffOrderManagement = () => {
                                             <button className="st-btn" onClick={() => updateCustomerStatus(selectedOrder.id, 'Shipped')}>Shipped</button>
                                             <button className="st-btn success" onClick={() => updateCustomerStatus(selectedOrder.id, 'Delivered')}>Delivered</button>
                                         </>
-                                    ) : (
-                                        <>
-                                            <button className="st-btn" onClick={() => updateSupplierStatus(selectedOrder.id, 'Pending')}>Pending</button>
-                                            <button className="st-btn" onClick={() => updateSupplierStatus(selectedOrder.id, 'Shipped')}>Shipped</button>
-                                            <button className="st-btn success" onClick={() => updateSupplierStatus(selectedOrder.id, 'Received')}>Received</button>
-                                        </>
-                                    )}
+                                    ) : (() => {
+                                        const { status } = selectedOrder;
+                                        if (status === 'Pending') return (
+                                            <button className="st-btn danger" onClick={() => updateSupplierStatus(selectedOrder.id, 'Cancelled')}>Cancel Request</button>
+                                        );
+                                        if (status === 'Approved') return (
+                                            <button className="st-btn" onClick={() => updateSupplierStatus(selectedOrder.id, 'Ordered')}>Mark as Ordered</button>
+                                        );
+                                        if (status === 'Ordered') return (
+                                            <button className="st-btn success" onClick={() => updateSupplierStatus(selectedOrder.id, 'Received')}>Mark as Received</button>
+                                        );
+                                        return <p style={{ color: 'rgba(255,255,255,0.4)', margin: 0, fontSize: '0.9rem' }}>No further actions available for this status.</p>;
+                                    })()}
                                 </div>
                             </div>
                         </div>
@@ -439,36 +512,39 @@ const StaffOrderManagement = () => {
                 }
                 .modal-content {
                     background: #1a1f2e; border: 1px solid rgba(255,255,255,0.1);
-                    width: 500px; border-radius: 1.5rem; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-                    overflow: hidden;
+                    width: 420px; max-width: 94vw; max-height: 88vh; overflow-y: auto;
+                    border-radius: 1rem; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
                 }
                 .modal-header {
-                    padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1);
+                    padding: 1rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.1);
                     display: flex; justify-content: space-between; align-items: center;
+                    position: sticky; top: 0; background: #1a1f2e; z-index: 1;
                 }
                 .modal-close { background: none; border: none; color: white; cursor: pointer; }
                 
-                .modal-body { padding: 2rem; }
-                .summary-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-                .summary-id { margin: 0; color: var(--color-primary); }
-                .summary-date { color: rgba(255,255,255,0.5); }
+                .modal-body { padding: 1.25rem; }
+                .summary-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+                .summary-id { margin: 0; color: var(--color-primary); font-size: 1.2rem; }
+                .summary-date { color: rgba(255,255,255,0.5); font-size: 0.85rem; }
                 
                 .detail-grid {
-                    display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;
+                    display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem 1.25rem; margin-bottom: 1.25rem;
                 }
                 .full-width { grid-column: 1 / -1; }
-                .detail-grid label { display: block; color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-bottom: 0.5rem; }
-                .detail-grid p { margin: 0; font-size: 1rem; color: white; }
-                .highlight-price { font-size: 1.25rem; font-weight: 700; color: var(--color-primary); }
+                .detail-grid label { display: block; color: rgba(255,255,255,0.45); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 0.25rem; }
+                .detail-grid p { margin: 0; font-size: 0.9rem; color: white; }
+                .highlight-price { font-size: 1.05rem; font-weight: 700; color: var(--color-primary); }
                 
-                .action-section h4 { color: rgba(255,255,255,0.5); font-size: 0.85rem; text-transform: uppercase; margin-bottom: 1rem; }
-                .status-buttons { display: flex; gap: 1rem; }
+                .action-section h4 { color: rgba(255,255,255,0.5); font-size: 0.78rem; text-transform: uppercase; margin-bottom: 0.75rem; }
+                .status-buttons { display: flex; gap: 0.75rem; }
                 .st-btn {
                     flex: 1; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.1);
                     background: transparent; color: white; cursor: pointer; transition: all 0.2s;
                 }
                 .st-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
                 .st-btn.success:hover { border-color: #10b981; color: #10b981; }
+                .st-btn.danger { color: #ef4444; border-color: rgba(239,68,68,0.3); }
+                .st-btn.danger:hover { background: rgba(239,68,68,0.1); border-color: #ef4444; }
 
                 /* Form Styles */
                 .form-group { margin-bottom: 1.25rem; }

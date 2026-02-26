@@ -12,6 +12,9 @@ router.get('/supplier', authenticate, authorize('supplier'), restockController.g
 // GET – staff/admin lists all restock requests
 router.get('/', authenticate, authorize('admin', 'staff'), restockController.getAllRestockRequests);
 
+// PUT – staff marks request as Ordered / Received / Cancelled
+router.put('/:id/staff-status', authenticate, authorize('admin', 'staff'), restockController.updateStaffRestockStatus);
+
 // PUT – supplier accepts or rejects a request
 router.put('/:id/status', authenticate, authorize('supplier'), restockController.updateRestockStatus);
 

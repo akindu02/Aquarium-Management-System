@@ -100,6 +100,26 @@ const getSupplierRestockRequests = async (supplierId) => {
 };
 
 /**
+ * Staff updates a restock request status (Ordered / Received / Cancelled).
+ * Ordered: staff confirms they placed the order after supplier Approved it.
+ * Received: staff marks the delivery as received.
+ * Cancelled: staff cancels a Pending request.
+ */
+const updateStaffRestockStatus = async (requestId, status) => {
+    const allowed = ['Ordered', 'Received', 'Cancelled'];
+    if (!allowed.includes(status)) throw new Error('Invalid status. Allowed: Ordered, Received, Cancelled.');
+
+    const { rows } = await pool.query(`
+        UPDATE restock_requests
+        SET status = $1, updated_at = CURRENT_TIMESTAMP
+        WHERE request_id = $2
+        RETURNING *
+    `, [status, requestId]);
+
+    return rows[0] || null;
+};
+
+/**
  * Supplier accepts or rejects a restock request.
  * Only the owning supplier may change the status.
  */
@@ -117,4 +137,4 @@ const updateRestockRequestStatus = async (requestId, status, supplierId) => {
     return rows[0] || null;
 };
 
-module.exports = { createRestockRequest, getAllRestockRequests, getSupplierRestockRequests, updateRestockRequestStatus };
+module.exports = { createRestockRequest, getAllRestockRequests, getSupplierRestockRequests, updateRestockRequestStatus, updateStaffRestockStatus };
