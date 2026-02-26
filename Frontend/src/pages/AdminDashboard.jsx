@@ -175,10 +175,12 @@ const AdminDashboard = () => {
 
                 /* Logo Section */
                 .sidebar-logo {
-                    padding: 1.5rem;
+                    height: 72px;
+                    padding: 0 1.5rem;
                     display: flex;
                     align-items: center;
                     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                    flex-shrink: 0;
                 }
 
                 .logo {
@@ -237,17 +239,17 @@ const AdminDashboard = () => {
                 /* Navigation */
                 .sidebar-nav {
                     flex: 1;
-                    padding: 1rem 0;
+                    padding: 2rem 0 1rem 0;
                     overflow-y: auto;
                 }
 
                 .nav-section-title {
                     padding: 0 1.5rem;
                     font-size: 0.7rem;
-                    font-weight: 600;
-                    color: rgba(255, 255, 255, 0.4);
-                    letter-spacing: 1.5px;
-                    margin-bottom: 0.75rem;
+                    font-weight: 700;
+                    color: rgba(255, 255, 255, 0.35);
+                    letter-spacing: 2px;
+                    margin-bottom: 0.5rem;
                     text-transform: uppercase;
                 }
 
@@ -342,13 +344,15 @@ const AdminDashboard = () => {
                     background: rgba(17, 25, 40, 0.8);
                     backdrop-filter: blur(10px);
                     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-                    padding: 1rem 2rem;
+                    height: 72px;
+                    padding: 0 2rem;
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
                     position: sticky;
                     top: 0;
                     z-index: 50;
+                    flex-shrink: 0;
                 }
 
                 .sidebar-toggle {
