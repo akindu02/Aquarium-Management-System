@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, ClipboardList, Banknote, Bell, LogOut, History, ChevronRight, Package, Settings } from "lucide-react";
+import { LayoutDashboard, ClipboardList, Banknote, Bell, LogOut, History, ChevronRight, Package, Settings, UserCircle } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
@@ -8,6 +8,7 @@ import SupplierOrderRequests from './supplier/SupplierOrderRequests';
 import SupplierOrderHistory from './supplier/SupplierOrderHistory';
 import SupplierEarnings from './supplier/SupplierEarnings';
 import SupplierRestock from './supplier/SupplierRestock';
+import SupplierMyDetails from './supplier/SupplierMyDetails';
 import '../index.css';
 
 const SupplierDashboard = () => {
@@ -37,11 +38,12 @@ const SupplierDashboard = () => {
   };
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'dashboard',    label: 'Dashboard',        icon: LayoutDashboard },
     { id: 'new_requests', label: 'New Order Request', icon: ClipboardList },
-    { id: 'restock', label: 'Restock', icon: Package },
-    { id: 'order_history', label: 'Order History', icon: History },
-    { id: 'earnings', label: 'Performance', icon: Banknote },
+    { id: 'restock',      label: 'Restock',           icon: Package },
+    { id: 'order_history',label: 'Order History',     icon: History },
+    { id: 'earnings',     label: 'Performance',       icon: Banknote },
+    { id: 'my_details',   label: 'My Details',        icon: UserCircle },
   ];
 
   const renderContent = () => {
@@ -56,6 +58,8 @@ const SupplierDashboard = () => {
         return <SupplierOrderHistory />;
       case 'earnings':
         return <SupplierEarnings />;
+      case 'my_details':
+        return <SupplierMyDetails />;
       default:
         return <DashboardContent onNavigate={setActiveMenu} />;
     }

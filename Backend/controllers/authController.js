@@ -496,6 +496,51 @@ class AuthController {
             });
         }
     }
+
+    /**
+     * Get supplier profile details
+     * GET /api/auth/supplier-details
+     */
+    async getSupplierDetails(req, res) {
+        try {
+            const data = await authService.getSupplierDetails(req.user.id);
+            if (!data) {
+                return res.status(404).json({ success: false, message: 'Supplier not found' });
+            }
+            return res.status(200).json({ success: true, data });
+        } catch (error) {
+            console.error('Get supplier details error:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'An error occurred while fetching supplier details',
+            });
+        }
+    }
+
+    /**
+     * Update supplier profile details
+     * PUT /api/auth/supplier-details
+     */
+    async updateSupplierDetails(req, res) {
+        try {
+            const { company_name, phone, address } = req.body;
+            const result = await authService.updateSupplierDetails(req.user.id, {
+                company_name,
+                phone,
+                address,
+            });
+            if (!result.success) {
+                return res.status(400).json(result);
+            }
+            return res.status(200).json(result);
+        } catch (error) {
+            console.error('Update supplier details error:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'An error occurred while updating supplier details',
+            });
+        }
+    }
 }
 
 module.exports = new AuthController();

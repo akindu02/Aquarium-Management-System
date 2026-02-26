@@ -327,3 +327,22 @@ export const changePasswordAPI = async (currentPassword, newPassword) => {
     });
 };
 
+/**
+ * Get supplier-specific details (company_name, phone, address)
+ */
+export const getSupplierDetailsAPI = async () => {
+    return apiRequest('/auth/supplier-details', {
+        method: 'GET',
+    });
+};
+
+/**
+ * Update supplier-specific details (company_name, phone, address)
+ */
+export const updateSupplierDetailsAPI = async (details) => {
+    return apiRequest('/auth/supplier-details', {
+        method: 'PUT',
+        body: JSON.stringify(details),
+    });
+};
+

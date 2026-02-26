@@ -150,6 +150,12 @@ router.post('/logout', authenticate, authController.logout);
 // POST /api/auth/logout-all - Logout from all devices
 router.post('/logout-all', authenticate, authController.logoutAll);
 
+// GET /api/auth/supplier-details - Get supplier company details
+router.get('/supplier-details', authenticate, authController.getSupplierDetails);
+
+// PUT /api/auth/supplier-details - Update supplier company details
+router.put('/supplier-details', authenticate, authController.updateSupplierDetails);
+
 /**
  * Admin User Management Routes (admin only)
  */

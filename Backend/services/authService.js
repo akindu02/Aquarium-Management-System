@@ -787,6 +787,85 @@ class AuthService {
             message: `User "${userResult.rows[0].name}" has been deleted successfully`,
         };
     }
+
+    /**
+     * Get supplier-specific details (company_name, phone, address)
+     * @param {number} userId
+     */
+    async getSupplierDetails(userId) {
+        const result = await query(
+            `SELECT s.company_name, s.phone, s.address, u.name, u.email
+             FROM suppliers s
+             JOIN users u ON u.id = s.user_id
+             WHERE s.user_id = $1`,
+            [userId]
+        );
+
+        if (result.rows.length === 0) {
+            // Row may not exist yet — return empty defaults
+            const userResult = await query(
+                'SELECT name, email FROM users WHERE id = $1',
+                [userId]
+            );
+            if (userResult.rows.length === 0) return null;
+            return {
+                name: userResult.rows[0].name,
+                email: userResult.rows[0].email,
+                company_name: '',
+                phone: '',
+                address: '',
+            };
+        }
+
+        const row = result.rows[0];
+        return {
+            name: row.name,
+            email: row.email,
+            company_name: row.company_name || '',
+            phone: row.phone || '',
+            address: row.address || '',
+        };
+    }
+
+    /**
+     * Create or update supplier-specific details
+     * @param {number} userId
+     * @param {Object} details  { company_name, phone, address }
+     */
+    async updateSupplierDetails(userId, details) {
+        const { company_name, phone, address } = details;
+
+        // Validate required fields
+        if (!phone || phone.trim() === '') {
+            return { success: false, message: 'Phone number is required' };
+        }
+        if (!address || address.trim() === '') {
+            return { success: false, message: 'Address is required' };
+        }
+
+        // UPSERT into suppliers table
+        const result = await query(
+            `INSERT INTO suppliers (user_id, company_name, phone, address)
+             VALUES ($1, $2, $3, $4)
+             ON CONFLICT (user_id) DO UPDATE
+             SET company_name = EXCLUDED.company_name,
+                 phone        = EXCLUDED.phone,
+                 address      = EXCLUDED.address
+             RETURNING company_name, phone, address`,
+            [userId, company_name || null, phone.trim(), address.trim()]
+        );
+
+        const row = result.rows[0];
+        return {
+            success: true,
+            message: 'Details updated successfully',
+            data: {
+                company_name: row.company_name || '',
+                phone: row.phone,
+                address: row.address,
+            },
+        };
+    }
 }
 
 module.exports = new AuthService();
