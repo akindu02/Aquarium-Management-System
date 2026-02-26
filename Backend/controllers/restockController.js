@@ -51,4 +51,43 @@ const getAllRestockRequests = async (req, res) => {
     }
 };
 
-module.exports = { createRestockRequest, getAllRestockRequests };
+/**
+ * GET /api/restock/supplier
+ * Supplier – fetch all restock requests assigned to them.
+ */
+const getSupplierRestockRequests = async (req, res) => {
+    try {
+        const supplierId = req.user.id; // supplier_id === user id
+        const requests = await restockService.getSupplierRestockRequests(supplierId);
+        res.json({ success: true, data: requests });
+    } catch (err) {
+        console.error('getSupplierRestockRequests error:', err);
+        res.status(500).json({ success: false, message: 'Failed to fetch restock requests.' });
+    }
+};
+
+/**
+ * PUT /api/restock/:id/status
+ * Supplier – accept (Approved) or reject (Rejected) a request.
+ */
+const updateRestockStatus = async (req, res) => {
+    try {
+        const { status } = req.body;
+        if (!status) return res.status(400).json({ success: false, message: 'Status is required.' });
+
+        const supplierId = req.user.id;
+        const updated = await restockService.updateRestockRequestStatus(
+            req.params.id,
+            status,
+            supplierId
+        );
+
+        if (!updated) return res.status(404).json({ success: false, message: 'Request not found or not authorised.' });
+        res.json({ success: true, message: `Request ${status.toLowerCase()} successfully.`, data: updated });
+    } catch (err) {
+        console.error('updateRestockStatus error:', err);
+        res.status(500).json({ success: false, message: err.message || 'Failed to update request status.' });
+    }
+};
+
+module.exports = { createRestockRequest, getAllRestockRequests, getSupplierRestockRequests, updateRestockStatus };
