@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     Package, Truck, CheckCircle, Clock, ChevronRight, ShoppingBag,
-    XCircle, Search, RotateCcw, AlertCircle, ArrowLeft, ChevronDown,
+    XCircle, Search, RotateCcw, AlertCircle, ArrowLeft, Eye,
     CheckSquare, Square, FileText, RefreshCw, ThumbsUp, ThumbsDown, Banknote
 } from 'lucide-react';
 import Swal from 'sweetalert2';
@@ -112,16 +112,6 @@ const MyOrders = () => {
         'Other',
     ];
 
-    const getStatusInfo = (status) => {
-        switch (status) {
-            case 'processing': return { icon: <Clock size={16} />, color: 'status-processing', label: 'Processing' };
-            case 'shipped': return { icon: <Truck size={16} />, color: 'status-shipped', label: 'Shipped' };
-            case 'delivered': return { icon: <CheckCircle size={16} />, color: 'status-delivered', label: 'Delivered' };
-            case 'cancelled': return { icon: <XCircle size={16} />, color: 'status-cancelled', label: 'Cancelled' };
-            default: return { icon: <Package size={16} />, color: '', label: status };
-        }
-    };
-
     const getReturnStatusInfo = (status) => {
         switch (status) {
             case 'submitted': return { icon: <FileText size={14} />, color: 'ret-submitted', label: 'Submitted', step: 1 };
@@ -211,180 +201,245 @@ const MyOrders = () => {
         return true;
     };
 
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedOrderDetail, setSelectedOrderDetail] = useState(null);
+
+    const getOrderStatusStyle = (status) => {
+        switch (status) {
+            case 'processing': return { bg: 'rgba(245,158,11,0.15)', color: '#f59e0b', Icon: Clock };
+            case 'shipped': return { bg: 'rgba(59,130,246,0.15)', color: '#3b82f6', Icon: Truck };
+            case 'delivered': return { bg: 'rgba(16,185,129,0.15)', color: '#10b981', Icon: CheckCircle };
+            case 'cancelled': return { bg: 'rgba(239,68,68,0.15)', color: '#ef4444', Icon: XCircle };
+            default: return { bg: 'rgba(107,114,128,0.15)', color: '#9ca3af', Icon: Package };
+        }
+    };
+
+    const getPaymentColor = (status) => {
+        switch (status) {
+            case 'paid': return '#10b981';
+            case 'pending': return '#f59e0b';
+            case 'failed': return '#ef4444';
+            case 'refunded': return '#4ecdc4';
+            default: return '#9ca3af';
+        }
+    };
+
+    const searchedOrders = filteredOrders.filter(o => {
+        if (!searchTerm) return true;
+        const term = searchTerm.toLowerCase();
+        return o.id.toLowerCase().includes(term) ||
+            o.items.some(i => i.name.toLowerCase().includes(term));
+    });
+
+    const searchedReturns = returns.filter(r => {
+        if (!searchTerm) return true;
+        const term = searchTerm.toLowerCase();
+        return r.id.toLowerCase().includes(term) || r.orderId.toLowerCase().includes(term);
+    });
+
     return (
         <div className="my-orders-container">
-            <div className="orders-header">
+            {/* Header */}
+            <div className="mo-header">
                 <div>
-                    <h2 className="page-title">My Orders</h2>
-                    <p className="page-subtitle">Track, manage and return your purchases</p>
-                </div>
-                <div className="search-box">
-                    <Search size={18} className="search-icon" />
-                    <input type="text" placeholder="Search Order ID..." />
+                    <h2 className="mo-title">My Orders</h2>
+                    <p className="mo-subtitle">Track, manage and return your purchases</p>
                 </div>
             </div>
 
-            {/* Filters */}
-            <div className="orders-filters">
+            {/* Tab Navigation */}
+            <div className="mo-tab-nav">
                 {['all', 'active', 'completed', 'cancelled', 'returns'].map(f => (
                     <button
                         key={f}
-                        className={`filter-btn ${filter === f ? 'active' : ''}`}
+                        className={`mo-tab-btn ${filter === f ? 'mo-tab-active' : ''}`}
                         onClick={() => setFilter(f)}
                     >
-                        {f === 'returns' && <RotateCcw size={14} style={{ marginRight: '5px' }} />}
+                        {f === 'returns' && <RotateCcw size={14} />}
                         {f.charAt(0).toUpperCase() + f.slice(1)}
                         {f === 'returns' && returns.length > 0 && (
-                            <span className="return-count-badge">{returns.length}</span>
+                            <span className="mo-badge">{returns.length}</span>
                         )}
                     </button>
                 ))}
             </div>
 
+            {/* Toolbar */}
+            <div className="mo-toolbar">
+                <div className="mo-search-box">
+                    <Search size={16} />
+                    <input
+                        type="text"
+                        placeholder={filter === 'returns' ? 'Search Return ID or Order ID...' : 'Search Order ID or Product...'}
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                    />
+                </div>
+            </div>
+
             {/* Returns Tab Content */}
             {filter === 'returns' ? (
-                <div className="orders-list">
+                <div className="mo-table-container">
                     {isLoadingReturns ? (
-                        <div className="empty-state"><RefreshCw size={32} style={{ animation: 'spin 1s linear infinite' }} /><p>Loading return requests…</p></div>
-                    ) : returns.length === 0 ? (
-                        <div className="empty-state">
-                            <RotateCcw size={48} />
+                        <div className="mo-empty"><RefreshCw size={28} style={{ animation: 'spin 1s linear infinite' }} /><p>Loading return requests…</p></div>
+                    ) : searchedReturns.length === 0 ? (
+                        <div className="mo-empty">
+                            <RotateCcw size={44} />
                             <h3>No Return Requests</h3>
-                            <p>You haven't submitted any return requests yet.</p>
+                            <p>{returns.length === 0 ? "You haven't submitted any return requests yet." : 'No returns match your search.'}</p>
                         </div>
                     ) : (
-                        returns.map(ret => {
-                            const retStatus = getReturnStatusInfo(ret.status);
-                            const steps = ['Submitted', 'Under Review', ret.status === 'rejected' ? 'Rejected' : 'Approved', 'Refunded'];
-                            return (
-                                <div key={ret.id} className="order-card return-card">
-                                    <div className="order-header-main">
-                                        <div className="order-id-group">
-                                            <span className="order-id">{ret.id}</span>
-                                            <span className="order-date">For order <strong style={{ color: 'var(--color-primary)' }}>{ret.orderId}</strong> · {ret.date}</span>
-                                        </div>
-                                        <div className={`status-badge ${retStatus.color}`}>
-                                            {retStatus.icon}
-                                            {retStatus.label}
-                                        </div>
-                                    </div>
-
-                                    {/* Return Progress Timeline */}
-                                    <div className="return-timeline">
-                                        {steps.map((step, idx) => {
-                                            const isComplete = retStatus.step > idx + 1;
-                                            const isCurrent = retStatus.step === idx + 1;
-                                            const isRejected = ret.status === 'rejected' && idx === 2;
-                                            return (
-                                                <React.Fragment key={step}>
-                                                    <div className="timeline-step">
-                                                        <div className={`timeline-dot ${isComplete ? 'dot-complete' : isCurrent ? (isRejected ? 'dot-rejected' : 'dot-current') : 'dot-pending'}`}>
-                                                            {isComplete ? <CheckCircle size={12} /> : isRejected ? <XCircle size={12} /> : <span>{idx + 1}</span>}
-                                                        </div>
-                                                        <span className={`timeline-label ${isCurrent ? 'label-current' : isComplete ? 'label-complete' : 'label-pending'}`}>
-                                                            {step}
-                                                        </span>
-                                                    </div>
-                                                    {idx < 3 && <div className={`timeline-line ${isComplete ? 'line-complete' : 'line-pending'}`} />}
-                                                </React.Fragment>
-                                            );
-                                        })}
-                                    </div>
-
-                                    <div className="order-content">
-                                        <div className="order-items-preview">
-                                            {ret.items.map((item, idx) => (
-                                                <div key={idx} className="item-row">
-                                                    <span className="item-qty">{item.qty}x</span>
-                                                    <span className="item-name">{item.name}</span>
+                        <table className="mo-table">
+                            <thead>
+                                <tr>
+                                    <th>Return ID</th>
+                                    <th>Order</th>
+                                    <th>Items</th>
+                                    <th>Reason</th>
+                                    <th>Date</th>
+                                    <th>Refund (LKR)</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {searchedReturns.map(ret => {
+                                    const retStatus = getReturnStatusInfo(ret.status);
+                                    return (
+                                        <tr key={ret.id}>
+                                            <td className="mo-mono mo-ret-id">{ret.id}</td>
+                                            <td><span className="mo-linked-order">{ret.orderId}</span></td>
+                                            <td className="mo-truncate" title={ret.items.map(i => `${i.qty}x ${i.name}`).join(', ')}>
+                                                {ret.items.map(i => `${i.qty}x ${i.name}`).join(', ')}
+                                            </td>
+                                            <td className="mo-truncate" title={ret.reason}>{ret.reason}</td>
+                                            <td>{ret.date}</td>
+                                            <td className="mo-bold mo-refund">{ret.refundAmount.toLocaleString()}</td>
+                                            <td>
+                                                <div className={`mo-status-badge ${retStatus.color}`}>
+                                                    {retStatus.icon}
+                                                    {retStatus.label}
                                                 </div>
-                                            ))}
-                                            <div className="return-reason-display">
-                                                <AlertCircle size={13} />
-                                                <span>{ret.reason}</span>
-                                            </div>
-                                        </div>
-                                        <div className="order-meta">
-                                            <div className="order-total">
-                                                <span>Expected Refund</span>
-                                                <span className="amount">LKR {ret.refundAmount.toLocaleString()}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
                     )}
                 </div>
             ) : (
-                /* Orders List */
-                <div className="orders-list">
+                /* Orders Table */
+                <div className="mo-table-container">
                     {isLoadingOrders ? (
-                        <div className="empty-state"><RefreshCw size={32} style={{ animation: 'spin 1s linear infinite' }} /><p>Loading your orders…</p></div>
-                    ) : filteredOrders.length === 0 ? (
-                        <div className="empty-state">
-                            <ShoppingBag size={48} />
+                        <div className="mo-empty"><RefreshCw size={28} style={{ animation: 'spin 1s linear infinite' }} /><p>Loading your orders…</p></div>
+                    ) : searchedOrders.length === 0 ? (
+                        <div className="mo-empty">
+                            <ShoppingBag size={44} />
                             <h3>No orders found</h3>
-                            <p>You haven't placed any orders in this category yet.</p>
+                            <p>{filteredOrders.length === 0 ? "You haven't placed any orders in this category yet." : 'No orders match your search.'}</p>
                         </div>
                     ) : (
-                        filteredOrders.map(order => {
-                            const statusInfo = getStatusInfo(order.status);
-                            const alreadyReturned = isAlreadyReturned(order.id);
-                            return (
-                                <div key={order.id} className="order-card">
-                                    <div className="order-header-main">
-                                        <div className="order-id-group">
-                                            <span className="order-id">{order.id}</span>
-                                            <span className="order-date">{order.date}</span>
-                                        </div>
-                                        <div className={`status-badge ${statusInfo.color}`}>
-                                            {statusInfo.icon}
-                                            {statusInfo.label}
-                                        </div>
-                                    </div>
-
-                                    <div className="order-content">
-                                        <div className="order-items-preview">
-                                            {order.items.map((item, idx) => (
-                                                <div key={idx} className="item-row">
-                                                    <span className="item-qty">{item.qty}x</span>
-                                                    <span className="item-name">{item.name}</span>
+                        <table className="mo-table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Items</th>
+                                    <th>Date</th>
+                                    <th>Total (LKR)</th>
+                                    <th>Payment</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {searchedOrders.map(order => {
+                                    const { bg, color: statusColor, Icon: StatusIcon } = getOrderStatusStyle(order.status);
+                                    const paymentColor = getPaymentColor(order.paymentStatus);
+                                    const alreadyReturned = isAlreadyReturned(order.id);
+                                    const itemsSummary = order.items.map(i => `${i.qty}x ${i.name}`).join(', ');
+                                    return (
+                                        <tr key={order.id}>
+                                            <td className="mo-mono">{order.id}</td>
+                                            <td className="mo-truncate" title={itemsSummary}>{itemsSummary}</td>
+                                            <td>{order.date}</td>
+                                            <td className="mo-bold">{order.total.toLocaleString()}</td>
+                                            <td>
+                                                <span className="mo-payment-dot" style={{ backgroundColor: paymentColor }} />
+                                                <span style={{ textTransform: 'capitalize' }}>{order.paymentStatus}</span>
+                                            </td>
+                                            <td>
+                                                <div className="mo-status-badge" style={{ backgroundColor: bg, color: statusColor }}>
+                                                    <StatusIcon size={12} />
+                                                    <span style={{ textTransform: 'capitalize' }}>{order.status}</span>
                                                 </div>
-                                            ))}
-                                        </div>
-                                        <div className="order-meta">
-                                            <div className="order-total">
-                                                <span>Total Amount</span>
-                                                <span className="amount">LKR {order.total.toLocaleString()}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="order-footer">
-                                        <button className="track-btn">Track Order</button>
-                                        {/* Return button: only for delivered, not already returned */}
-                                        {order.status === 'delivered' && (
-                                            alreadyReturned ? (
-                                                <button className="return-btn return-btn-done" disabled>
-                                                    <RotateCcw size={15} />
-                                                    Return Requested
-                                                </button>
-                                            ) : (
-                                                <button className="return-btn" onClick={() => openReturnModal(order)}>
-                                                    <RotateCcw size={15} />
-                                                    Return Item
-                                                </button>
-                                            )
-                                        )}
-                                        <button className="details-btn">
-                                            Details <ChevronRight size={16} />
-                                        </button>
-                                    </div>
-                                </div>
-                            );
-                        })
+                                            </td>
+                                            <td>
+                                                <div className="mo-actions">
+                                                    <button className="mo-btn-icon" title="View Details" onClick={() => setSelectedOrderDetail(order)}>
+                                                        <Eye size={15} />
+                                                    </button>
+                                                    {order.status === 'delivered' && !alreadyReturned && (
+                                                        <button className="mo-btn-icon mo-btn-return" title="Return Item" onClick={() => openReturnModal(order)}>
+                                                            <RotateCcw size={14} />
+                                                        </button>
+                                                    )}
+                                                    {order.status === 'delivered' && alreadyReturned && (
+                                                        <span className="mo-returned-tag">Returned</span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
                     )}
+                </div>
+            )}
+
+            {/* ===== ORDER DETAIL MODAL ===== */}
+            {selectedOrderDetail && (
+                <div className="modal-overlay" onClick={() => setSelectedOrderDetail(null)}>
+                    <div className="mo-detail-modal" onClick={e => e.stopPropagation()}>
+                        <div className="mo-detail-header">
+                            <div>
+                                <h3>Order Details</h3>
+                                <p className="mo-detail-ref">{selectedOrderDetail.id}</p>
+                            </div>
+                            <button className="modal-close-btn" onClick={() => setSelectedOrderDetail(null)}>✕</button>
+                        </div>
+                        <div className="mo-detail-body">
+                            <div className="mo-detail-row">
+                                <span>Date</span>
+                                <strong>{selectedOrderDetail.date}</strong>
+                            </div>
+                            <div className="mo-detail-row">
+                                <span>Status</span>
+                                <strong style={{ textTransform: 'capitalize', color: getOrderStatusStyle(selectedOrderDetail.status).color }}>
+                                    {selectedOrderDetail.status}
+                                </strong>
+                            </div>
+                            <div className="mo-detail-row">
+                                <span>Payment</span>
+                                <strong style={{ textTransform: 'capitalize', color: getPaymentColor(selectedOrderDetail.paymentStatus) }}>
+                                    {selectedOrderDetail.paymentStatus}
+                                </strong>
+                            </div>
+                            <div className="mo-detail-divider" />
+                            <p className="mo-detail-section-label">Items</p>
+                            {selectedOrderDetail.items.map((item, idx) => (
+                                <div key={idx} className="mo-detail-item">
+                                    <span>{item.qty}x {item.name}</span>
+                                    <span>LKR {(item.price * item.qty).toLocaleString()}</span>
+                                </div>
+                            ))}
+                            <div className="mo-detail-divider" />
+                            <div className="mo-detail-row mo-detail-total">
+                                <span>Total</span>
+                                <strong>LKR {selectedOrderDetail.total.toLocaleString()}</strong>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
 
@@ -558,154 +613,168 @@ const MyOrders = () => {
                 .my-orders-container {
                     display: flex;
                     flex-direction: column;
-                    gap: 1.5rem;
+                    gap: 0;
                 }
 
-                .orders-header {
+                .mo-header {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    flex-wrap: wrap;
-                    gap: 1rem;
+                    margin-bottom: 1.5rem;
                 }
 
-                .page-title {
+                .mo-title {
                     font-size: 1.75rem;
                     font-weight: 700;
                     color: var(--text-main);
+                    margin: 0 0 0.25rem;
+                }
+
+                .mo-subtitle {
+                    color: var(--text-muted);
+                    font-size: 0.95rem;
                     margin: 0;
                 }
 
-                .page-subtitle {
-                    color: var(--text-muted);
-                    font-size: 0.95rem;
-                    margin-top: 0.25rem;
+                /* Tab Navigation */
+                .mo-tab-nav {
+                    display: flex;
+                    gap: 0.25rem;
+                    background: rgba(255,255,255,0.03);
+                    border: 1px solid rgba(255,255,255,0.08);
+                    border-radius: 12px;
+                    padding: 6px;
+                    margin-bottom: 1.5rem;
+                    width: fit-content;
                 }
 
-                .search-box {
+                .mo-tab-btn {
                     display: flex;
                     align-items: center;
-                    background: rgba(0, 0, 0, 0.2);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    gap: 6px;
+                    padding: 0.55rem 1.25rem;
                     border-radius: 8px;
-                    padding: 0 0.75rem;
-                    width: 250px;
-                }
-
-                .search-icon { color: var(--text-muted); }
-
-                .search-box input {
-                    background: transparent;
                     border: none;
-                    color: white;
-                    padding: 0.65rem;
-                    width: 100%;
-                    outline: none;
-                    font-size: 0.9rem;
-                }
-
-                /* Filters */
-                .orders-filters {
-                    display: flex;
-                    gap: 0.75rem;
-                    overflow-x: auto;
-                    padding-bottom: 0.5rem;
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-                }
-
-                .filter-btn {
                     background: transparent;
-                    border: none;
                     color: var(--text-muted);
-                    padding: 0.5rem 1rem;
-                    border-radius: 20px;
                     font-size: 0.9rem;
                     cursor: pointer;
                     transition: all 0.2s;
+                    font-weight: 500;
                     white-space: nowrap;
-                    display: flex;
-                    align-items: center;
-                    gap: 4px;
                 }
 
-                .filter-btn:hover {
-                    color: var(--text-main);
-                    background: rgba(255, 255, 255, 0.05);
-                }
+                .mo-tab-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
+                .mo-tab-active { background: rgba(78,205,196,0.15) !important; color: var(--color-primary) !important; font-weight: 700; }
 
-                .filter-btn.active {
-                    background: rgba(78, 205, 196, 0.15);
-                    color: var(--color-primary);
-                    font-weight: 600;
-                }
-
-                .return-count-badge {
-                    background: var(--color-primary);
-                    color: #000;
+                .mo-badge {
+                    background: #ef4444;
+                    color: #fff;
                     border-radius: 50%;
                     width: 18px;
                     height: 18px;
                     font-size: 0.7rem;
-                    display: inline-flex;
+                    display: flex;
                     align-items: center;
                     justify-content: center;
                     font-weight: 700;
                 }
 
-                /* Orders List */
-                .orders-list { display: grid; gap: 1.25rem; }
-
-                .order-card {
-                    background: rgba(255, 255, 255, 0.03);
-                    border: 1px solid rgba(255, 255, 255, 0.08);
-                    border-radius: 12px;
-                    padding: 1.5rem;
-                    transition: all 0.2s;
+                /* Toolbar */
+                .mo-toolbar {
+                    background: rgba(255,255,255,0.03);
+                    border: 1px solid rgba(255,255,255,0.08);
+                    padding: 1rem;
+                    border-radius: 1rem;
+                    margin-bottom: 1.5rem;
                 }
 
-                .order-card:hover {
-                    border-color: rgba(78, 205, 196, 0.3);
-                    background: rgba(255, 255, 255, 0.05);
-                }
-
-                .return-card { border-left: 3px solid rgba(78, 205, 196, 0.5); }
-
-                .order-header-main {
+                .mo-search-box {
                     display: flex;
-                    justify-content: space-between;
-                    align-items: flex-start;
+                    align-items: center;
+                    background: rgba(0,0,0,0.2);
+                    border: 1px solid rgba(255,255,255,0.1);
+                    border-radius: 0.5rem;
+                    padding: 0 0.75rem;
+                    color: var(--text-muted);
+                    flex: 1;
+                    max-width: 400px;
+                }
+
+                .mo-search-box input {
+                    background: transparent;
+                    border: none;
+                    padding: 0.6rem;
+                    color: var(--text-main);
+                    width: 100%;
+                    outline: none;
+                    font-size: 0.9rem;
+                }
+
+                /* Table */
+                .mo-table-container {
+                    background: rgba(255,255,255,0.03);
+                    border: 1px solid rgba(255,255,255,0.08);
+                    border-radius: 1rem;
+                    overflow-x: auto;
                     margin-bottom: 1rem;
                 }
 
-                .order-id-group {
-                    display: flex;
-                    flex-direction: column;
+                .mo-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    min-width: 750px;
                 }
 
-                .order-id {
-                    font-weight: 700;
+                .mo-table th {
+                    text-align: left;
+                    padding: 1rem 1.25rem;
+                    background: rgba(255,255,255,0.02);
+                    color: var(--text-muted);
+                    font-size: 0.8rem;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                    border-bottom: 1px solid rgba(255,255,255,0.08);
+                    white-space: nowrap;
+                }
+
+                .mo-table td {
+                    padding: 0.9rem 1.25rem;
+                    border-bottom: 1px solid rgba(255,255,255,0.05);
+                    vertical-align: middle;
                     color: var(--text-main);
-                    font-family: monospace;
-                    font-size: 1rem;
+                    font-size: 0.9rem;
                 }
 
-                .order-date { font-size: 0.85rem; color: var(--text-muted); }
+                .mo-table tr:last-child td { border-bottom: none; }
+                .mo-table tbody tr:hover { background: rgba(255,255,255,0.02); }
 
-                /* Status Badges */
-                .status-badge {
-                    display: flex;
+                .mo-mono { font-family: monospace; color: var(--color-primary); font-size: 0.92rem; }
+                .mo-bold { font-weight: 700; }
+                .mo-ret-id { color: #fb923c !important; }
+                .mo-linked-order { color: var(--color-primary); font-family: monospace; }
+                .mo-refund { color: #4ade80; }
+                .mo-truncate { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+                .mo-payment-dot {
+                    display: inline-block;
+                    width: 6px;
+                    height: 6px;
+                    border-radius: 50%;
+                    margin-right: 6px;
+                    vertical-align: middle;
+                }
+
+                .mo-status-badge {
+                    display: inline-flex;
                     align-items: center;
                     gap: 0.35rem;
-                    padding: 0.35rem 0.75rem;
+                    padding: 0.3rem 0.7rem;
                     border-radius: 50px;
-                    font-size: 0.8rem;
+                    font-size: 0.78rem;
                     font-weight: 600;
+                    white-space: nowrap;
                 }
-
-                .status-processing { background: rgba(59,130,246,0.12); color: #60a5fa; }
-                .status-shipped { background: rgba(168,85,247,0.12); color: #c084fc; }
-                .status-delivered { background: rgba(34,197,94,0.12); color: #4ade80; }
-                .status-cancelled { background: rgba(239,68,68,0.12); color: #f87171; }
 
                 .ret-submitted { background: rgba(250,204,21,0.12); color: #facc15; }
                 .ret-review { background: rgba(251,146,60,0.12); color: #fb923c; }
@@ -713,167 +782,141 @@ const MyOrders = () => {
                 .ret-rejected { background: rgba(239,68,68,0.12); color: #f87171; }
                 .ret-refunded { background: rgba(78,205,196,0.12); color: var(--color-primary); }
 
-                .order-content {
-                    display: grid;
-                    grid-template-columns: 1fr auto;
-                    gap: 2rem;
-                    padding: 1rem 0;
-                    border-top: 1px dashed rgba(255, 255, 255, 0.1);
-                    border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
-                }
-
-                .item-row {
+                /* Action Buttons */
+                .mo-actions {
                     display: flex;
                     align-items: center;
                     gap: 0.5rem;
-                    margin-bottom: 0.25rem;
-                    font-size: 0.95rem;
-                    color: rgba(255,255,255,0.8);
                 }
 
-                .item-qty { color: var(--text-muted); font-size: 0.9rem; }
-
-                .return-reason-display {
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    margin-top: 0.75rem;
-                    font-size: 0.82rem;
-                    color: var(--text-muted);
-                    font-style: italic;
-                }
-
-                .order-total {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: flex-end;
-                }
-
-                .order-total span:first-child {
-                    font-size: 0.8rem;
-                    color: var(--text-muted);
-                    text-transform: uppercase;
-                }
-
-                .amount {
-                    font-size: 1.25rem;
-                    font-weight: 700;
-                    color: var(--color-primary);
-                }
-
-                .order-footer {
-                    display: flex;
-                    justify-content: flex-end;
-                    align-items: center;
-                    gap: 1rem;
-                    margin-top: 1rem;
-                }
-
-                .track-btn {
-                    padding: 0.5rem 1rem;
-                    background: rgba(255,255,255,0.05);
-                    border: 1px solid rgba(255,255,255,0.1);
-                    color: var(--text-main);
+                .mo-btn-icon {
+                    width: 32px;
+                    height: 32px;
                     border-radius: 6px;
-                    font-size: 0.9rem;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-
-                .track-btn:hover { background: rgba(255,255,255,0.1); }
-
-                .return-btn {
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    padding: 0.5rem 1rem;
-                    background: rgba(239,68,68,0.1);
-                    border: 1px solid rgba(239,68,68,0.3);
-                    color: #f87171;
-                    border-radius: 6px;
-                    font-size: 0.88rem;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    font-weight: 600;
-                }
-
-                .return-btn:hover {
-                    background: rgba(239,68,68,0.2);
-                    border-color: rgba(239,68,68,0.5);
-                    transform: translateY(-1px);
-                }
-
-                .return-btn-done {
-                    background: rgba(78,205,196,0.08);
-                    border-color: rgba(78,205,196,0.2);
-                    color: var(--color-primary);
-                    cursor: default;
-                    opacity: 0.7;
-                }
-
-                .return-btn-done:hover { transform: none; }
-
-                .details-btn {
-                    padding: 0.5rem 1rem;
-                    background: transparent;
-                    color: var(--color-primary);
-                    border: none;
-                    display: flex;
-                    align-items: center;
-                    gap: 0.25rem;
-                    font-weight: 600;
-                    cursor: pointer;
-                }
-
-                .details-btn:hover { text-decoration: underline; }
-
-                /* Return Timeline */
-                .return-timeline {
-                    display: flex;
-                    align-items: center;
-                    margin-bottom: 1rem;
-                    padding: 0.75rem 0;
-                    overflow-x: auto;
-                }
-
-                .timeline-step {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 4px;
-                    min-width: 70px;
-                }
-
-                .timeline-dot {
-                    width: 26px;
-                    height: 26px;
-                    border-radius: 50%;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    font-size: 0.75rem;
+                    border: none;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    background: rgba(255,255,255,0.05);
+                    color: var(--text-main);
+                }
+
+                .mo-btn-icon:hover { background: rgba(255,255,255,0.12); }
+
+                .mo-btn-return {
+                    background: rgba(239,68,68,0.1);
+                    color: #f87171;
+                }
+
+                .mo-btn-return:hover {
+                    background: rgba(239,68,68,0.2);
+                }
+
+                .mo-returned-tag {
+                    font-size: 0.72rem;
+                    font-weight: 600;
+                    color: var(--color-primary);
+                    background: rgba(78,205,196,0.1);
+                    padding: 0.2rem 0.5rem;
+                    border-radius: 4px;
+                    white-space: nowrap;
+                }
+
+                /* Empty State */
+                .mo-empty {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 4rem;
+                    color: var(--text-muted);
+                    text-align: center;
+                    gap: 0.5rem;
+                }
+
+                .mo-empty h3 { color: var(--text-main); margin: 0.5rem 0 0; }
+                .mo-empty p { margin: 0; }
+
+                /* Order Detail Modal */
+                .mo-detail-modal {
+                    background: #1a1f2e;
+                    border: 1px solid rgba(78,205,196,0.2);
+                    border-radius: 16px;
+                    width: 100%;
+                    max-width: 440px;
+                    max-height: 90vh;
+                    overflow-y: auto;
+                    animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+                }
+
+                .mo-detail-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    padding: 1.5rem 1.5rem 1rem;
+                    border-bottom: 1px solid rgba(255,255,255,0.08);
+                }
+
+                .mo-detail-header h3 {
+                    font-size: 1.15rem;
                     font-weight: 700;
+                    color: var(--text-main);
+                    margin: 0;
                 }
 
-                .dot-complete { background: var(--color-primary); color: #000; }
-                .dot-current { background: rgba(78,205,196,0.2); border: 2px solid var(--color-primary); color: var(--color-primary); }
-                .dot-rejected { background: rgba(239,68,68,0.2); border: 2px solid #f87171; color: #f87171; }
-                .dot-pending { background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); color: var(--text-muted); }
-
-                .timeline-label { font-size: 0.72rem; text-align: center; }
-                .label-current { color: var(--color-primary); font-weight: 600; }
-                .label-complete { color: var(--text-muted); }
-                .label-pending { color: rgba(255,255,255,0.2); }
-
-                .timeline-line {
-                    flex: 1;
-                    height: 2px;
-                    min-width: 24px;
-                    margin-bottom: 18px;
+                .mo-detail-ref {
+                    color: var(--color-primary);
+                    font-family: monospace;
+                    font-size: 0.88rem;
+                    margin: 2px 0 0;
                 }
 
-                .line-complete { background: var(--color-primary); }
-                .line-pending { background: rgba(255,255,255,0.1); }
+                .mo-detail-body { padding: 1.5rem; }
+
+                .mo-detail-row {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 0.6rem 0;
+                    font-size: 0.9rem;
+                }
+
+                .mo-detail-row span { color: var(--text-muted); }
+                .mo-detail-row strong { color: var(--text-main); }
+
+                .mo-detail-divider {
+                    height: 1px;
+                    background: rgba(255,255,255,0.06);
+                    margin: 0.75rem 0;
+                }
+
+                .mo-detail-section-label {
+                    font-size: 0.78rem;
+                    font-weight: 600;
+                    color: var(--text-muted);
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                    margin: 0 0 0.5rem;
+                }
+
+                .mo-detail-item {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 0.4rem 0;
+                    font-size: 0.88rem;
+                    color: rgba(255,255,255,0.8);
+                }
+
+                .mo-detail-total {
+                    padding-top: 0.75rem;
+                }
+
+                .mo-detail-total strong {
+                    color: var(--color-primary) !important;
+                    font-size: 1.1rem;
+                }
 
                 /* ==== RETURN MODAL ==== */
                 .modal-overlay {
@@ -1212,9 +1255,10 @@ const MyOrders = () => {
                 }
 
                 @media (max-width: 768px) {
-                    .order-content { grid-template-columns: 1fr; gap: 1rem; }
-                    .order-total { align-items: flex-start; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed rgba(255,255,255,0.1); }
+                    .mo-table { min-width: 600px; }
+                    .mo-tab-nav { overflow-x: auto; width: 100%; }
                     .return-modal { max-width: 100%; border-radius: 16px 16px 0 0; margin-top: auto; }
+                    .mo-detail-modal { max-width: 100%; border-radius: 16px 16px 0 0; margin-top: auto; }
                 }
             `}</style>
         </div>
