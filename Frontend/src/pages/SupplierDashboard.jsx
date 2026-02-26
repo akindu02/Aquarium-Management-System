@@ -6,7 +6,6 @@ import { logoutAPI } from '../utils/api';
 import ProfileModal from '../components/ProfileModal';
 import SupplierOrderRequests from './supplier/SupplierOrderRequests';
 import SupplierOrderHistory from './supplier/SupplierOrderHistory';
-import SupplierEarnings from './supplier/SupplierEarnings';
 import SupplierMyDetails from './supplier/SupplierMyDetails';
 import '../index.css';
 
@@ -40,7 +39,6 @@ const SupplierDashboard = () => {
     { id: 'dashboard',    label: 'Dashboard',        icon: LayoutDashboard },
     { id: 'new_requests', label: 'New Order Request', icon: ClipboardList },
     { id: 'order_history',label: 'Order History',     icon: History },
-    { id: 'earnings',     label: 'Performance',       icon: Banknote },
     { id: 'my_details',   label: 'My Details',        icon: UserCircle },
   ];
 
@@ -52,8 +50,6 @@ const SupplierDashboard = () => {
         return <SupplierOrderRequests />;
       case 'order_history':
         return <SupplierOrderHistory />;
-      case 'earnings':
-        return <SupplierEarnings />;
       case 'my_details':
         return <SupplierMyDetails />;
       default:
