@@ -1,10 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { isAuthenticated, getUserData, clearAuthData, getDashboardRoute } from '../utils/auth';
 import '../index.css';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const loggedIn = isAuthenticated();
+  const user = loggedIn ? getUserData() : null;
+  const dashboardRoute = user ? getDashboardRoute(user.role) : '/';
+
+  const handleLogout = () => {
+    clearAuthData();
+    navigate('/');
+    setMobileMenuOpen(false);
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -32,22 +44,44 @@ const Navbar = () => {
           <a href="#about" className="nav-link">About</a>
           <a href="#about" className="nav-link">Contact</a>
           <div className="mobile-auth">
-            <Link to="/signin" style={{ width: '100%', marginBottom: '10px' }}>
-              <button className="btn btn-outline" style={{ width: '100%' }}>Sign In</button>
-            </Link>
-            <Link to="/signup" style={{ width: '100%' }}>
-              <button className="btn btn-primary" style={{ width: '100%' }}>Sign Up</button>
-            </Link>
+            {loggedIn ? (
+              <>
+                <Link to={dashboardRoute} style={{ width: '100%', marginBottom: '10px' }} onClick={() => setMobileMenuOpen(false)}>
+                  <button className="btn btn-outline" style={{ width: '100%' }}>My Account</button>
+                </Link>
+                <button className="btn btn-primary" style={{ width: '100%' }} onClick={handleLogout}>Logout</button>
+              </>
+            ) : (
+              <>
+                <Link to="/signin" style={{ width: '100%', marginBottom: '10px' }}>
+                  <button className="btn btn-outline" style={{ width: '100%' }}>Sign In</button>
+                </Link>
+                <Link to="/signup" style={{ width: '100%' }}>
+                  <button className="btn btn-primary" style={{ width: '100%' }}>Sign Up</button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
 
         <div className="nav-auth">
-          <Link to="/signin">
-            <button className="btn btn-outline" style={{ padding: '0.5rem 1.25rem', marginRight: '1rem' }}>Sign In</button>
-          </Link>
-          <Link to="/signup">
-            <button className="btn btn-primary" style={{ padding: '0.5rem 1.25rem' }}>Sign Up</button>
-          </Link>
+          {loggedIn ? (
+            <>
+              <Link to={dashboardRoute}>
+                <button className="btn btn-outline" style={{ padding: '0.5rem 1.25rem', marginRight: '1rem' }}>My Account</button>
+              </Link>
+              <button className="btn btn-primary" style={{ padding: '0.5rem 1.25rem' }} onClick={handleLogout}>Logout</button>
+            </>
+          ) : (
+            <>
+              <Link to="/signin">
+                <button className="btn btn-outline" style={{ padding: '0.5rem 1.25rem', marginRight: '1rem' }}>Sign In</button>
+              </Link>
+              <Link to="/signup">
+                <button className="btn btn-primary" style={{ padding: '0.5rem 1.25rem' }}>Sign Up</button>
+              </Link>
+            </>
+          )}
         </div>
 
         <div className="hamburger" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
