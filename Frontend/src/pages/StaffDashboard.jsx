@@ -271,10 +271,14 @@ const StaffDashboard = () => {
                     display: flex;
                     flex-direction: column;
                     transition: margin-left 0.3s ease;
+                    width: calc(100% - 280px);
+                    max-width: calc(100% - 280px);
                 }
 
                 .staff-sidebar.collapsed + .staff-main {
                     margin-left: 80px;
+                    width: calc(100% - 80px);
+                    max-width: calc(100% - 80px);
                 }
 
                 /* Header */
@@ -396,6 +400,9 @@ const StaffDashboard = () => {
                     flex: 1;
                     padding: 2rem;
                     overflow-y: auto;
+                    overflow-x: hidden;
+                    width: 100%;
+                    max-width: 100%;
                 }
 
                 /* ===== DASHBOARD CONTENT STYLES ===== */
@@ -513,6 +520,7 @@ const StaffDashboard = () => {
 
                 /* ===== RESPONSIVE ===== */
                 @media (max-width: 768px) {
+                    .staff-sidebar {
                         transform: translateX(-100%);
                     }
 
@@ -522,6 +530,8 @@ const StaffDashboard = () => {
 
                     .staff-main {
                         margin-left: 0;
+                        width: 100%;
+                        max-width: 100%;
                     }
 
                     .dashboard-heading {

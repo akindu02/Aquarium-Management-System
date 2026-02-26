@@ -341,11 +341,16 @@ const StaffOrderManagement = () => {
                     height: 100%;
                     display: flex;
                     flex-direction: column;
+                    width: 100%;
+                    max-width: 100%;
+                    overflow-x: hidden;
                 }
                 
                 .so-header {
                     display: flex; justify-content: space-between; align-items: flex-end;
                     margin-bottom: 2rem;
+                    flex-wrap: wrap;
+                    gap: 1rem;
                 }
                 .so-title { font-size: 2rem; font-weight: 700; color: white; margin: 0; }
                 .so-subtitle { color: rgba(255,255,255,0.6); margin: 0.5rem 0 0 0; }
@@ -366,12 +371,15 @@ const StaffOrderManagement = () => {
 
                 .so-toolbar {
                     display: flex; justify-content: space-between; margin-bottom: 1.5rem;
+                    flex-wrap: wrap;
+                    gap: 1rem;
                 }
                 .search-box {
                     display: flex; align-items: center; gap: 0.75rem;
                     background: rgba(0,0,0,0.2); padding: 0.75rem 1rem;
                     border-radius: 0.75rem; border: 1px solid rgba(255,255,255,0.1);
-                    width: 350px;
+                    width: 100%;
+                    max-width: 350px;
                 }
                 .search-box input {
                     background: transparent; border: none; outline: none;
@@ -387,10 +395,11 @@ const StaffOrderManagement = () => {
                 .new-req-btn:hover { background: rgba(255,255,255,0.15); }
 
                 .so-table-wrapper {
-                    flex: 1; overflow-y: auto; background: rgba(255,255,255,0.03);
+                    flex: 1; overflow-x: auto; overflow-y: auto; background: rgba(255,255,255,0.03);
                     border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem;
+                    width: 100%;
                 }
-                .so-table { width: 100%; border-collapse: collapse; }
+                .so-table { width: 100%; border-collapse: collapse; min-width: 800px; }
                 .so-table th {
                     text-align: left; padding: 1rem 1.5rem; position: sticky; top: 0;
                     background: rgba(20, 20, 30, 0.95); backdrop-filter: blur(5px);

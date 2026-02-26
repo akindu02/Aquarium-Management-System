@@ -266,10 +266,14 @@ const CustomerDashboard = () => {
                     display: flex;
                     flex-direction: column;
                     transition: margin-left 0.3s ease;
+                    width: calc(100% - 280px);
+                    max-width: calc(100% - 280px);
                 }
 
                 .customer-sidebar.collapsed + .customer-main {
                     margin-left: 80px;
+                    width: calc(100% - 80px);
+                    max-width: calc(100% - 80px);
                 }
 
                 /* Header */
@@ -391,6 +395,9 @@ const CustomerDashboard = () => {
                     flex: 1;
                     padding: 2rem;
                     overflow-y: auto;
+                    overflow-x: hidden;
+                    width: 100%;
+                    max-width: 100%;
                 }
 
                 /* ===== DASHBOARD CONTENT STYLES ===== */
@@ -573,6 +580,8 @@ const CustomerDashboard = () => {
 
                     .customer-main {
                         margin-left: 0;
+                        width: 100%;
+                        max-width: 100%;
                     }
 
                     .dashboard-heading {

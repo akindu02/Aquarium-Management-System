@@ -183,10 +183,11 @@ const SupplierRestock = () => {
                 }
 
                 .restock-list {
-                    flex: 1; overflow-y: auto; background: rgba(255,255,255,0.03);
+                    flex: 1; overflow-x: auto; overflow-y: auto; background: rgba(255,255,255,0.03);
                     border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem;
+                    width: 100%;
                 }
-                .restock-table { width: 100%; border-collapse: collapse; }
+                .restock-table { width: 100%; border-collapse: collapse; min-width: 600px; }
                 .restock-table th {
                     text-align: left; padding: 1rem 1.5rem; background: rgba(0,0,0,0.2);
                     color: rgba(255,255,255,0.5); font-size: 0.85rem; text-transform: uppercase;

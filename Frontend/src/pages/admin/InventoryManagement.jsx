@@ -812,9 +812,10 @@ const InventoryManagement = () => {
                 .im-table-container {
                     background: rgba(255,255,255,0.03);
                     border: 1px solid rgba(255,255,255,0.08);
-                    border-radius: 1rem; overflow: hidden;
+                    border-radius: 1rem; overflow-x: auto; overflow-y: hidden;
+                    width: 100%;
                 }
-                .im-table { width: 100%; border-collapse: collapse; }
+                .im-table { width: 100%; border-collapse: collapse; min-width: 800px; }
                 .im-table th {
                     text-align: left; padding: 1rem 1.25rem;
                     background: rgba(255,255,255,0.02); color: var(--text-muted);

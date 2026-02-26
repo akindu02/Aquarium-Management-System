@@ -190,7 +190,7 @@ const SupplierEarnings = () => {
                 }
                 .btn-download:hover { background: rgba(255,255,255,0.05); color: white; }
 
-                .table-wrapper { overflow-y: auto; }
+                .table-wrapper { overflow-x: auto; overflow-y: auto; width: 100%; }
                 .earn-table { width: 100%; border-collapse: collapse; }
                 .earn-table th {
                     text-align: left; padding: 1rem; color: rgba(255,255,255,0.4);

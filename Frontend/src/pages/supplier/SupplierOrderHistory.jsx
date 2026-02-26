@@ -137,10 +137,11 @@ const SupplierOrderHistory = () => {
                 .filter-box select option { background: #1a1f2e; color: white; }
 
                 .oh-table-wrapper {
-                    flex: 1; overflow-y: auto; background: rgba(255,255,255,0.03);
+                    flex: 1; overflow-x: auto; overflow-y: auto; background: rgba(255,255,255,0.03);
                     border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem;
+                    width: 100%;
                 }
-                .oh-table { width: 100%; border-collapse: collapse; }
+                .oh-table { width: 100%; border-collapse: collapse; min-width: 700px; }
                 .oh-table th {
                     text-align: left; padding: 1rem 1.5rem; position: sticky; top: 0;
                     background: rgba(20, 20, 30, 0.95); backdrop-filter: blur(5px);

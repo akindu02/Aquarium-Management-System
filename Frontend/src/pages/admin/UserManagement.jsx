@@ -730,12 +730,15 @@ const UserManagement = () => {
                     background: rgba(255,255,255,0.03);
                     border: 1px solid rgba(255,255,255,0.08);
                     border-radius: 1rem;
-                    overflow: hidden;
+                    overflow-x: auto;
+                    overflow-y: hidden;
+                    width: 100%;
                 }
 
                 .um-table {
                     width: 100%;
                     border-collapse: collapse;
+                    min-width: 700px;
                 }
 
                 .um-table th {
