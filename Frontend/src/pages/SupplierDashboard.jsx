@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, ClipboardList, Banknote, Bell, LogOut, History, ChevronRight, Package, Settings, UserCircle } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
@@ -552,59 +552,129 @@ const SupplierDashboard = () => {
 };
 
 // Dashboard Content Component
-const DashboardContent = ({ onNavigate }) => (
-  <>
-    <div className="dashboard-welcome">
-      <h1 className="dashboard-heading">Supplier Dashboard</h1>
-      <p className="dashboard-subtitle">
-        Overview of your pending requests, past orders, and earnings.
-      </p>
-    </div>
+const DashboardContent = ({ onNavigate }) => {
+  const [stats, setStats]     = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState(null);
 
-    <div className="dashboard-grid">
-      {/* New Requests Summary */}
-      <div className="dashboard-card" onClick={() => onNavigate('new_requests')}>
-        <div className="card-header">
-          <ClipboardList className="card-icon" style={{ color: "var(--color-primary)" }} />
-          <ChevronRight size={20} className="card-arrow" />
-        </div>
-        <h3>Pending Requests</h3>
-        <p>New stock requests from shop</p>
-        <div className="card-stat">
-          <span className="stat-number">4</span>
-          <span className="stat-label">Action Required</span>
-        </div>
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('auth_token');
+        const res   = await fetch('http://localhost:5001/api/restock/supplier', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.message || 'Failed to load data');
+
+        const requests = json.data || [];
+
+        const pendingCount   = requests.filter(r => r.status === 'Pending').length;
+        const completedCount = requests.filter(r =>
+          ['Approved', 'Ordered', 'Received'].includes(r.status)
+        ).length;
+        const totalEarnings  = requests
+          .filter(r => ['Approved', 'Ordered', 'Received'].includes(r.status))
+          .reduce((sum, r) => sum + parseFloat(r.total_cost || 0), 0);
+
+        setStats({ pendingCount, completedCount, totalEarnings, totalRequests: requests.length });
+      } catch (err) {
+        console.error('Dashboard stats error:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  const fmt = (n) =>
+    'LKR ' + Number(n).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  return (
+    <>
+      <div className="dashboard-welcome">
+        <h1 className="dashboard-heading">Supplier Dashboard</h1>
+        <p className="dashboard-subtitle">
+          Overview of your pending requests, past orders, and earnings.
+        </p>
       </div>
 
-      {/* Order History Summary */}
-      <div className="dashboard-card" onClick={() => onNavigate('order_history')}>
-        <div className="card-header">
-          <History className="card-icon" style={{ color: "#f59e0b" }} />
-          <ChevronRight size={20} className="card-arrow" />
+      {error && (
+        <div style={{
+          padding: '0.85rem 1.25rem',
+          background: 'rgba(239,68,68,0.1)',
+          border: '1px solid rgba(239,68,68,0.3)',
+          borderRadius: '10px',
+          color: '#f87171',
+          marginBottom: '1.5rem',
+          fontSize: '0.9rem',
+        }}>
+          ⚠️ Could not load dashboard data: {error}
         </div>
-        <h3>Order History</h3>
-        <p>Completed and processed orders</p>
-        <div className="card-stat">
-          <span className="stat-number">128</span>
-          <span className="stat-label">Total Orders</span>
-        </div>
-      </div>
+      )}
 
-      {/* Earnings Summary */}
-      <div className="dashboard-card" onClick={() => onNavigate('earnings')}>
-        <div className="card-header">
-          <Banknote className="card-icon" style={{ color: "#10b981" }} />
-          <ChevronRight size={20} className="card-arrow" />
+      <div className="dashboard-grid">
+        {/* Total Earnings */}
+        <div className="dashboard-card" onClick={() => onNavigate('earnings')}>
+          <div className="card-header">
+            <Banknote className="card-icon" style={{ color: '#10b981' }} />
+            <ChevronRight size={20} className="card-arrow" />
+          </div>
+          <h3>Total Earnings</h3>
+          <p>Revenue from approved &amp; delivered orders</p>
+          <div className="card-stat">
+            {loading ? (
+              <span className="stat-number" style={{ fontSize: '1.5rem', opacity: 0.5 }}>—</span>
+            ) : (
+              <span className="stat-number" style={{ fontSize: '1.4rem' }}>
+                {fmt(stats?.totalEarnings ?? 0)}
+              </span>
+            )}
+            <span className="stat-label">Lifetime Revenue</span>
+          </div>
         </div>
-        <h3>Total Earnings</h3>
-        <p>Revenue from sales</p>
-        <div className="card-stat">
-          <span className="stat-number">LKR 125 000</span>
-          <span className="stat-label">This Month</span>
+
+        {/* Order History */}
+        <div className="dashboard-card" onClick={() => onNavigate('order_history')}>
+          <div className="card-header">
+            <History className="card-icon" style={{ color: '#f59e0b' }} />
+            <ChevronRight size={20} className="card-arrow" />
+          </div>
+          <h3>Order History</h3>
+          <p>Approved, ordered &amp; received requests</p>
+          <div className="card-stat">
+            {loading ? (
+              <span className="stat-number" style={{ fontSize: '1.5rem', opacity: 0.5 }}>—</span>
+            ) : (
+              <span className="stat-number">{stats?.completedCount ?? 0}</span>
+            )}
+            <span className="stat-label">Processed Orders</span>
+          </div>
+        </div>
+
+        {/* Pending Requests */}
+        <div className="dashboard-card" onClick={() => onNavigate('new_requests')}>
+          <div className="card-header">
+            <ClipboardList className="card-icon" style={{ color: 'var(--color-primary)' }} />
+            <ChevronRight size={20} className="card-arrow" />
+          </div>
+          <h3>Pending Requests</h3>
+          <p>New stock requests awaiting your response</p>
+          <div className="card-stat">
+            {loading ? (
+              <span className="stat-number" style={{ fontSize: '1.5rem', opacity: 0.5 }}>—</span>
+            ) : (
+              <span className="stat-number">{stats?.pendingCount ?? 0}</span>
+            )}
+            <span className="stat-label">Action Required</span>
+          </div>
         </div>
       </div>
-    </div>
-  </>
-);
+    </>
+  );
+};
 
 export default SupplierDashboard;
