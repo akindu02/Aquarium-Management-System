@@ -327,5 +327,58 @@ DROP TRIGGER IF EXISTS update_returns_timestamp ON order_returns;
 CREATE TRIGGER update_returns_timestamp BEFORE
 UPDATE ON order_returns FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+-- 1. Rejected status eka add kirima (Check ekak ekka)
+DO $$ BEGIN 
+    ALTER TYPE restock_status ADD VALUE 'Rejected';
+EXCEPTION WHEN duplicate_object THEN null; END $$;
 
+-- 2. Received status eka add kirima (Badu labuna kiyala mark karanna)
+DO $$ BEGIN 
+    ALTER TYPE restock_status ADD VALUE 'Received';
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+-- 3. Product-Supplier Bridge table eka
+CREATE TABLE IF NOT EXISTS product_suppliers (
+    product_id INTEGER REFERENCES products(product_id) ON DELETE CASCADE,
+    supplier_id INTEGER REFERENCES suppliers(user_id) ON DELETE CASCADE,
+    is_primary BOOLEAN DEFAULT false,
+    supply_price DECIMAL(10, 2),
+    PRIMARY KEY (product_id, supplier_id)
+);
+
+-- 4. Rejection Notification Function
+CREATE OR REPLACE FUNCTION notify_restock_rejection() RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.status = 'Rejected' AND OLD.status != 'Rejected' THEN
+        INSERT INTO notifications (user_id, message, type)
+        VALUES (NEW.created_by_staff_id, 'Restock Request #' || NEW.request_id || ' was rejected by the supplier', 'Alert');
+    END IF;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- 5. Rejection Trigger
+DROP TRIGGER IF EXISTS trg_on_restock_rejection ON restock_requests;
+CREATE TRIGGER trg_on_restock_rejection
+AFTER UPDATE ON restock_requests
+FOR EACH ROW EXECUTE FUNCTION notify_restock_rejection();
+
+-- 6. Auto Stock Update Function
+CREATE OR REPLACE FUNCTION update_stock_after_restock() RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.status = 'Received' AND OLD.status != 'Received' THEN
+        UPDATE products p
+        SET stock_quantity = p.stock_quantity + ri.quantity
+        FROM restock_items ri
+        WHERE ri.product_id = p.product_id AND ri.request_id = NEW.request_id;
+    END IF;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- 7. Auto Stock Update Trigger
+DROP TRIGGER IF EXISTS trg_on_restock_received ON restock_requests;
+CREATE TRIGGER trg_on_restock_received
+AFTER UPDATE ON restock_requests
+FOR EACH ROW EXECUTE FUNCTION update_stock_after_restock();
 
