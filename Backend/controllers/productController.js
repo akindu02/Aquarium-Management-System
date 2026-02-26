@@ -38,7 +38,7 @@ const getProductById = async (req, res) => {
  */
 const createProduct = async (req, res) => {
     try {
-        const { name, category, description, price, discount_percent, stock_quantity, supplier_id } = req.body;
+        const { name, category, description, price, discount_percent, stock_quantity, supplier_id, secondary_supplier_id } = req.body;
 
         // Validation
         if (!name || !name.trim()) return res.status(400).json({ success: false, message: 'Product name is required.' });
@@ -60,7 +60,8 @@ const createProduct = async (req, res) => {
             price: parseFloat(price),
             discount_percent: parseFloat(discount_percent) || 0,
             stock_quantity: parseInt(stock_quantity),
-            supplier_id: supplier_id || null,
+            supplier_id: supplier_id && supplier_id !== '' ? parseInt(supplier_id) : null,
+            secondary_supplier_id: secondary_supplier_id && secondary_supplier_id !== '' ? parseInt(secondary_supplier_id) : null,
             image_url,
         });
 
@@ -77,7 +78,7 @@ const createProduct = async (req, res) => {
  */
 const updateProduct = async (req, res) => {
     try {
-        const { name, category, description, price, discount_percent, stock_quantity, supplier_id } = req.body;
+        const { name, category, description, price, discount_percent, stock_quantity, supplier_id, secondary_supplier_id } = req.body;
 
         let image_url = undefined;
         if (req.file) {
@@ -92,7 +93,8 @@ const updateProduct = async (req, res) => {
             discount_percent: discount_percent !== undefined && discount_percent !== '' ? parseFloat(discount_percent) : undefined,
             stock_quantity:   stock_quantity   !== undefined && stock_quantity   !== '' ? parseInt(stock_quantity)    : undefined,
             // Convert empty string → null so PostgreSQL FK constraint is satisfied
-            supplier_id:      supplier_id && supplier_id !== '' ? parseInt(supplier_id) : null,
+            supplier_id:           supplier_id && supplier_id !== '' ? parseInt(supplier_id) : null,
+            secondary_supplier_id: secondary_supplier_id && secondary_supplier_id !== '' ? parseInt(secondary_supplier_id) : null,
             image_url,
         });
 

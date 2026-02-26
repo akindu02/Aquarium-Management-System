@@ -18,6 +18,7 @@ const EMPTY_FORM = {
     discount_percent: '0',
     stock_quantity: '',
     supplier_id: '',
+    secondary_supplier_id: '',
     image: null,
     imagePreview: null,
 };
@@ -154,6 +155,7 @@ const InventoryManagement = () => {
             body.append('discount_percent', formData.discount_percent);
             body.append('stock_quantity', formData.stock_quantity);
             body.append('supplier_id', formData.supplier_id);
+            body.append('secondary_supplier_id', formData.secondary_supplier_id);
             if (formData.image) body.append('image', formData.image);
 
             const res = await fetch(`${API}/products`, {
@@ -201,7 +203,8 @@ const InventoryManagement = () => {
                 price: p.price || '',
                 discount_percent: p.discount_percent ?? '0',
                 stock_quantity: p.stock_quantity ?? '',
-                supplier_id: p.supplier_id || '',
+                supplier_id:           p.supplier_id || '',
+                secondary_supplier_id: p.secondary_supplier_id || '',
                 image: null,
                 imagePreview: p.image_url ? `http://localhost:5001${p.image_url}` : null,
             });
@@ -262,6 +265,7 @@ const InventoryManagement = () => {
             body.append('discount_percent', editFormData.discount_percent);
             body.append('stock_quantity', editFormData.stock_quantity);
             body.append('supplier_id', editFormData.supplier_id);
+            body.append('secondary_supplier_id', editFormData.secondary_supplier_id);
             if (editFormData.image) body.append('image', editFormData.image);
 
             const res = await fetch(`${API}/products/${editingProduct.id}`, {
@@ -540,28 +544,40 @@ const InventoryManagement = () => {
                                 </div>
                             )}
 
-                            {/* Stock Quantity + Supplier */}
+                            {/* Stock Quantity */}
+                            <div className="ap-form-group">
+                                <label><Layers size={13} /> Stock Quantity <span className="required">*</span></label>
+                                <input
+                                    type="number"
+                                    name="stock_quantity"
+                                    placeholder="0"
+                                    min="0"
+                                    step="1"
+                                    value={formData.stock_quantity}
+                                    onChange={handleChange}
+                                    className={errors.stock_quantity ? 'input-error' : ''}
+                                />
+                                {errors.stock_quantity && <span className="error-msg">{errors.stock_quantity}</span>}
+                            </div>
+
+                            {/* Suppliers */}
                             <div className="ap-form-row">
                                 <div className="ap-form-group">
-                                    <label><Layers size={13} /> Stock Quantity <span className="required"></span></label>
-                                    <input
-                                        type="number"
-                                        name="stock_quantity"
-                                        placeholder="0"
-                                        min="0"
-                                        step="1"
-                                        value={formData.stock_quantity}
-                                        onChange={handleChange}
-                                        className={errors.stock_quantity ? 'input-error' : ''}
-                                    />
-                                    {errors.stock_quantity && <span className="error-msg">{errors.stock_quantity}</span>}
-                                </div>
-                                <div className="ap-form-group">
-                                    <label><User size={13} /> Supplier</label>
+                                    <label><User size={13} /> Primary Supplier</label>
                                     <div className="select-wrap-full">
                                         <select name="supplier_id" value={formData.supplier_id} onChange={handleChange}>
                                             <option value="">-- No Supplier --</option>
                                             {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                        </select>
+                                        <ChevronDown size={14} className="sel-arrow" />
+                                    </div>
+                                </div>
+                                <div className="ap-form-group">
+                                    <label><User size={13} /> Secondary Supplier</label>
+                                    <div className="select-wrap-full">
+                                        <select name="secondary_supplier_id" value={formData.secondary_supplier_id} onChange={handleChange}>
+                                            <option value="">-- No Supplier --</option>
+                                            {suppliers.filter(s => s.id !== formData.supplier_id).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                         </select>
                                         <ChevronDown size={14} className="sel-arrow" />
                                     </div>
@@ -710,28 +726,40 @@ const InventoryManagement = () => {
                                 </div>
                             )}
 
-                            {/* Stock Quantity + Supplier */}
+                            {/* Stock Quantity */}
+                            <div className="ap-form-group">
+                                <label><Layers size={13} /> Stock Quantity <span className="required">*</span></label>
+                                <input
+                                    type="number"
+                                    name="stock_quantity"
+                                    placeholder="0"
+                                    min="0"
+                                    step="1"
+                                    value={editFormData.stock_quantity}
+                                    onChange={handleEditChange}
+                                    className={editErrors.stock_quantity ? 'input-error' : ''}
+                                />
+                                {editErrors.stock_quantity && <span className="error-msg">{editErrors.stock_quantity}</span>}
+                            </div>
+
+                            {/* Suppliers */}
                             <div className="ap-form-row">
                                 <div className="ap-form-group">
-                                    <label><Layers size={13} /> Stock Quantity <span className="required">*</span></label>
-                                    <input
-                                        type="number"
-                                        name="stock_quantity"
-                                        placeholder="0"
-                                        min="0"
-                                        step="1"
-                                        value={editFormData.stock_quantity}
-                                        onChange={handleEditChange}
-                                        className={editErrors.stock_quantity ? 'input-error' : ''}
-                                    />
-                                    {editErrors.stock_quantity && <span className="error-msg">{editErrors.stock_quantity}</span>}
-                                </div>
-                                <div className="ap-form-group">
-                                    <label><User size={13} /> Supplier</label>
+                                    <label><User size={13} /> Primary Supplier</label>
                                     <div className="select-wrap-full">
                                         <select name="supplier_id" value={editFormData.supplier_id} onChange={handleEditChange}>
                                             <option value="">-- No Supplier --</option>
                                             {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                        </select>
+                                        <ChevronDown size={14} className="sel-arrow" />
+                                    </div>
+                                </div>
+                                <div className="ap-form-group">
+                                    <label><User size={13} /> Secondary Supplier</label>
+                                    <div className="select-wrap-full">
+                                        <select name="secondary_supplier_id" value={editFormData.secondary_supplier_id} onChange={handleEditChange}>
+                                            <option value="">-- No Supplier --</option>
+                                            {suppliers.filter(s => s.id !== editFormData.supplier_id).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                         </select>
                                         <ChevronDown size={14} className="sel-arrow" />
                                     </div>
