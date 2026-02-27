@@ -47,6 +47,14 @@ router.get(
     orderController.getOrderById
 );
 
+// PATCH /api/orders/:id/cancel  — Customer cancels their own order (Pending / Processing only)
+router.patch(
+    '/:id/cancel',
+    authenticate,
+    authorize('customer'),
+    orderController.cancelOrder
+);
+
 // ─── Admin / Staff management routes ────────────────────────────────────────
 
 // PATCH /api/orders/:id/status  — Update workflow status

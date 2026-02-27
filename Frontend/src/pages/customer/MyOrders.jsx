@@ -5,7 +5,7 @@ import {
     CheckSquare, Square, FileText, RefreshCw, ThumbsUp, ThumbsDown, Banknote
 } from 'lucide-react';
 import Swal from 'sweetalert2';
-import { getOrdersAPI, createReturnAPI, getMyReturnsAPI } from '../../utils/api';
+import { getOrdersAPI, createReturnAPI, getMyReturnsAPI, cancelOrderAPI } from '../../utils/api';
 
 const MyOrders = () => {
     const [filter, setFilter] = useState('all');
@@ -124,6 +124,52 @@ const MyOrders = () => {
     };
 
     const isAlreadyReturned = (orderId) => returns.some(r => r.orderId === orderId);
+
+    const handleCancelOrder = async (order) => {
+        const confirm = await Swal.fire({
+            icon: 'warning',
+            title: 'Cancel Order?',
+            html: `Are you sure you want to cancel order <strong>${order.id}</strong>?<br/>This action cannot be undone.`,
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Cancel Order',
+            cancelButtonText: 'Keep Order',
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#4ecdc4',
+            background: '#1a1f2e',
+            color: '#fff',
+        });
+        if (!confirm.isConfirmed) return;
+
+        try {
+            await cancelOrderAPI(order._orderId);
+            setOrders(prev =>
+                prev.map(o =>
+                    o._orderId === order._orderId ? { ...o, status: 'cancelled' } : o
+                )
+            );
+            // Close detail modal if it's open for this order
+            if (selectedOrderDetail && selectedOrderDetail._orderId === order._orderId) {
+                setSelectedOrderDetail(prev => ({ ...prev, status: 'cancelled' }));
+            }
+            Swal.fire({
+                icon: 'success',
+                title: 'Order Cancelled',
+                text: 'Your order has been cancelled successfully.',
+                background: '#1a1f2e',
+                color: '#fff',
+                confirmButtonColor: '#4ecdc4',
+            });
+        } catch (err) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Cancellation Failed',
+                text: err.message || 'Could not cancel the order. Please try again.',
+                background: '#1a1f2e',
+                color: '#fff',
+                confirmButtonColor: '#4ecdc4',
+            });
+        }
+    };
 
     const filteredOrders = orders.filter(order => {
         if (filter === 'all') return true;
@@ -378,6 +424,15 @@ const MyOrders = () => {
                                                     <button className="mo-btn-icon" title="View Details" onClick={() => setSelectedOrderDetail(order)}>
                                                         <Eye size={15} />
                                                     </button>
+                                                    {['processing'].includes(order.status) && (
+                                                        <button
+                                                            className="mo-btn-icon mo-btn-cancel"
+                                                            title="Cancel Order"
+                                                            onClick={() => handleCancelOrder(order)}
+                                                        >
+                                                            <XCircle size={15} />
+                                                        </button>
+                                                    )}
                                                     {order.status === 'delivered' && !alreadyReturned && (
                                                         <button className="mo-btn-icon mo-btn-return" title="Return Item" onClick={() => openReturnModal(order)}>
                                                             <RotateCcw size={14} />
@@ -812,6 +867,16 @@ const MyOrders = () => {
 
                 .mo-btn-return:hover {
                     background: rgba(239,68,68,0.2);
+                }
+
+                .mo-btn-cancel {
+                    background: rgba(245,158,11,0.12);
+                    color: #f59e0b;
+                }
+
+                .mo-btn-cancel:hover {
+                    background: rgba(245,158,11,0.25);
+                    color: #fbbf24;
                 }
 
                 .mo-returned-tag {

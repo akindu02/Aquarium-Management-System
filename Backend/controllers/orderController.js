@@ -90,6 +90,23 @@ const getOrderById = async (req, res) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// PATCH /api/orders/:id/cancel
+// Customer cancels their own order while it is Pending or Processing
+// ─────────────────────────────────────────────────────────────────────────────
+const cancelOrder = async (req, res) => {
+    try {
+        const orderId = parseInt(req.params.id, 10);
+        const customerId = req.user.id;
+
+        const result = await orderService.cancelOrder(orderId, customerId);
+        return res.json(result);
+    } catch (err) {
+        console.error('cancelOrder error:', err.message);
+        return res.status(400).json({ success: false, message: err.message || 'Failed to cancel order' });
+    }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // PATCH /api/orders/:id/status
 // Admin / Staff update an order's workflow status
 // ─────────────────────────────────────────────────────────────────────────────
@@ -132,4 +149,4 @@ const getOrderStats = async (req, res) => {
     }
 };
 
-module.exports = { createOrder, markOrderPaid, getOrders, getOrderById, updateOrderStatus, getOrderStats };
+module.exports = { createOrder, markOrderPaid, cancelOrder, getOrders, getOrderById, updateOrderStatus, getOrderStats };

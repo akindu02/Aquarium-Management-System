@@ -214,6 +214,15 @@ export const markOrderPaidAPI = async (orderId, paymentMethod = 'Card') => {
 };
 
 /**
+ * Customer - Cancel a Pending or Processing order before it is shipped
+ */
+export const cancelOrderAPI = async (orderId) => {
+    return apiRequest(`/orders/${orderId}/cancel`, {
+        method: 'PATCH',
+    });
+};
+
+/**
  * Admin / Staff - Update order workflow status
  */
 export const updateOrderStatusAPI = async (orderId, status) => {

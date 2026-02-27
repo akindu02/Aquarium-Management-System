@@ -324,6 +324,88 @@ const getOrderById = async (orderId, userId, role) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// CANCEL ORDER  (customer-initiated, transactional)
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Allows a customer to cancel their own order while it is still
+ * in 'Pending' or 'Processing' status (i.e. before it is shipped).
+ * Stock is restored and, if the payment was already completed, the
+ * payment record is flipped to 'Refunded'.
+ *
+ * @param {number} orderId
+ * @param {number} customerId - users.id of the authenticated customer
+ * @returns {{ success, orderId, orderRef, message }}
+ */
+const cancelOrder = async (orderId, customerId) => {
+    const client = await getClient();
+    try {
+        await client.query('BEGIN');
+
+        // Verify ownership and cancellable status
+        const orderCheck = await client.query(
+            `SELECT order_id, status FROM orders
+             WHERE order_id = $1 AND customer_id = $2`,
+            [orderId, customerId]
+        );
+
+        if (orderCheck.rows.length === 0) {
+            throw new Error('Order not found or you are not authorised to cancel it');
+        }
+
+        const { status } = orderCheck.rows[0];
+        if (!['Pending', 'Processing'].includes(status)) {
+            throw new Error(
+                `Order cannot be cancelled because it is already "${status}". ` +
+                'Only Pending or Processing orders can be cancelled.'
+            );
+        }
+
+        // Restore stock for each item
+        const items = await client.query(
+            `SELECT product_id, quantity FROM order_items WHERE order_id = $1`,
+            [orderId]
+        );
+        for (const item of items.rows) {
+            await client.query(
+                `UPDATE products
+                 SET stock_quantity = stock_quantity + $1
+                 WHERE product_id = $2`,
+                [item.quantity, item.product_id]
+            );
+        }
+
+        // Cancel the order
+        await client.query(
+            `UPDATE orders SET status = 'Cancelled', updated_at = NOW()
+             WHERE order_id = $1`,
+            [orderId]
+        );
+
+        // Flip payment to Refunded if it was previously Completed
+        await client.query(
+            `UPDATE payments
+             SET status = 'Refunded'
+             WHERE order_id = $1 AND status = 'Completed'`,
+            [orderId]
+        );
+
+        await client.query('COMMIT');
+
+        return {
+            success: true,
+            orderId,
+            orderRef: fmtOrderId(orderId),
+            message: 'Order cancelled successfully. Stock has been restored.',
+        };
+    } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+    } finally {
+        client.release();
+    }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // UPDATE ORDER STATUS  (admin / staff)
 // ─────────────────────────────────────────────────────────────────────────────
 const updateOrderStatus = async (orderId, newStatus) => {
@@ -359,6 +441,7 @@ const getOrderStats = async () => {
 module.exports = {
     createOrder,
     markOrderPaid,
+    cancelOrder,
     getOrders,
     getOrderById,
     updateOrderStatus,
