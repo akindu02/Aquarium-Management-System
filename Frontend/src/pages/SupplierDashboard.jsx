@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, ClipboardList, Banknote, Bell, LogOut, History, ChevronRight, Package, Settings, UserCircle } from "lucide-react";
+import { LayoutDashboard, ClipboardList, Banknote, LogOut, History, ChevronRight, Package, UserCircle } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
 import ProfileModal from '../components/ProfileModal';
+import NotificationPopup from '../components/NotificationPopup';
 import SupplierOrderRequests from './supplier/SupplierOrderRequests';
 import SupplierOrderHistory from './supplier/SupplierOrderHistory';
 import SupplierMyDetails from './supplier/SupplierMyDetails';
@@ -103,10 +104,7 @@ const SupplierDashboard = () => {
         <header className="supplier-header">
           <div className="header-left"></div>
           <div className="header-right">
-            <button className="notification-btn" title="Notifications">
-              <Bell size={18} className="notification-icon" />
-              <span className="notification-badge">5</span>
-            </button>
+            <NotificationPopup accentColor="#667eea" />
             <div className="header-divider" />
             <div className="header-profile" onClick={() => setShowProfileModal(true)} title="Profile settings">
               <div className="header-avatar">

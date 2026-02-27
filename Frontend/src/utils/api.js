@@ -346,3 +346,42 @@ export const updateSupplierDetailsAPI = async (details) => {
     });
 };
 
+// =============================================
+// NOTIFICATION APIs
+// =============================================
+
+/**
+ * Get all notifications for the logged-in user
+ */
+export const getNotificationsAPI = async () => {
+    return apiRequest('/notifications', { method: 'GET' });
+};
+
+/**
+ * Get unread notification count
+ */
+export const getUnreadCountAPI = async () => {
+    return apiRequest('/notifications/unread-count', { method: 'GET' });
+};
+
+/**
+ * Mark a single notification as read
+ */
+export const markNotificationReadAPI = async (notificationId) => {
+    return apiRequest(`/notifications/${notificationId}/read`, { method: 'PATCH' });
+};
+
+/**
+ * Mark all notifications as read
+ */
+export const markAllNotificationsReadAPI = async () => {
+    return apiRequest('/notifications/read-all', { method: 'PATCH' });
+};
+
+/**
+ * Delete a single notification
+ */
+export const deleteNotificationAPI = async (notificationId) => {
+    return apiRequest(`/notifications/${notificationId}`, { method: 'DELETE' });
+};
+

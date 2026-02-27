@@ -1,4 +1,5 @@
 const restockService = require('../services/restockService');
+const notificationService = require('../services/notificationService');
 
 /**
  * POST /api/restock
@@ -25,6 +26,17 @@ const createRestockRequest = async (req, res) => {
             notes: notes || null,
             expectedDate: expected_date || null,
         });
+
+        // Notify the supplier about the new restock request
+        try {
+            await notificationService.createNotification(
+                parseInt(supplier_id),
+                `New restock request #${result.request_id} has been assigned to you.`,
+                'Order'
+            );
+        } catch (notifErr) {
+            console.error('Failed to create notification for supplier:', notifErr);
+        }
 
         res.status(201).json({
             success: true,
@@ -78,6 +90,25 @@ const updateStaffRestockStatus = async (req, res) => {
         const updated = await restockService.updateStaffRestockStatus(req.params.id, status);
         if (!updated) return res.status(404).json({ success: false, message: 'Restock request not found.' });
 
+        // Notify the supplier about status change
+        if (updated.supplier_id) {
+            try {
+                let msg = '';
+                if (status === 'Ordered') msg = `Restock Request #${updated.request_id} has been marked as Ordered by staff.`;
+                else if (status === 'Received') msg = `Restock Request #${updated.request_id} delivery has been received. Stock updated.`;
+                else if (status === 'Cancelled') msg = `Restock Request #${updated.request_id} has been cancelled by staff.`;
+                if (msg) {
+                    await notificationService.createNotification(
+                        updated.supplier_id,
+                        msg,
+                        status === 'Cancelled' ? 'Alert' : 'Info'
+                    );
+                }
+            } catch (notifErr) {
+                console.error('Failed to create notification for supplier:', notifErr);
+            }
+        }
+
         res.json({ success: true, message: `Status updated to ${status}.`, data: updated });
     } catch (err) {
         console.error('updateStaffRestockStatus error:', err);
@@ -102,6 +133,23 @@ const updateRestockStatus = async (req, res) => {
         );
 
         if (!updated) return res.status(404).json({ success: false, message: 'Request not found or not authorised.' });
+
+        // Notify the staff member who created the request
+        if (updated.created_by_staff_id) {
+            try {
+                const statusMsg = status === 'Approved'
+                    ? `Restock Request #${updated.request_id} has been approved by the supplier.`
+                    : `Restock Request #${updated.request_id} has been rejected by the supplier.`;
+                await notificationService.createNotification(
+                    updated.created_by_staff_id,
+                    statusMsg,
+                    status === 'Approved' ? 'Success' : 'Alert'
+                );
+            } catch (notifErr) {
+                console.error('Failed to create notification for staff:', notifErr);
+            }
+        }
+
         res.json({ success: true, message: `Request ${status.toLowerCase()} successfully.`, data: updated });
     } catch (err) {
         console.error('updateRestockStatus error:', err);

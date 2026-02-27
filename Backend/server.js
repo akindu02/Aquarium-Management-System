@@ -8,6 +8,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const returnRoutes = require('./routes/returnRoutes');
 const posRoutes = require('./routes/posRoutes');
 const restockRoutes = require('./routes/restockRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 const { pool } = require('./config/db');
 
 const app = express();
@@ -92,6 +93,9 @@ app.use('/api/pos', posRoutes);
 
 // Restock request routes
 app.use('/api/restock', restockRoutes);
+
+// Notification routes
+app.use('/api/notifications', notificationRoutes);
 
 // Suppliers list (for dropdowns)
 app.get('/api/suppliers', async (req, res) => {
