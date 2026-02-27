@@ -149,4 +149,35 @@ const getOrderStats = async (req, res) => {
     }
 };
 
-module.exports = { createOrder, markOrderPaid, cancelOrder, getOrders, getOrderById, updateOrderStatus, getOrderStats };
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/orders/refunds
+// Admin / Staff list all refund requests
+// ─────────────────────────────────────────────────────────────────────────────
+const getRefundRequests = async (req, res) => {
+    try {
+        const { status } = req.query;
+        const requests = await orderService.getRefundRequests({ status });
+        return res.json({ success: true, data: requests });
+    } catch (err) {
+        console.error('getRefundRequests error:', err.message);
+        return res.status(500).json({ success: false, message: 'Failed to fetch refund requests' });
+    }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PATCH /api/orders/refunds/:refundId
+// Admin / Staff advance a refund to Processing or Completed
+// ─────────────────────────────────────────────────────────────────────────────
+const processRefund = async (req, res) => {
+    try {
+        const refundId = parseInt(req.params.refundId, 10);
+        const { status, adminNote, refundRef } = req.body;
+        const result = await orderService.processRefund(refundId, { status, adminNote, refundRef });
+        return res.json({ success: true, data: result, message: `Refund status updated to "${status}"` });
+    } catch (err) {
+        console.error('processRefund error:', err.message);
+        return res.status(400).json({ success: false, message: err.message || 'Failed to process refund' });
+    }
+};
+
+module.exports = { createOrder, markOrderPaid, cancelOrder, getOrders, getOrderById, updateOrderStatus, getOrderStats, getRefundRequests, processRefund };

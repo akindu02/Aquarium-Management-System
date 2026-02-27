@@ -31,6 +31,22 @@ router.get(
     orderController.getOrderStats
 );
 
+// GET /api/orders/refunds  — Must come BEFORE /:id route
+router.get(
+    '/refunds',
+    authenticate,
+    staffOrAdmin,
+    orderController.getRefundRequests
+);
+
+// PATCH /api/orders/refunds/:refundId  — Admin / Staff process a refund
+router.patch(
+    '/refunds/:refundId',
+    authenticate,
+    staffOrAdmin,
+    orderController.processRefund
+);
+
 // GET /api/orders
 router.get(
     '/',

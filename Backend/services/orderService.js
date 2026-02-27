@@ -381,13 +381,64 @@ const cancelOrder = async (orderId, customerId) => {
             [orderId]
         );
 
-        // Flip payment to Refunded if it was previously Completed
-        await client.query(
+        // If payment was already Completed → flip to Refunded and create a refund request
+        const paymentRes = await client.query(
             `UPDATE payments
              SET status = 'Refunded'
-             WHERE order_id = $1 AND status = 'Completed'`,
+             WHERE order_id = $1 AND status = 'Completed'
+             RETURNING payment_id, amount`,
             [orderId]
         );
+
+        let refundRequested = false;
+        let refundAmount = null;
+
+        if (paymentRes.rows.length > 0) {
+            refundRequested = true;
+            refundAmount = parseFloat(paymentRes.rows[0].amount);
+            const paymentId = paymentRes.rows[0].payment_id;
+            const orderRef = fmtOrderId(orderId);
+
+            // Create refund request record
+            await client.query(
+                `INSERT INTO refund_requests (order_id, payment_id, customer_id, amount)
+                 VALUES ($1, $2, $3, $4)
+                 ON CONFLICT (order_id) DO NOTHING`,
+                [orderId, paymentId, customerId, refundAmount]
+            );
+
+            // Notify the customer
+            await client.query(
+                `INSERT INTO notifications (user_id, message, type)
+                 VALUES ($1, $2, 'Warning')`,
+                [
+                    customerId,
+                    `Your order ${orderRef} has been cancelled. A refund of LKR ${refundAmount.toLocaleString()} has been initiated and will be processed within 3–5 business days.`,
+                ]
+            );
+
+            // Notify all active admins
+            const admins = await client.query(
+                `SELECT id FROM users WHERE role = 'admin' AND is_active = true`
+            );
+            for (const admin of admins.rows) {
+                await client.query(
+                    `INSERT INTO notifications (user_id, message, type)
+                     VALUES ($1, $2, 'Warning')`,
+                    [
+                        admin.id,
+                        `Refund required: Order ${orderRef} was cancelled by the customer. Amount: LKR ${refundAmount.toLocaleString()}. Please process the refund in Order Management → Refunds.`,
+                    ]
+                );
+            }
+        } else {
+            // No paid payment — just inform the customer
+            await client.query(
+                `INSERT INTO notifications (user_id, message, type)
+                 VALUES ($1, $2, 'Info')`,
+                [customerId, `Your order ${fmtOrderId(orderId)} has been cancelled successfully.`]
+            );
+        }
 
         await client.query('COMMIT');
 
@@ -395,7 +446,11 @@ const cancelOrder = async (orderId, customerId) => {
             success: true,
             orderId,
             orderRef: fmtOrderId(orderId),
-            message: 'Order cancelled successfully. Stock has been restored.',
+            refundRequested,
+            refundAmount,
+            message: refundRequested
+                ? `Order cancelled. A refund of LKR ${refundAmount.toLocaleString()} will be processed within 3–5 business days.`
+                : 'Order cancelled successfully.',
         };
     } catch (err) {
         await client.query('ROLLBACK');
@@ -438,6 +493,90 @@ const getOrderStats = async () => {
     return rows[0];
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GET REFUND REQUESTS  (admin / staff)
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Returns all refund requests, optionally filtered by status.
+ */
+const getRefundRequests = async ({ status } = {}) => {
+    let sql = `
+        SELECT
+            rr.refund_id,
+            rr.order_id,
+            rr.amount,
+            rr.status,
+            rr.refund_ref,
+            rr.admin_note,
+            rr.created_at,
+            rr.processed_at,
+            COALESCE(u.name,  'Unknown') AS customer_name,
+            COALESCE(u.email, '')        AS customer_email,
+            p.method                     AS payment_method,
+            p.transaction_reference
+        FROM refund_requests rr
+        LEFT JOIN users    u ON rr.customer_id = u.id
+        LEFT JOIN payments p ON rr.payment_id  = p.payment_id
+    `;
+
+    const params = [];
+    if (status && status !== 'All') {
+        params.push(status);
+        sql += ` WHERE rr.status = $1`;
+    }
+
+    sql += ` ORDER BY rr.created_at DESC`;
+
+    const { rows } = await pool.query(sql, params);
+    return rows.map(r => ({ ...r, order_ref: fmtOrderId(r.order_id) }));
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROCESS REFUND  (admin / staff)
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Admin / staff advance a refund request to 'Processing' or 'Completed'.
+ * When marked Completed the customer receives an in-app notification.
+ */
+const processRefund = async (refundId, { status, adminNote, refundRef } = {}) => {
+    const validStatuses = ['Processing', 'Completed'];
+    if (!validStatuses.includes(status)) {
+        throw new Error(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
+    }
+
+    const processedAt = status === 'Completed' ? 'NOW()' : 'NULL';
+
+    const { rows } = await pool.query(
+        `UPDATE refund_requests
+         SET status       = $1,
+             admin_note   = COALESCE($2, admin_note),
+             refund_ref   = COALESCE($3, refund_ref),
+             processed_at = ${processedAt}
+         WHERE refund_id = $4
+         RETURNING *`,
+        [status, adminNote || null, refundRef || null, refundId]
+    );
+
+    if (!rows[0]) throw new Error('Refund request not found');
+
+    const row = rows[0];
+
+    // Notify the customer when the refund is completed
+    if (status === 'Completed' && row.customer_id) {
+        const refNote = refundRef ? ` Refund reference: ${refundRef}.` : '';
+        await pool.query(
+            `INSERT INTO notifications (user_id, message, type)
+             VALUES ($1, $2, 'Success')`,
+            [
+                row.customer_id,
+                `Your refund of LKR ${parseFloat(row.amount).toLocaleString()} for order ${fmtOrderId(row.order_id)} has been processed successfully.${refNote}`,
+            ]
+        );
+    }
+
+    return { ...row, order_ref: fmtOrderId(row.order_id) };
+};
+
 module.exports = {
     createOrder,
     markOrderPaid,
@@ -446,4 +585,6 @@ module.exports = {
     getOrderById,
     updateOrderStatus,
     getOrderStats,
+    getRefundRequests,
+    processRefund,
 };

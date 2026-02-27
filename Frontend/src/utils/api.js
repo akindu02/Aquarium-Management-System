@@ -223,6 +223,27 @@ export const cancelOrderAPI = async (orderId) => {
 };
 
 /**
+ * Admin / Staff - Get all refund requests (optionally filtered by status)
+ * @param {string} [status]  'Pending' | 'Processing' | 'Completed' | 'All'
+ */
+export const getRefundRequestsAPI = async (status = 'All') => {
+    const qs = status && status !== 'All' ? `?status=${encodeURIComponent(status)}` : '';
+    return apiRequest(`/orders/refunds${qs}`, { method: 'GET' });
+};
+
+/**
+ * Admin / Staff - Advance a refund request to Processing or Completed
+ * @param {number} refundId
+ * @param {{ status: string, adminNote?: string, refundRef?: string }} payload
+ */
+export const processRefundAPI = async (refundId, payload) => {
+    return apiRequest(`/orders/refunds/${refundId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+    });
+};
+
+/**
  * Admin / Staff - Update order workflow status
  */
 export const updateOrderStatusAPI = async (orderId, status) => {

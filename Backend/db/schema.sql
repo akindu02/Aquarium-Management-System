@@ -266,6 +266,21 @@ CREATE TABLE IF NOT EXISTS reports (
         file_path VARCHAR(255),
         generated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+-- Refund Requests Table
+-- Tracks pending refunds owed to customers who cancelled a paid order
+CREATE TABLE IF NOT EXISTS refund_requests (
+    refund_id    SERIAL PRIMARY KEY,
+    order_id     INTEGER REFERENCES orders(order_id) ON DELETE CASCADE UNIQUE,
+    payment_id   INTEGER REFERENCES payments(payment_id) ON DELETE SET NULL,
+    customer_id  INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    amount       DECIMAL(10, 2) NOT NULL,
+    status       VARCHAR(20) NOT NULL DEFAULT 'Pending',
+    refund_ref   VARCHAR(100),
+    admin_note   TEXT,
+    created_at   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    processed_at TIMESTAMP WITH TIME ZONE,
+    CONSTRAINT chk_refund_status CHECK (status IN ('Pending', 'Processing', 'Completed'))
+);
 -- =============================================
 -- 8. INDEXES & FINAL TRIGGERS
 -- =============================================

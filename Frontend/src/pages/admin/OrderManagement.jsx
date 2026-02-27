@@ -7,7 +7,7 @@ import {
     ClipboardList, Layers, CalendarDays, Hourglass
 } from 'lucide-react';
 import Swal from 'sweetalert2';
-import { getOrdersAPI, updateOrderStatusAPI, getAllReturnsAPI, updateReturnStatusAPI } from '../../utils/api';
+import { getOrdersAPI, updateOrderStatusAPI, getAllReturnsAPI, updateReturnStatusAPI, getRefundRequestsAPI, processRefundAPI } from '../../utils/api';
 
 const API = 'http://localhost:5001/api';
 
@@ -102,6 +102,14 @@ const OrderManagement = () => {
     const [supplierSearchTerm, setSupplierSearchTerm] = useState('');
     const [processingRestockId, setProcessingRestockId] = useState(null);
 
+    // ─── Refund Requests State ──────────────────────────────
+    const [refundRequests, setRefundRequests]     = useState([]);
+    const [isLoadingRefunds, setIsLoadingRefunds] = useState(true);
+    const [refundFilter, setRefundFilter]         = useState('All');
+    const [selectedRefund, setSelectedRefund]     = useState(null);
+    const [refundAdminNote, setRefundAdminNote]   = useState('');
+    const [refundRefInput, setRefundRefInput]     = useState('');
+
     const token = () => localStorage.getItem('auth_token');
 
     // ─── Fetch Orders ─────────────────────────────────────────────
@@ -179,6 +187,37 @@ const OrderManagement = () => {
     }, []);
 
     useEffect(() => { fetchSupplierOrders(); }, [fetchSupplierOrders]);
+
+    // ─── Fetch Refund Requests ─────────────────────────────
+    const fetchRefundRequests = useCallback(async () => {
+        try {
+            setIsLoadingRefunds(true);
+            const res = await getRefundRequestsAPI();
+            if (res.success) {
+                setRefundRequests(res.data.map(r => ({
+                    refundId:      r.refund_id,
+                    orderId:       r.order_ref,
+                    _orderId:      r.order_id,
+                    customer:      r.customer_name || 'Unknown',
+                    email:         r.customer_email || '',
+                    amount:        parseFloat(r.amount),
+                    paymentMethod: r.payment_method || '—',
+                    txnRef:        r.transaction_reference || '',
+                    status:        r.status,
+                    refundRef:     r.refund_ref || '',
+                    adminNote:     r.admin_note || '',
+                    createdAt:     r.created_at ? r.created_at.split('T')[0] : '',
+                    processedAt:   r.processed_at ? r.processed_at.split('T')[0] : null,
+                })));
+            }
+        } catch (err) {
+            console.error('fetchRefundRequests error:', err);
+        } finally {
+            setIsLoadingRefunds(false);
+        }
+    }, []);
+
+    useEffect(() => { fetchRefundRequests(); }, [fetchRefundRequests]);
 
     // ─── Accept / Reject Restock Request ─────────────────────────
     const handleRestockAction = async (req, action) => {
@@ -325,6 +364,63 @@ const OrderManagement = () => {
         });
     };
 
+    // ─── Refund Logic ────────────────────────────────────────────
+    const filteredRefunds = refundRequests.filter(r =>
+        refundFilter === 'All' || r.status === refundFilter
+    );
+    const pendingRefundCount = refundRequests.filter(r => r.status === 'Pending').length;
+
+    const handleProcessRefund = async (refund, newStatus) => {
+        const labelMap = { Processing: 'Mark as Processing', Completed: 'Mark as Completed' };
+        const { isConfirmed } = await Swal.fire({
+            title: `${labelMap[newStatus]}?`,
+            text: newStatus === 'Completed'
+                ? `This will mark the LKR ${refund.amount.toLocaleString()} refund as processed and notify the customer.`
+                : `This will start processing the refund of LKR ${refund.amount.toLocaleString()}.`,
+            icon: newStatus === 'Completed' ? 'success' : 'info',
+            showCancelButton: true,
+            confirmButtonColor: newStatus === 'Completed' ? '#10b981' : '#4ecdc4',
+            cancelButtonColor: '#374151',
+            confirmButtonText: labelMap[newStatus],
+            background: '#1a1f2e',
+            color: '#fff',
+        });
+        if (!isConfirmed) return;
+        try {
+            await processRefundAPI(refund.refundId, {
+                status: newStatus,
+                adminNote: refundAdminNote || undefined,
+                refundRef: refundRefInput || undefined,
+            });
+            const today = new Date().toISOString().split('T')[0];
+            const updater = r => r.refundId === refund.refundId
+                ? { ...r, status: newStatus, adminNote: refundAdminNote || r.adminNote, refundRef: refundRefInput || r.refundRef, processedAt: newStatus === 'Completed' ? today : r.processedAt }
+                : r;
+            setRefundRequests(prev => prev.map(updater));
+            if (selectedRefund?.refundId === refund.refundId) setSelectedRefund(prev => updater(prev));
+            Swal.fire({
+                icon: 'success',
+                title: newStatus === 'Completed' ? 'Refund Completed!' : 'Status Updated',
+                text: newStatus === 'Completed'
+                    ? `Refund of LKR ${refund.amount.toLocaleString()} processed. Customer notified.`
+                    : 'Refund is now being processed.',
+                background: '#1a1f2e', color: '#fff', confirmButtonColor: '#4ecdc4',
+                timer: 3000, showConfirmButton: false,
+            });
+        } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Error', text: err.message, background: '#1a1f2e', color: '#fff', confirmButtonColor: '#ef4444' });
+        }
+    };
+
+    const getRefundStatusStyle = (status) => {
+        switch (status) {
+            case 'Pending':    return { bg: 'rgba(245,158,11,0.15)',  color: '#f59e0b', Icon: Clock        };
+            case 'Processing': return { bg: 'rgba(96,165,250,0.15)',  color: '#60a5fa', Icon: RefreshCw   };
+            case 'Completed':  return { bg: 'rgba(16,185,129,0.15)',  color: '#10b981', Icon: CheckCircle };
+            default:           return { bg: 'rgba(107,114,128,0.15)', color: '#9ca3af', Icon: FileText    };
+        }
+    };
+
     // ─── Style Helpers ────────────────────────────────────────────
     const getOrderStatusStyle = (status) => {
         switch (status) {
@@ -390,6 +486,15 @@ const OrderManagement = () => {
                     <ClipboardList size={16} /> Supplier Orders
                     {pendingRestockCount > 0 && (
                         <span className="pending-badge">{pendingRestockCount}</span>
+                    )}
+                </button>
+                <button
+                    className={`tab-btn ${activeTab === 'refunds' ? 'tab-active' : ''}`}
+                    onClick={() => setActiveTab('refunds')}
+                >
+                    <Banknote size={16} /> Refunds
+                    {pendingRefundCount > 0 && (
+                        <span className="pending-badge">{pendingRefundCount}</span>
                     )}
                 </button>
             </div>
@@ -787,6 +892,215 @@ const OrderManagement = () => {
                         </div>
                     )}
                 </>
+            )}
+
+            {/* ═══════════════════════════════════════════════════════ */}
+            {/* REFUNDS TAB                                             */}
+            {/* ═══════════════════════════════════════════════════════ */}
+            {activeTab === 'refunds' && (
+                <>
+                    {/* Stats */}
+                    <div className="return-stats-row">
+                        {[
+                            { label: 'Total Refunds',  value: refundRequests.length,                                    color: '#4ecdc4', Icon: Banknote     },
+                            { label: 'Pending',        value: refundRequests.filter(r => r.status === 'Pending').length,    color: '#f59e0b', Icon: Clock        },
+                            { label: 'Processing',     value: refundRequests.filter(r => r.status === 'Processing').length, color: '#60a5fa', Icon: RefreshCw   },
+                            { label: 'Completed',      value: refundRequests.filter(r => r.status === 'Completed').length,  color: '#10b981', Icon: CheckCircle },
+                        ].map(stat => (
+                            <div key={stat.label} className="ret-stat-card">
+                                <div className="ret-stat-icon" style={{ background: `${stat.color}1a`, color: stat.color }}>
+                                    <stat.Icon size={18} />
+                                </div>
+                                <div>
+                                    <div className="ret-stat-value" style={{ color: stat.color }}>{stat.value}</div>
+                                    <div className="ret-stat-label">{stat.label}</div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Toolbar */}
+                    <div className="om-toolbar">
+                        <div className="om-filter-group">
+                            <div className="select-wrapper">
+                                <select value={refundFilter} onChange={e => setRefundFilter(e.target.value)}>
+                                    {['All', 'Pending', 'Processing', 'Completed'].map(s => (
+                                        <option key={s} value={s}>{s === 'All' ? 'All Statuses' : s}</option>
+                                    ))}
+                                </select>
+                                <ChevronDown size={14} className="select-arrow" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Table */}
+                    <div className="om-table-container">
+                        {isLoadingRefunds ? (
+                            <div style={{ textAlign: 'center', padding: '3rem', color: '#9ca3af' }}>Loading refund requests…</div>
+                        ) : (
+                            <table className="om-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Customer</th>
+                                        <th>Amount (LKR)</th>
+                                        <th>Payment Method</th>
+                                        <th>Requested On</th>
+                                        <th>Processed On</th>
+                                        <th>Refund Ref</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredRefunds.length === 0 ? (
+                                        <tr><td colSpan={9} style={{ textAlign:'center', padding:'3rem', color:'var(--text-muted)' }}>No refund requests found.</td></tr>
+                                    ) : filteredRefunds.map(refund => {
+                                        const { bg, color, Icon: RefIcon } = getRefundStatusStyle(refund.status);
+                                        return (
+                                            <tr key={refund.refundId} className={refund.status === 'Pending' ? 'row-highlight' : ''}>
+                                                <td className="font-mono">{refund.orderId}</td>
+                                                <td>
+                                                    <div className="customer-cell">
+                                                        <div className="customer-avatar">{refund.customer[0]}</div>
+                                                        <div>
+                                                            <div className="customer-name">{refund.customer}</div>
+                                                            <div className="customer-email">{refund.email}</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="font-bold refund-amount">{refund.amount.toLocaleString()}</td>
+                                                <td style={{ textTransform: 'capitalize' }}>{refund.paymentMethod}</td>
+                                                <td>{refund.createdAt}</td>
+                                                <td>{refund.processedAt || <span style={{ color:'var(--text-muted)' }}>—</span>}</td>
+                                                <td className="font-mono" style={{ fontSize:'0.8rem' }}>{refund.refundRef || <span style={{ color:'var(--text-muted)' }}>—</span>}</td>
+                                                <td>
+                                                    <div className="status-badge" style={{ backgroundColor: bg, color }}>
+                                                        <RefIcon size={12} style={{ marginRight:4 }} />{refund.status}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    {refund.status !== 'Completed' && (
+                                                        <button className="btn-icon view" title="Process Refund"
+                                                            onClick={() => { setSelectedRefund(refund); setRefundAdminNote(refund.adminNote || ''); setRefundRefInput(refund.refundRef || ''); }}
+                                                        >
+                                                            <Eye size={16} />
+                                                        </button>
+                                                    )}
+                                                    {refund.status === 'Completed' && (
+                                                        <span style={{ color:'#10b981', fontSize:'0.8rem', fontWeight:600 }}>✓ Done</span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
+                </>
+            )}
+
+            {/* ═══════════════════════════════════════════════════════ */}
+            {/* REFUND PROCESSING MODAL                                 */}
+            {/* ═══════════════════════════════════════════════════════ */}
+            {selectedRefund && (
+                <div className="modal-overlay" onClick={() => setSelectedRefund(null)}>
+                    <div className="modal-content ret-modal" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <div>
+                                <h3>Process Refund</h3>
+                                <span className="ret-modal-id">{selectedRefund.orderId}</span>
+                            </div>
+                            <button className="modal-close" onClick={() => setSelectedRefund(null)}><X size={20} /></button>
+                        </div>
+                        <div className="modal-body ret-modal-body">
+                            {/* Status banner */}
+                            {(() => {
+                                const { bg, color, Icon: RI } = getRefundStatusStyle(selectedRefund.status);
+                                return (
+                                    <div className="ret-status-banner" style={{ background: bg, borderColor: `${color}44` }}>
+                                        <RI size={16} style={{ color }} />
+                                        <span style={{ color, fontWeight: 700 }}>Status: {selectedRefund.status}</span>
+                                    </div>
+                                );
+                            })()}
+
+                            {/* Info grid */}
+                            <div className="grid-2-col">
+                                <div className="detail-box">
+                                    <h4><User size={12} style={{ marginRight:4 }} />Customer</h4>
+                                    <p className="detail-name">{selectedRefund.customer}</p>
+                                    <p className="detail-sub">{selectedRefund.email}</p>
+                                </div>
+                                <div className="detail-box">
+                                    <h4><CreditCard size={12} style={{ marginRight:4 }} />Refund Amount</h4>
+                                    <p className="ret-refund-big">LKR {selectedRefund.amount.toLocaleString()}</p>
+                                    <p className="detail-sub">via {selectedRefund.paymentMethod}</p>
+                                </div>
+                            </div>
+
+                            {/* Refund Ref input */}
+                            {selectedRefund.status !== 'Completed' && (
+                                <div className="admin-note-section">
+                                    <label className="admin-note-label">
+                                        <Hash size={14} /> Refund Reference (e.g. bank txn ID)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="admin-note-textarea"
+                                        style={{ height:'auto', padding:'0.6rem 0.8rem' }}
+                                        placeholder="Enter refund transaction reference..."
+                                        value={refundRefInput}
+                                        onChange={e => setRefundRefInput(e.target.value)}
+                                    />
+                                </div>
+                            )}
+
+                            {/* Admin note */}
+                            <div className="admin-note-section">
+                                <label className="admin-note-label">
+                                    <MessageSquare size={14} /> Note (optional, visible to customer)
+                                </label>
+                                <textarea
+                                    className="admin-note-textarea"
+                                    rows={3}
+                                    placeholder="Add a note for this refund..."
+                                    value={refundAdminNote}
+                                    onChange={e => setRefundAdminNote(e.target.value)}
+                                    disabled={selectedRefund.status === 'Completed'}
+                                />
+                            </div>
+
+                            {/* Action buttons */}
+                            {selectedRefund.status !== 'Completed' && (
+                                <div className="ret-action-grid">
+                                    {selectedRefund.status === 'Pending' && (
+                                        <button className="ret-action-btn ret-btn-review"
+                                            onClick={() => handleProcessRefund(selectedRefund, 'Processing')}>
+                                            <RefreshCw size={15} /> Mark as Processing
+                                        </button>
+                                    )}
+                                    <button className="ret-action-btn ret-btn-refund"
+                                        onClick={() => handleProcessRefund(selectedRefund, 'Completed')}>
+                                        <Banknote size={15} /> Mark as Completed (LKR {selectedRefund.amount.toLocaleString()})
+                                    </button>
+                                </div>
+                            )}
+
+                            {selectedRefund.status === 'Completed' && (
+                                <div className="refunded-banner">
+                                    <CheckCircle size={20} />
+                                    <div>
+                                        <strong>Refund Completed</strong>
+                                        <p>LKR {selectedRefund.amount.toLocaleString()} was refunded to the customer on {selectedRefund.processedAt}.
+                                        {selectedRefund.refundRef && <> Ref: <code>{selectedRefund.refundRef}</code></>}</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
             )}
 
             {/* ═══════════════════════════════════════════════════════ */}

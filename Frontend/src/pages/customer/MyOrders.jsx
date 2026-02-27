@@ -141,20 +141,28 @@ const MyOrders = () => {
         if (!confirm.isConfirmed) return;
 
         try {
-            await cancelOrderAPI(order._orderId);
+            const res = await cancelOrderAPI(order._orderId);
+            // Update local state: cancelled + set paymentStatus to refunded if applicable
             setOrders(prev =>
                 prev.map(o =>
-                    o._orderId === order._orderId ? { ...o, status: 'cancelled' } : o
+                    o._orderId === order._orderId
+                        ? { ...o, status: 'cancelled', paymentStatus: res.refundRequested ? 'refunded' : o.paymentStatus }
+                        : o
                 )
             );
-            // Close detail modal if it's open for this order
             if (selectedOrderDetail && selectedOrderDetail._orderId === order._orderId) {
-                setSelectedOrderDetail(prev => ({ ...prev, status: 'cancelled' }));
+                setSelectedOrderDetail(prev => ({
+                    ...prev,
+                    status: 'cancelled',
+                    paymentStatus: res.refundRequested ? 'refunded' : prev.paymentStatus,
+                }));
             }
             Swal.fire({
                 icon: 'success',
                 title: 'Order Cancelled',
-                text: 'Your order has been cancelled successfully.',
+                html: res.refundRequested
+                    ? `Your order has been cancelled.<br/><br/>💳 A refund of <strong>LKR ${res.refundAmount.toLocaleString()}</strong> has been initiated and will be processed within <strong>3–5 business days</strong>.`
+                    : 'Your order has been cancelled successfully.',
                 background: '#1a1f2e',
                 color: '#fff',
                 confirmButtonColor: '#4ecdc4',
@@ -433,6 +441,11 @@ const MyOrders = () => {
                                                             <XCircle size={15} />
                                                         </button>
                                                     )}
+                                                    {order.status === 'cancelled' && order.paymentStatus === 'refunded' && (
+                                                        <span className="mo-refund-tag" title="Refund has been initiated. You will be notified once processed.">
+                                                            <Banknote size={12} /> Refund Initiated
+                                                        </span>
+                                                    )}
                                                     {order.status === 'delivered' && !alreadyReturned && (
                                                         <button className="mo-btn-icon mo-btn-return" title="Return Item" onClick={() => openReturnModal(order)}>
                                                             <RotateCcw size={14} />
@@ -493,6 +506,22 @@ const MyOrders = () => {
                                 <span>Total</span>
                                 <strong>LKR {selectedOrderDetail.total.toLocaleString()}</strong>
                             </div>
+                            {selectedOrderDetail.status === 'cancelled' && selectedOrderDetail.paymentStatus === 'refunded' && (
+                                <>
+                                    <div className="mo-detail-divider" />
+                                    <div className="mo-refund-notice">
+                                        <Banknote size={16} />
+                                        <div>
+                                            <p className="mo-refund-notice-title">Refund Initiated</p>
+                                            <p className="mo-refund-notice-text">
+                                                A refund of <strong>LKR {selectedOrderDetail.total.toLocaleString()}</strong> has been initiated.
+                                                It will be processed within <strong>3–5 business days</strong>.
+                                                You will receive a notification once completed.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -887,6 +916,46 @@ const MyOrders = () => {
                     padding: 0.2rem 0.5rem;
                     border-radius: 4px;
                     white-space: nowrap;
+                }
+
+                .mo-refund-tag {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.25rem;
+                    font-size: 0.72rem;
+                    font-weight: 600;
+                    color: #4ecdc4;
+                    background: rgba(78,205,196,0.1);
+                    border: 1px solid rgba(78,205,196,0.25);
+                    padding: 0.2rem 0.5rem;
+                    border-radius: 4px;
+                    white-space: nowrap;
+                    cursor: default;
+                }
+
+                .mo-refund-notice {
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 0.75rem;
+                    background: rgba(78,205,196,0.08);
+                    border: 1px solid rgba(78,205,196,0.2);
+                    border-radius: 8px;
+                    padding: 0.85rem 1rem;
+                    color: #4ecdc4;
+                    margin-top: 0.5rem;
+                }
+
+                .mo-refund-notice-title {
+                    font-weight: 700;
+                    font-size: 0.85rem;
+                    margin-bottom: 0.2rem;
+                    color: #4ecdc4;
+                }
+
+                .mo-refund-notice-text {
+                    font-size: 0.78rem;
+                    color: rgba(78,205,196,0.8);
+                    line-height: 1.5;
                 }
 
                 /* Empty State */
