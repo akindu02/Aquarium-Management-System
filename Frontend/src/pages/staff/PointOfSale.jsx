@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { getProductsAPI, createPosOrderAPI } from '../../utils/api';
+import OrderReceipt from '../../components/OrderReceipt';
 
 const PointOfSale = () => {
     // ── Product state ─────────────────────────────────────────────────────────
@@ -403,90 +404,29 @@ const PointOfSale = () => {
                 </div>
             )}
 
-            {/* ─── Receipt Modal ───────────────────────────────────────────── */}
+            {/* ─── Receipt Auto-Download ───────────────────────────────── */}
             {showReceiptModal && receiptData && (
-                <div className="modal-overlay">
-                    <div className="receipt-modal">
-                        <div className="receipt-header">
-                            <h2>Methu Aquarium</h2>
-                            <p>No 50, Kumaradasa Mawatha, Matara</p>
-                            <p>041-2236848 / 074-3143109</p>
-                            <p>methuaquarium@gmail.com</p>
-                            <div className="receipt-meta">
-                                <span>Date: {receiptData.saleDate.toLocaleDateString()}</span>
-                                <span>Time: {receiptData.saleDate.toLocaleTimeString()}</span>
-                            </div>
-                            <div className="receipt-id">
-                                <div><strong>Receipt #:</strong> {receiptData.receiptNumber}</div>
-                                <div><strong>Order Ref:</strong> {receiptData.orderRef}</div>
-                                <div><strong>Payment:</strong> Cash</div>
-                            </div>
-                        </div>
-
-                        <div className="receipt-customer">
-                            <p><strong>Bill To:</strong> {receiptData.customer.name}</p>
-                            {receiptData.customer.phone && <p>{receiptData.customer.phone}</p>}
-                            {receiptData.customer.email && <p>{receiptData.customer.email}</p>}
-                            {receiptData.customer.address && <p>{receiptData.customer.address}</p>}
-                        </div>
-
-                        <div className="receipt-divider"></div>
-
-                        <div className="receipt-body">
-                            <table className="receipt-table">
-                                <thead>
-                                    <tr>
-                                        <th>Item</th>
-                                        <th>Qty</th>
-                                        <th>Price</th>
-                                        <th>Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {receiptData.items.map(item => (
-                                        <tr key={item.id}>
-                                            <td className="r-item-name">{item.name}</td>
-                                            <td>{item.qty}</td>
-                                            <td>{item.price.toLocaleString()}</td>
-                                            <td>{(item.price * item.qty).toLocaleString()}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div className="receipt-divider"></div>
-
-                        <div className="receipt-summary">
-                            <div className="r-row">
-                                <span>Subtotal</span>
-                                <span>LKR {receiptData.totalAmount.toLocaleString()}</span>
-                            </div>
-                            <div className="r-row">
-                                <span>Payment Method</span>
-                                <span>Cash</span>
-                            </div>
-                            <div className="r-row total">
-                                <span>Total Paid</span>
-                                <span>LKR {receiptData.totalAmount.toLocaleString()}</span>
-                            </div>
-                        </div>
-
-                        <div className="receipt-footer">
-                            <p>Thank you for shopping with us!</p>
-                            <p>Software by MethuTech</p>
-                        </div>
-
-                        <div className="receipt-actions">
-                            <button className="print-btn" onClick={() => window.print()}>
-                                <Package size={16} /> Print Receipt
-                            </button>
-                            <button className="close-btn" onClick={handleNewSale}>
-                                New Sale
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <OrderReceipt
+                    orderData={{
+                        orderRef: receiptData.orderRef,
+                        orderId: receiptData.receiptNumber,
+                        shippingData: {
+                            name: receiptData.customer.name,
+                            email: receiptData.customer.email || '',
+                            phone: receiptData.customer.phone || '',
+                            address: receiptData.customer.address || '',
+                        },
+                        cartItems: receiptData.items.map(i => ({
+                            name: i.name,
+                            price: i.price,
+                            quantity: i.qty,
+                        })),
+                        currentTotal: receiptData.totalAmount,
+                        cardType: 'Cash',
+                        paymentDate: receiptData.saleDate,
+                    }}
+                    onClose={handleNewSale}
+                />
             )}
 
             <style>{`
@@ -833,17 +773,6 @@ const PointOfSale = () => {
                 .print-btn:hover { background: #333; }
                 .close-btn { background: #f3f4f6; color: #333; }
                 .close-btn:hover { background: #e5e7eb; }
-
-                @media print {
-                    body * { visibility: hidden; }
-                    .receipt-modal, .receipt-modal * { visibility: visible; }
-                    .modal-overlay { background: white; position: absolute; inset: 0; }
-                    .receipt-modal {
-                        position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; border-radius: 0; padding: 0;
-                        margin: 0;
-                    }
-                    .receipt-actions { display: none; } /* Hide buttons on print */
-                }
             `}</style>
         </div>
     );
