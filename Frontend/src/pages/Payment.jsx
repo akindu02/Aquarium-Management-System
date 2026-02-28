@@ -3,6 +3,7 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, CreditCard, CheckCircle, Lock, User, Calendar, Loader2 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { markOrderPaidAPI } from '../utils/api';
+import OrderReceipt from '../components/OrderReceipt';
 import '../index.css';
 
 const Payment = () => {
@@ -30,6 +31,7 @@ const Payment = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [confirmedRef, setConfirmedRef] = useState('');
+    const [showReceipt, setShowReceipt] = useState(false);
 
     const calculateTotal = () => {
         return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
@@ -90,21 +92,49 @@ const Payment = () => {
         return (
             <div className="payment-container container">
                 <div className="success-message white-theme-panel">
-                    <CheckCircle size={64} className="text-success" />
+                    <CheckCircle size={48} className="text-success" />
                     <h1>Payment Successful!</h1>
                     <p>Your order has been placed successfully.</p>
                     <p>A confirmation has been sent to <strong>{shippingData.email || 'your email'}</strong>.</p>
                     <div className="order-id-badge">{confirmedRef || orderRef || 'Order Confirmed'}</div>
-                    <Link to="/store" className="btn btn-primary mt-4">
-                        Continue Shopping
-                    </Link>
-                    <Link to="/customer" className="btn btn-outline mt-4" style={{marginLeft:'1rem'}}>
-                        View My Orders
-                    </Link>
+
+                    {/* Download Receipt button */}
+                    <button
+                        onClick={() => setShowReceipt(true)}
+                        className="btn-receipt"
+                    >
+                        Download Receipt
+                    </button>
+
+                    {/* Navigation buttons row */}
+                    <div className="success-actions">
+                        <Link to="/store" className="btn btn-primary">
+                            Continue Shopping
+                        </Link>
+                        <Link to="/customer" className="btn btn-outline">
+                            View My Orders
+                        </Link>
+                    </div>
+
+                    {/* Receipt modal */}
+                    {showReceipt && (
+                        <OrderReceipt
+                            orderData={{
+                                orderRef: confirmedRef || orderRef,
+                                orderId,
+                                shippingData,
+                                cartItems,
+                                currentTotal,
+                                cardType: cardData.cardType === 'visa' ? 'Visa Card' : 'Mastercard',
+                                paymentDate: new Date(),
+                            }}
+                            onClose={() => setShowReceipt(false)}
+                        />
+                    )}
                 </div>
                 <style>{`
           .payment-container {
-            padding-top: 8rem;
+            padding-top: 6rem;
             min-height: 80vh;
             display: flex;
             justify-content: center;
@@ -113,27 +143,60 @@ const Payment = () => {
           .white-theme-panel {
             background: #ffffff;
             text-align: center;
-            padding: 3rem;
-            border-radius: 20px;
+            padding: 2rem 2.2rem;
+            border-radius: 18px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 1.5rem;
-            max-width: 500px;
+            gap: 0.9rem;
+            max-width: 400px;
             width: 100%;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+          }
+          .white-theme-panel h1 {
+            color: #111827;
+            font-size: 1.35rem;
+            margin: 0;
+          }
+          .white-theme-panel p {
+            color: #4b5563;
+            font-size: 0.88rem;
+            margin: 0;
           }
           .text-success { color: #10b981; }
-          .mt-4 { margin-top: 2rem; }
           .order-id-badge {
               background: #f3f4f6;
-              padding: 0.5rem 1rem;
+              padding: 0.4rem 1rem;
               border-radius: 8px;
               font-family: monospace;
+              font-size: 0.85rem;
               color: #374151;
           }
-          h1 { color: #111827; }
-          p { color: #4b5563; }
+          .btn-receipt {
+              background: linear-gradient(135deg, #0ea5e9, #0284c7);
+              color: #fff;
+              border: none;
+              border-radius: 10px;
+              padding: 9px 22px;
+              font-weight: 700;
+              font-size: 0.85rem;
+              cursor: pointer;
+              box-shadow: 0 3px 12px rgba(14,165,233,0.35);
+              letter-spacing: 0.3px;
+              width: 100%;
+          }
+          .success-actions {
+              display: flex;
+              gap: 0.75rem;
+              width: 100%;
+              justify-content: center;
+          }
+          .success-actions .btn {
+              flex: 1;
+              text-align: center;
+              font-size: 0.82rem;
+              padding: 9px 12px;
+          }
         `}</style>
             </div>
         );
