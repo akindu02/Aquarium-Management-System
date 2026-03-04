@@ -656,6 +656,13 @@ class AuthService {
 
         const user = result.rows[0];
 
+        // Send credentials email (do not block user creation if email fails)
+        emailService
+            .sendNewUserCredentialsEmail(email.toLowerCase(), name, email.toLowerCase(), role, password)
+            .catch((err) => {
+                console.error('Error sending new user credentials email:', err);
+            });
+
         return {
             success: true,
             message: 'User created successfully',

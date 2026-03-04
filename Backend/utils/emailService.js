@@ -404,6 +404,68 @@ class EmailService {
             return { success: false, error: error.message };
         }
     }
+
+    /**
+     * Send new user credentials email (created by admin)
+     * NOTE: Sending plaintext passwords via email is not recommended for production.
+     * @param {string} to - Recipient email
+     * @param {string} userName - User's name
+     * @param {string} userEmail - User's login email
+     * @param {string} role - Assigned role
+     * @param {string} password - Temporary/initial password
+     */
+    async sendNewUserCredentialsEmail(to, userName, userEmail, role, password) {
+        await this.initPromise;
+
+        if (!this.transporter) {
+            console.error('❌ Transporter not initialized');
+            return { success: false, error: 'Email service not available' };
+        }
+
+        const appBaseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const loginUrl = `${appBaseUrl.replace(/\/$/, '')}/signin`;
+
+        const safeName = userName || 'there';
+
+        const mailOptions = {
+            from: process.env.EMAIL_FROM,
+            to,
+            subject: 'Your Aquarium Management Account Credentials',
+            text: `Hello ${safeName},
+
+An administrator has created an account for you on the Aquarium Management System.
+
+Your login credentials:
+
+  Email    : ${userEmail}
+  Password : ${password}
+  Role     : ${role}
+
+Sign in here: ${loginUrl}
+
+Please change your password after your first login.
+
+-- Aquarium Management System`,
+        };
+
+        try {
+            const info = await this.transporter.sendMail(mailOptions);
+            console.log('✅ New user credentials email sent:', info.messageId);
+
+            if (this.isTestMode) {
+                const previewUrl = nodemailer.getTestMessageUrl(info);
+                console.log('\n📧 ==================================');
+                console.log('🔗 VIEW EMAIL IN BROWSER:');
+                console.log(previewUrl);
+                console.log('====================================\n');
+            }
+
+            return { success: true, messageId: info.messageId };
+        } catch (error) {
+            console.error('❌ Error sending new user credentials email:', error);
+            return { success: false, error: error.message };
+        }
+    }
 }
 
 module.exports = new EmailService();
