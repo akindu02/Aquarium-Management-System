@@ -168,6 +168,15 @@ export const adminUpdateUserAPI = async (userId, userData) => {
     });
 };
 
+/**
+ * Admin - Toggle a user's active/inactive status
+ */
+export const adminToggleUserStatusAPI = async (userId) => {
+    return apiRequest(`/auth/admin/users/${userId}/toggle-status`, {
+        method: 'PATCH',
+    });
+};
+
 // =============================================
 // ORDER APIs
 // =============================================

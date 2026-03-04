@@ -474,6 +474,31 @@ class AuthController {
     }
 
     /**
+     * Toggle user active/inactive status (admin only)
+     * PATCH /api/auth/admin/users/:id/toggle-status
+     */
+    async toggleUserStatus(req, res) {
+        try {
+            const userId = req.params.id;
+            const adminId = req.user.id;
+
+            const result = await authService.toggleUserStatus(userId, adminId);
+
+            if (!result.success) {
+                return res.status(400).json(result);
+            }
+
+            return res.status(200).json(result);
+        } catch (error) {
+            console.error('Toggle user status error:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'An error occurred while updating user status',
+            });
+        }
+    }
+
+    /**
      * Delete a user (admin only)
      * DELETE /api/auth/admin/users/:id
      */

@@ -177,4 +177,7 @@ router.delete('/admin/users/:id', authenticate, adminOnly, authController.delete
 // PUT /api/auth/admin/users/:id - Update a user
 router.put('/admin/users/:id', authenticate, adminOnly, authController.updateUser);
 
+// PATCH /api/auth/admin/users/:id/toggle-status - Activate or deactivate a user
+router.patch('/admin/users/:id/toggle-status', authenticate, adminOnly, authController.toggleUserStatus);
+
 module.exports = router;

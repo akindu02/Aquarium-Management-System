@@ -708,7 +708,7 @@ class AuthService {
             email: user.email,
             name: user.name,
             role: user.role,
-            status: user.is_active ? 'Active' : 'Inactive',
+            status: user.is_active ? 'Active' : 'Deactive',
             isActive: user.is_active,
             emailVerified: user.email_verified,
             date: user.created_at ? new Date(user.created_at).toISOString().split('T')[0] : null,
@@ -766,6 +766,54 @@ class AuthService {
             success: true,
             message: 'User updated successfully',
             user: updated.rows[0],
+        };
+    }
+
+    /**
+     * Toggle user active status (admin only)
+     * @param {number} userId - User ID to toggle
+     * @param {number} adminId - ID of the admin performing the action
+     * @returns {Object} { success, message, user }
+     */
+    async toggleUserStatus(userId, adminId) {
+        // Prevent admin from deactivating themselves
+        if (parseInt(userId) === parseInt(adminId)) {
+            return {
+                success: false,
+                message: 'You cannot change the status of your own account',
+            };
+        }
+
+        const userResult = await query(
+            'SELECT id, name, role, is_active FROM users WHERE id = $1',
+            [userId]
+        );
+
+        if (userResult.rows.length === 0) {
+            return { success: false, message: 'User not found' };
+        }
+
+        const currentStatus = userResult.rows[0].is_active;
+        const newStatus = !currentStatus;
+
+        const updated = await query(
+            `UPDATE users SET is_active = $1, updated_at = NOW() WHERE id = $2
+             RETURNING id, name, email, role, is_active`,
+            [newStatus, userId]
+        );
+
+        const user = updated.rows[0];
+        return {
+            success: true,
+            message: `User ${newStatus ? 'activated' : 'deactivated'} successfully`,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                isActive: user.is_active,
+                status: user.is_active ? 'Active' : 'Inactive',
+            },
         };
     }
 

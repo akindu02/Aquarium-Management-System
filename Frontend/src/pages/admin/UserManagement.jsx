@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Plus, Trash2, Edit, Filter, MoreVertical, Shield, User, Truck, Briefcase, Eye, EyeOff, X, UserPlus, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { Search, Plus, Trash2, Edit, Filter, MoreVertical, Shield, User, Truck, Briefcase, Eye, EyeOff, X, UserPlus, AlertCircle, CheckCircle, Loader2, UserCheck, UserX } from 'lucide-react';
 import Swal from 'sweetalert2';
-import { adminGetUsersAPI, adminCreateUserAPI, adminDeleteUserAPI, adminUpdateUserAPI } from '../../utils/api';
+import { adminGetUsersAPI, adminCreateUserAPI, adminDeleteUserAPI, adminUpdateUserAPI, adminToggleUserStatusAPI } from '../../utils/api';
 
 const UserManagement = () => {
     const [activeTab, setActiveTab] = useState('all');
@@ -221,6 +221,53 @@ const UserManagement = () => {
         }
     };
 
+    // Handle Toggle Status (Activate / Deactivate)
+    const handleToggleStatus = (user) => {
+        const isActive = user.isActive;
+        Swal.fire({
+            title: isActive ? 'Deactivate User?' : 'Activate User?',
+            text: isActive
+                ? `${user.name} will be deactivated and will not be able to log in.`
+                : `${user.name} will be activated and can log in again.`,
+            icon: isActive ? 'warning' : 'question',
+            showCancelButton: true,
+            confirmButtonColor: isActive ? '#f59e0b' : '#10b981',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: isActive ? 'Yes, deactivate' : 'Yes, activate',
+            cancelButtonText: 'Cancel',
+            background: '#1a1f2e',
+            color: '#fff',
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    const response = await adminToggleUserStatusAPI(user.id);
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: isActive ? 'Deactivated!' : 'Activated!',
+                            text: response.message || `User status updated.`,
+                            background: '#1a1f2e',
+                            color: '#fff',
+                            confirmButtonColor: '#4ecdc4',
+                            timer: 2000,
+                            showConfirmButton: false,
+                        });
+                        fetchUsers();
+                    }
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Update Failed',
+                        text: error.message || 'Could not update the user status.',
+                        background: '#1a1f2e',
+                        color: '#fff',
+                        confirmButtonColor: '#4ecdc4',
+                    });
+                }
+            }
+        });
+    };
+
     // Handle Delete
     const handleDelete = (id) => {
         Swal.fire({
@@ -361,13 +408,26 @@ const UserManagement = () => {
                                             </span>
                                         </td>
                                         <td>
-                                            <span className={`status-dot ${user.status.toLowerCase()}`}></span>
-                                            {user.status}
+                                            <button
+                                                className={`status-toggle-btn ${user.isActive ? 'active' : 'inactive'}`}
+                                                title={user.isActive ? 'Click to deactivate' : 'Click to activate'}
+                                                onClick={() => handleToggleStatus(user)}
+                                            >
+                                                <span className={`status-dot ${user.status.toLowerCase()}`}></span>
+                                                {user.status}
+                                            </button>
                                         </td>
                                         <td>{new Date(user.date).toLocaleDateString()}</td>
                                         <td style={{ textAlign: 'right' }}>
                                             <button className="action-btn edit" title="Edit" onClick={() => handleOpenEdit(user)}>
                                                 <Edit size={16} />
+                                            </button>
+                                            <button
+                                                className={`action-btn ${user.isActive ? 'deactivate' : 'activate'}`}
+                                                title={user.isActive ? 'Deactivate user' : 'Activate user'}
+                                                onClick={() => handleToggleStatus(user)}
+                                            >
+                                                {user.isActive ? <UserX size={16} /> : <UserCheck size={16} />}
                                             </button>
                                             <button
                                                 className="action-btn delete"
@@ -808,6 +868,7 @@ const UserManagement = () => {
 
                 .status-dot.active { background-color: #10b981; }
                 .status-dot.inactive { background-color: #ef4444; }
+                .status-dot.deactive { background-color: #ef4444; }
 
                 .action-btn {
                     padding: 0.4rem;
@@ -824,6 +885,48 @@ const UserManagement = () => {
                 
                 .action-btn.delete { color: #ef4444; }
                 .action-btn.delete:hover { background: rgba(239, 68, 68, 0.1); }
+
+                .action-btn.deactivate { color: #f59e0b; }
+                .action-btn.deactivate:hover { background: rgba(245, 158, 11, 0.12); }
+
+                .action-btn.activate { color: #10b981; }
+                .action-btn.activate:hover { background: rgba(16, 185, 129, 0.12); }
+
+                .status-toggle-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    background: transparent;
+                    border: 1px solid transparent;
+                    border-radius: 50px;
+                    padding: 0.3rem 0.75rem;
+                    font-size: 0.875rem;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    white-space: nowrap;
+                }
+
+                .status-toggle-btn.active {
+                    color: #10b981;
+                    border-color: rgba(16, 185, 129, 0.2);
+                    background: rgba(16, 185, 129, 0.06);
+                }
+                .status-toggle-btn.active:hover {
+                    background: rgba(245, 158, 11, 0.1);
+                    border-color: rgba(245, 158, 11, 0.3);
+                    color: #f59e0b;
+                }
+
+                .status-toggle-btn.inactive {
+                    color: #ef4444;
+                    border-color: rgba(239, 68, 68, 0.2);
+                    background: rgba(239, 68, 68, 0.06);
+                }
+                .status-toggle-btn.inactive:hover {
+                    background: rgba(16, 185, 129, 0.1);
+                    border-color: rgba(16, 185, 129, 0.3);
+                    color: #10b981;
+                }
 
                 .empty-state {
                     text-align: center;
