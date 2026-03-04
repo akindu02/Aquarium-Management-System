@@ -6,6 +6,7 @@ import { createOrderAPI } from '../utils/api';
 import '../index.css';
 
 const CART_KEY = 'aquarium_cart';
+const SHIPPING_FEE = 250;
 const loadCart = () => {
     try { return JSON.parse(localStorage.getItem(CART_KEY) || '[]'); }
     catch { return []; }
@@ -60,7 +61,7 @@ const Checkout = () => {
                 items,
                 shippingAddress,
                 phone: formData.phone,
-                totalAmount: currentTotal,
+                totalAmount: currentTotal + SHIPPING_FEE,
             });
 
             if (result.success) {
@@ -71,6 +72,8 @@ const Checkout = () => {
                         orderId: result.orderId,
                         orderRef: result.orderRef,
                         totalAmount: result.totalAmount,
+                        subtotal: currentTotal,
+                        shippingFee: SHIPPING_FEE,
                         shippingData: { ...formData, shippingAddress },
                         cartItems,
                     }
@@ -226,11 +229,11 @@ const Checkout = () => {
                                 </div>
                                 <div className="total-row">
                                     <span>Shipping</span>
-                                    <span>Free</span>
+                                    <span>LKR {SHIPPING_FEE.toLocaleString()}</span>
                                 </div>
                                 <div className="total-row final-total">
                                     <span>Total</span>
-                                    <span>LKR {currentTotal.toLocaleString()}</span>
+                                    <span>LKR {(currentTotal + SHIPPING_FEE).toLocaleString()}</span>
                                 </div>
                             </div>
 

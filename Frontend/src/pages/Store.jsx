@@ -403,11 +403,11 @@ const Store = () => {
                             </div>
                             <div className="summary-row">
                                 <span>Shipping:</span>
-                                <span>Free</span>
+                                <span>LKR 250</span>
                             </div>
                             <div className="summary-row total">
                                 <span>Total:</span>
-                                <span>LKR {getCartTotal().toLocaleString()}</span>
+                                <span>LKR {(getCartTotal() + 250).toLocaleString()}</span>
                             </div>
                             <button className="checkout-btn" onClick={handleCheckout}>
                                 Proceed to Checkout

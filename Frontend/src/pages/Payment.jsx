@@ -13,12 +13,16 @@ const Payment = () => {
         orderId,
         orderRef,
         totalAmount: locationTotal,
+        subtotal: locationSubtotal,
+        shippingFee: locationShippingFee,
         cartItems = [],
         cartTotal = 0,
         shippingData = {}
     } = location.state || {};
 
-    const currentTotal = locationTotal || cartTotal || cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
+    const SHIPPING_FEE = locationShippingFee || 250;
+    const subtotal = locationSubtotal || (locationTotal ? locationTotal - SHIPPING_FEE : cartTotal || cartItems.reduce((s, i) => s + i.price * i.quantity, 0));
+    const currentTotal = locationTotal || subtotal + SHIPPING_FEE;
 
     const [cardData, setCardData] = useState({
         cardNumber: '',
@@ -322,11 +326,11 @@ const Payment = () => {
                             <div className="order-totals">
                                 <div className="total-row">
                                     <span>Subtotal</span>
-                                    <span>LKR {currentTotal.toLocaleString()}</span>
+                                    <span>LKR {subtotal.toLocaleString()}</span>
                                 </div>
                                 <div className="total-row">
                                     <span>Shipping</span>
-                                    <span>Free</span>
+                                    <span>LKR {SHIPPING_FEE.toLocaleString()}</span>
                                 </div>
                                 <div className="total-row final-total">
                                     <span>Total Pay</span>

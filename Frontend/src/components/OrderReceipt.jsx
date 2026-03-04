@@ -16,7 +16,8 @@ const OrderReceipt = ({ orderData, onClose }) => {
     const subtotal = cartItems.reduce((s, i) => s + (i.price * i.quantity), 0);
     const tax = 0;
     const discount = 0;
-    const grandTotal = parseFloat(currentTotal || subtotal);
+    const shippingFee = 250;
+    const grandTotal = parseFloat(currentTotal || (subtotal + shippingFee));
 
     const receiptNumber = `RCP-${Date.now().toString().slice(-8)}`;
     const transactionId = `TXN-${String(orderId || '00000').padStart(5, '0')}-${Date.now().toString().slice(-6)}`;
@@ -136,6 +137,7 @@ const OrderReceipt = ({ orderData, onClose }) => {
                         </div>
                         <div style={S.totalsBox}>
                             <TotalRow label="Subtotal" value={`Rs. ${subtotal.toFixed(2)}`} />
+                            <TotalRow label="Shipping" value={`Rs. ${shippingFee.toFixed(2)}`} />
                             {tax > 0 && <TotalRow label="Tax" value={`Rs. ${tax.toFixed(2)}`} />}
                             {discount > 0 && <TotalRow label="Discount" value={`- Rs. ${discount.toFixed(2)}`} />}
                             <div style={S.totalSeparator} />
