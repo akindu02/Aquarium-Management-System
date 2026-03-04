@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     Search, Plus, Edit, Trash2, Package, AlertTriangle,
-    CheckCircle, XCircle, ChevronDown, Tag, DollarSign,
+    CheckCircle, XCircle, ChevronDown, Tag, Banknote,
     Layers, Image, FileText, Percent, User, RefreshCw, X
 } from 'lucide-react';
 import Swal from 'sweetalert2';
@@ -505,7 +505,7 @@ const InventoryManagement = () => {
                             {/* Price + Discount */}
                             <div className="ap-form-row">
                                 <div className="ap-form-group">
-                                    <label><DollarSign size={13} /> Price (LKR) <span className="required"></span></label>
+                                    <label><Banknote size={13} /> Price (LKR) <span className="required"></span></label>
                                     <input
                                         type="number"
                                         name="price"
@@ -687,7 +687,7 @@ const InventoryManagement = () => {
                             {/* Price + Discount */}
                             <div className="ap-form-row">
                                 <div className="ap-form-group">
-                                    <label><DollarSign size={13} /> Price (LKR) <span className="required">*</span></label>
+                                    <label><Banknote size={13} /> Price (LKR) <span className="required">*</span></label>
                                     <input
                                         type="number"
                                         name="price"

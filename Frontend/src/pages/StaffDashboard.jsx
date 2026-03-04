@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, ClipboardList, Package, Settings, Bell, LogOut, CheckCircle2, AlertTriangle, CalendarClock, Store, DollarSign, ChevronRight } from "lucide-react";
+import { LayoutDashboard, ClipboardList, Package, Settings, Bell, LogOut, CheckCircle2, AlertTriangle, CalendarClock, Store, Banknote, ChevronRight } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';

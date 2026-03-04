@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     ClipboardList, RefreshCw, Check, X, AlertTriangle,
-    Clock, Package, DollarSign, Layers, CalendarDays,
+    Clock, Package, Banknote, Layers, CalendarDays,
     FileText, User, CheckCircle, XCircle, Hourglass, Filter
 } from 'lucide-react';
 import Swal from 'sweetalert2';
@@ -233,11 +233,11 @@ const SupplierOrderRequests = () => {
                                         <span className="sor-detail-value sor-qty">{req.quantity} units</span>
                                     </div>
                                     <div className="sor-detail-item">
-                                        <span className="sor-detail-label"><DollarSign size={11} /> Unit Cost</span>
+                                        <span className="sor-detail-label"><Banknote size={11} /> Unit Cost</span>
                                         <span className="sor-detail-value">{fmtCurrency(req.unit_cost)}</span>
                                     </div>
                                     <div className="sor-detail-item">
-                                        <span className="sor-detail-label"><DollarSign size={11} /> Total Value</span>
+                                        <span className="sor-detail-label"><Banknote size={11} /> Total Value</span>
                                         <span className="sor-detail-value sor-total">{fmtCurrency(req.total_cost)}</span>
                                     </div>
                                     <div className="sor-detail-item">

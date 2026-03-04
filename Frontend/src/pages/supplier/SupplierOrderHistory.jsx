@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     Search, Filter, CheckCircle, XCircle, Clock, Download,
-    RefreshCw, Package, DollarSign, Layers, User, CalendarDays,
+    RefreshCw, Package, Banknote, Layers, User, CalendarDays,
     FileText, Eye, X, ChevronDown, Hourglass, Truck, AlertCircle
 } from 'lucide-react';
 import { getSupplierOrderHistoryAPI } from '../../utils/supplier';
@@ -252,8 +252,8 @@ const SupplierOrderHistory = () => {
                             <div className="oh-modal-grid">
                                 {[
                                     { Icon: Layers,      label: 'Quantity',       value: `${selectedOrder.quantity} units` },
-                                    { Icon: DollarSign,  label: 'Unit Cost',      value: fmtCur(selectedOrder.unitCost)   },
-                                    { Icon: DollarSign,  label: 'Total Value',    value: fmtCur(selectedOrder.totalCost), accent: true },
+                                    { Icon: Banknote,  label: 'Unit Cost',      value: fmtCur(selectedOrder.unitCost)   },
+                                    { Icon: Banknote,  label: 'Total Value',    value: fmtCur(selectedOrder.totalCost), accent: true },
                                     { Icon: Package,     label: 'Current Stock',  value: `${selectedOrder.currentStock} units` },
                                     { Icon: User,        label: 'Requested By',   value: selectedOrder.staffName          },
                                     { Icon: CalendarDays,label: 'Requested On',   value: fmt(selectedOrder.requestedAt)   },

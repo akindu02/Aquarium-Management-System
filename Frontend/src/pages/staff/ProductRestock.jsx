@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     AlertTriangle, RefreshCw, Package, User,
-    DollarSign, Layers, FileText, CalendarDays,
+    Banknote, Layers, FileText, CalendarDays,
     CheckCircle, XCircle, Send, X, ChevronDown
 } from 'lucide-react';
 import Swal from 'sweetalert2';
@@ -372,7 +372,7 @@ const ProductRestock = () => {
 
                             {/* Unit Cost */}
                             <div className="pr-form-group">
-                                <label><DollarSign size={13} /> Unit Cost (LKR) <span className="pr-required"></span></label>
+                                <label><Banknote size={13} /> Unit Cost (LKR) <span className="pr-required"></span></label>
                                 <input
                                     type="number"
                                     name="unit_cost"

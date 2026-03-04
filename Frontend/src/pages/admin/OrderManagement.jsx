@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Search, Eye, DollarSign, Package, Check, X, Truck, Clock,
+    Search, Eye, Package, Check, X, Truck, Clock,
     AlertCircle, ChevronDown, RotateCcw, CheckCircle,
     XCircle, ThumbsUp, ThumbsDown, Banknote, RefreshCw, FileText,
     MessageSquare, User, ShoppingBag, Hash, Calendar, CreditCard, Filter,
@@ -817,11 +817,11 @@ const OrderManagement = () => {
                                                 <span className="so-detail-value" style={{ color: '#4ecdc4' }}>{req.quantity} units</span>
                                             </div>
                                             <div className="so-detail-item">
-                                                <span className="so-detail-label"><DollarSign size={11} /> Unit Cost</span>
+                                                <span className="so-detail-label"><Banknote size={11} /> Unit Cost</span>
                                                 <span className="so-detail-value">{fmtCurrency(req.unit_cost)}</span>
                                             </div>
                                             <div className="so-detail-item">
-                                                <span className="so-detail-label"><DollarSign size={11} /> Total Value</span>
+                                                <span className="so-detail-label"><Banknote size={11} /> Total Value</span>
                                                 <span className="so-detail-value" style={{ color: '#10b981' }}>{fmtCurrency(req.total_cost)}</span>
                                             </div>
                                             <div className="so-detail-item">

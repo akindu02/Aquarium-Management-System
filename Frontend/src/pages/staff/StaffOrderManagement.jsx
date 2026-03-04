@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Filter, Eye, DollarSign, Package, Check, X, Truck, Clock, AlertCircle, ChevronDown, Download, Users, Factory, Plus } from 'lucide-react';
+import { Search, Filter, Eye, Banknote, Package, Check, X, Truck, Clock, AlertCircle, ChevronDown, Download, Users, Factory, Plus } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { getOrdersAPI, updateOrderStatusAPI } from '../../utils/api';
 
