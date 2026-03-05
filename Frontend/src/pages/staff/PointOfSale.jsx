@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { getProductsAPI, createPosOrderAPI } from '../../utils/api';
-import OrderReceipt from '../../components/OrderReceipt';
+import POSReceipt from '../../components/POSReceipt';
 
 const PointOfSale = () => {
     // ── Product state ─────────────────────────────────────────────────────────
@@ -27,6 +27,7 @@ const PointOfSale = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [receiptData, setReceiptData] = useState(null);
     const [showReceiptModal, setShowReceiptModal] = useState(false);
+    const [cashGiven, setCashGiven] = useState('');
 
     // ── Fetch real products ───────────────────────────────────────────────────
     const fetchProducts = useCallback(async () => {
@@ -125,6 +126,15 @@ const PointOfSale = () => {
             }).then(() => setShowCustomerModal(true));
             return;
         }
+        const cashAmount = parseFloat(cashGiven);
+        if (!cashGiven || isNaN(cashAmount) || cashAmount < total) {
+            Swal.fire({
+                icon: 'warning', title: 'Cash Amount Required',
+                text: `Please enter the cash received. Minimum: LKR ${total.toLocaleString()}.`,
+                background: '#1a1f2e', color: '#fff', confirmButtonColor: '#4ecdc4',
+            });
+            return;
+        }
         try {
             setIsProcessing(true);
             const result = await createPosOrderAPI({
@@ -144,6 +154,7 @@ const PointOfSale = () => {
                     customer: { ...customer },
                     items: cart.map(i => ({ ...i })),
                     saleDate: new Date(),
+                    cashGiven: parseFloat(cashGiven) || 0,
                 });
                 setShowReceiptModal(true);
             }
@@ -164,6 +175,7 @@ const PointOfSale = () => {
         setCart([]);
         setCustomer({ name: '', phone: '', email: '', address: '' });
         setReceiptData(null);
+        setCashGiven('');
         setSaleCount(c => c + 1);
     };
 
@@ -310,6 +322,32 @@ const PointOfSale = () => {
                         <span>Total Amount</span>
                         <span>LKR {total.toLocaleString()}</span>
                     </div>
+
+                    {/* ── Cash input ── */}
+                    <div className="cash-input-section">
+                        <label className="cash-label">Cash Received (LKR)</label>
+                        <input
+                            type="number"
+                            className="cash-input"
+                            min={total}
+                            step="0.01"
+                            value={cashGiven}
+                            onChange={e => setCashGiven(e.target.value)}
+                            placeholder={`Min. LKR ${total.toLocaleString()}`}
+                        />
+                        {cashGiven && parseFloat(cashGiven) >= total && (
+                            <div className="balance-display">
+                                <span>Balance</span>
+                                <span className="balance-amount">LKR {(parseFloat(cashGiven) - total).toLocaleString()}</span>
+                            </div>
+                        )}
+                        {cashGiven && parseFloat(cashGiven) < total && (
+                            <div className="balance-short">
+                                <span>Short by LKR {(total - parseFloat(cashGiven)).toLocaleString()}</span>
+                            </div>
+                        )}
+                    </div>
+
                     <div className="payment-method-tag">
                         <Banknote size={16} /> Cash Payment Only
                     </div>
@@ -404,13 +442,13 @@ const PointOfSale = () => {
                 </div>
             )}
 
-            {/* ─── Receipt Auto-Download ───────────────────────────────── */}
+            {/* ─── POS Receipt Auto-Download ───────────────────────────── */}
             {showReceiptModal && receiptData && (
-                <OrderReceipt
+                <POSReceipt
                     orderData={{
                         orderRef: receiptData.orderRef,
                         orderId: receiptData.receiptNumber,
-                        shippingData: {
+                        customer: {
                             name: receiptData.customer.name,
                             email: receiptData.customer.email || '',
                             phone: receiptData.customer.phone || '',
@@ -421,8 +459,8 @@ const PointOfSale = () => {
                             price: i.price,
                             quantity: i.qty,
                         })),
-                        currentTotal: receiptData.totalAmount,
-                        cardType: 'Cash',
+                        totalAmount: receiptData.totalAmount,
+                        cashGiven: receiptData.cashGiven,
                         paymentDate: receiptData.saleDate,
                     }}
                     onClose={handleNewSale}
@@ -449,6 +487,42 @@ const PointOfSale = () => {
                     padding: 0.5rem 1rem; border-radius: 0.5rem; margin-bottom: 1rem;
                     border: 1px solid rgba(16,185,129,0.2);
                 }
+
+                /* Cash input */
+                .cash-input-section {
+                    display: flex; flex-direction: column; gap: 0.45rem;
+                    margin: 0.75rem 0 0.75rem;
+                    padding: 0.75rem 0.9rem;
+                    background: rgba(6,182,212,0.06);
+                    border: 1px solid rgba(6,182,212,0.2);
+                    border-radius: 0.6rem;
+                }
+                .cash-label {
+                    font-size: 0.78rem; font-weight: 600; color: #94a3b8;
+                    text-transform: uppercase; letter-spacing: 0.5px;
+                }
+                .cash-input {
+                    width: 100%; box-sizing: border-box;
+                    padding: 0.55rem 0.75rem;
+                    background: rgba(255,255,255,0.06);
+                    border: 1.5px solid rgba(6,182,212,0.35);
+                    border-radius: 0.45rem;
+                    color: #f8fafc; font-size: 1rem; font-weight: 600;
+                    outline: none;
+                }
+                .cash-input:focus { border-color: #06b6d4; background: rgba(6,182,212,0.09); }
+                .cash-input::placeholder { color: #4b5563; font-weight: 400; }
+                .balance-display {
+                    display: flex; justify-content: space-between; align-items: center;
+                    padding: 0.4rem 0;
+                }
+                .balance-display span:first-child { font-size: 0.78rem; color: #94a3b8; }
+                .balance-amount { font-size: 0.95rem; font-weight: 700; color: #10b981; }
+                .balance-short {
+                    font-size: 0.78rem; color: #f87171; font-weight: 600;
+                    padding: 0.3rem 0;
+                }
+
                 .form-note {
                     display: flex; align-items: center; gap: 0.5rem;
                     font-size: 0.8rem; color: var(--text-muted);
