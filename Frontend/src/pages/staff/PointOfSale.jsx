@@ -236,13 +236,10 @@ const PointOfSale = () => {
                             <p>Enter the customer&apos;s information for this sale.</p>
                         </div>
                         <div className="qpos-customer-card">
-                            <div className="qpos-field-note">
-                                <AlertCircle size={14} />
-                                <span>Name is required. All other fields are optional.</span>
-                            </div>
+                            <p className="qpos-field-note">* Name is required. All other fields are optional.</p>
                             <div className="qpos-form-grid">
                                 <div className="qpos-form-group">
-                                    <label>Customer Name <span className="req">*</span></label>
+                                    <label>Customer Name <span className="req"></span></label>
                                     <div className="qpos-input-wrap">
                                         <User size={16} className="qpos-input-icon" />
                                         <input
@@ -610,9 +607,8 @@ const PointOfSale = () => {
                     padding: 0; width: 100%;
                 }
                 .qpos-field-note {
-                    display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: #94a3b8;
-                    background: rgba(255,255,255,0.04); padding: 0.55rem 0.8rem; border-radius: 0.5rem;
-                    margin-bottom: 1.25rem; border: 1px solid rgba(255,255,255,0.07);
+                    font-size: 0.78rem; color: #10b981;
+                    margin: 0 0 1.25rem; padding: 0;
                 }
                 .qpos-form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
                 .qpos-form-group label {
