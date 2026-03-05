@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { registerAPI } from '../utils/api';
 import { saveAuthData, getDashboardRoute } from '../utils/auth';
@@ -18,6 +19,8 @@ const SignUp = () => {
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -131,33 +134,53 @@ const SignUp = () => {
 
           <div className="form-group">
             <label htmlFor="password" className="form-label">Password </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="form-input"
-              placeholder="Min 8 characters"
-              required
-              minLength={8}
-              disabled={loading}
-            />
+            <div className="password-wrap">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className="form-input"
+                placeholder="Min 8 characters"
+                required
+                minLength={8}
+                disabled={loading}
+              />
+              <button
+                type="button"
+                className="eye-btn"
+                onClick={() => setShowPassword(v => !v)}
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+              </button>
+            </div>
           </div>
 
           <div className="form-group">
             <label htmlFor="confirmPassword" className="form-label">Confirm Password </label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className="form-input"
-              placeholder="Re-enter your password"
-              required
-              disabled={loading}
-            />
+            <div className="password-wrap">
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                id="confirmPassword"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className="form-input"
+                placeholder="Re-enter your password"
+                required
+                disabled={loading}
+              />
+              <button
+                type="button"
+                className="eye-btn"
+                onClick={() => setShowConfirmPassword(v => !v)}
+                tabIndex={-1}
+              >
+                {showConfirmPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+              </button>
+            </div>
           </div>
 
           <button type="submit" className="btn btn-primary signup-btn" disabled={loading}>
@@ -282,6 +305,31 @@ const SignUp = () => {
         .form-input::placeholder {
           color: var(--text-muted);
         }
+
+        .password-wrap {
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+
+        .password-wrap .form-input {
+          padding-right: 2.5rem;
+        }
+
+        .eye-btn {
+          position: absolute;
+          right: 0.75rem;
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          color: var(--text-muted);
+          display: flex;
+          align-items: center;
+          padding: 0;
+          transition: color 0.2s;
+        }
+
+        .eye-btn:hover { color: var(--color-primary); }
 
         .form-select {
           cursor: pointer;

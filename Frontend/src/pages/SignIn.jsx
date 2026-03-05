@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { saveAuthData, getDashboardRoute } from '../utils/auth';
 import { loginAPI, loginAdminAPI } from '../utils/api';
@@ -16,6 +17,7 @@ const SignIn = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -105,17 +107,27 @@ const SignIn = () => {
 
           <div className="form-group">
             <label htmlFor="password" className="form-label">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="form-input"
-              placeholder="Enter your password"
-              required
-              disabled={loading}
-            />
+            <div className="password-wrap">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className="form-input"
+                placeholder="Enter your password"
+                required
+                disabled={loading}
+              />
+              <button
+                type="button"
+                className="eye-btn"
+                onClick={() => setShowPassword(v => !v)}
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+              </button>
+            </div>
           </div>
 
           <div className="form-options">
@@ -240,6 +252,31 @@ const SignIn = () => {
         .form-input::placeholder {
           color: var(--text-muted);
         }
+
+        .password-wrap {
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+
+        .password-wrap .form-input {
+          padding-right: 2.5rem;
+        }
+
+        .eye-btn {
+          position: absolute;
+          right: 0.75rem;
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          color: var(--text-muted);
+          display: flex;
+          align-items: center;
+          padding: 0;
+          transition: color 0.2s;
+        }
+
+        .eye-btn:hover { color: var(--color-primary); }
 
         .form-options {
           display: flex;
