@@ -207,6 +207,12 @@ const BookingManagement = () => {
                     >
                         Manage Time Slots
                     </button>
+                    <button
+                        className={`bm-tab ${viewMode === 'add-slot' ? 'active' : ''}`}
+                        onClick={() => setViewMode('add-slot')}
+                    >
+                        Add New Time Slot
+                    </button>
                 </div>
 
                 {viewMode === 'bookings' && (
@@ -321,10 +327,9 @@ const BookingManagement = () => {
                         </tbody>
                     </table>
                 </div>
-            ) : (
+            ) : viewMode === 'add-slot' ? (
                 <div className="slot-management-container">
-                    {/* Add Slot Form */}
-                    <div className="add-slot-panel">
+                    <div className="add-slot-panel" style={{ width: '100%', maxWidth: '600px', margin: '0 auto' }}>
                         <h3>Add New Time Slot</h3>
                         <form onSubmit={handleAddSlot} className="slot-form">
                             <div className="form-group">
@@ -376,9 +381,10 @@ const BookingManagement = () => {
                             </button>
                         </form>
                     </div>
-
-                    {/* Slot List */}
-                    <div className="slots-list-panel">
+                </div>
+            ) : (
+                <div className="slot-management-container">
+                    <div className="slots-list-panel" style={{ width: '100%' }}>
                         <h3>Existing Slots</h3>
                         <div className="slots-table-wrapper">
                             <table className="bm-table">
