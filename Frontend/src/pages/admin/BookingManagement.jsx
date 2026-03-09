@@ -53,9 +53,35 @@ const BookingManagement = () => {
         }
     };
 
+    const getTodayDate = () => new Date().toISOString().split('T')[0];
+
     const handleAddSlot = async (e) => {
         e.preventDefault();
         if (!newSlot.date || !newSlot.start || !newSlot.end) return;
+
+        if (newSlot.date < getTodayDate()) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Invalid Date',
+                text: 'You cannot add time slots for past dates. Please select today or a future date.',
+                background: '#1a1f2e',
+                color: '#fff',
+                confirmButtonColor: '#4ecdc4'
+            });
+            return;
+        }
+
+        if (newSlot.end <= newSlot.start) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Invalid Time Range',
+                text: 'End time must be after the start time.',
+                background: '#1a1f2e',
+                color: '#fff',
+                confirmButtonColor: '#4ecdc4'
+            });
+            return;
+        }
 
         try {
             const data = await apiRequest('/bookings/slots', {
@@ -135,6 +161,31 @@ const BookingManagement = () => {
 
     const handleUpdateSlot = async (e) => {
         e.preventDefault();
+
+        if (editSlot.date < getTodayDate()) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Invalid Date',
+                text: 'You cannot set a time slot to a past date. Please select today or a future date.',
+                background: '#1a1f2e',
+                color: '#fff',
+                confirmButtonColor: '#4ecdc4'
+            });
+            return;
+        }
+
+        if (editSlot.end <= editSlot.start) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Invalid Time Range',
+                text: 'End time must be after the start time.',
+                background: '#1a1f2e',
+                color: '#fff',
+                confirmButtonColor: '#4ecdc4'
+            });
+            return;
+        }
+
         try {
             const data = await apiRequest(`/bookings/slots/${editSlot.id}`, {
                 method: 'PUT',
@@ -433,6 +484,7 @@ const BookingManagement = () => {
                                 <input
                                     type="date"
                                     value={newSlot.date}
+                                    min={getTodayDate()}
                                     onChange={e => setNewSlot({ ...newSlot, date: e.target.value })}
                                     required
                                 />
@@ -597,6 +649,7 @@ const BookingManagement = () => {
                                     <input
                                         type="date"
                                         value={editSlot.date}
+                                        min={getTodayDate()}
                                         onChange={e => setEditSlot({ ...editSlot, date: e.target.value })}
                                         required
                                     />
