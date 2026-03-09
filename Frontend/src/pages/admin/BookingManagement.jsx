@@ -409,7 +409,7 @@ const BookingManagement = () => {
                     </table>
                 </div>
             ) : viewMode === 'add-slot' ? (
-                <div className="slot-management-container">
+                <div className="add-slot-view-container">
                     <div className="add-slot-panel" style={{ width: '100%', maxWidth: '600px', margin: '0 auto' }}>
                         <h3>Add New Time Slot</h3>
                         <form onSubmit={handleAddSlot} className="slot-form">
@@ -464,11 +464,19 @@ const BookingManagement = () => {
                     </div>
                 </div>
             ) : (
-                <div className="slot-management-container">
-                    <div className="slots-list-panel" style={{ width: '100%' }}>
-                        <h3>Existing Slots</h3>
-                        <div className="slots-table-wrapper">
-                            <table className="bm-table">
+                <div className="slots-view-container">
+                    <div className="slots-list-panel">
+                        <div className="panel-header">
+                            <div>
+                                <h3>Existing Time Slots</h3>
+                                <p className="panel-subtitle">Manage availability and assigned slots</p>
+                            </div>
+                            <div className="total-slots-badge">
+                                {managedSlots.length} Total Slot{managedSlots.length !== 1 ? 's' : ''}
+                            </div>
+                        </div>
+                        <div className="slots-table-wrapper nice-scrollbar">
+                            <table className="bm-table slot-table">
                                 <thead>
                                     <tr>
                                         <th>Service</th>
@@ -481,30 +489,64 @@ const BookingManagement = () => {
                                 <tbody>
                                     {managedSlots.length === 0 ? (
                                         <tr>
-                                            <td colSpan="5" className="text-center">No slots added yet.</td>
+                                            <td colSpan="5" className="text-center py-8">
+                                                <div className="empty-state">
+                                                    <Calendar size={48} opacity={0.2} />
+                                                    <p>No time slots have been created yet.</p>
+                                                    <button 
+                                                        className="btn-link"
+                                                        onClick={() => setViewMode('add-slot')}
+                                                    >
+                                                        Create your first slot
+                                                    </button>
+                                                </div>
+                                            </td>
                                         </tr>
                                     ) : (
                                         managedSlots.map(slot => (
-                                            <tr key={slot.id}>
-                                                <td>{slot.service}</td>
-                                                <td>{slot.date}</td>
-                                                <td>{slot.start} - {slot.end}</td>
+                                            <tr key={slot.id} className="slot-row">
                                                 <td>
-                                                    <span className={`status-badge ${slot.status?.toLowerCase()}`}>
+                                                    <div className="service-cell">
+                                                        <div className="service-icon-box">
+                                                            {slot.service.toLowerCase().includes('clean') ? <AlertCircle size={16} /> : 
+                                                             slot.service.toLowerCase().includes('setup') ? <Plus size={16} /> : 
+                                                             <Clock size={16} />}
+                                                        </div>
+                                                        <span>{slot.service}</span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div className="date-cell">
+                                                        <Calendar size={14} className="cell-icon" />
+                                                        <span>{slot.date}</span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div className="time-cell">
+                                                        <Clock size={14} className="cell-icon" />
+                                                        <span>{slot.start} - {slot.end}</span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span className={`status-badge ${slot.status?.toLowerCase()} modern-badge`}>
+                                                        {slot.status === 'Available' && <span className="status-dot green"></span>}
+                                                        {slot.status === 'Booked' && <span className="status-dot red"></span>}
+                                                        {slot.status === 'Maintenance' && <span className="status-dot yellow"></span>}
+                                                        {slot.status === 'Unavailable' && <span className="status-dot gray"></span>}
                                                         {slot.status}
                                                     </span>
                                                 </td>
                                                 <td>
                                                     <div className="td-actions">
                                                         <button
-                                                            className="btn-icon edit"
+                                                            className="btn-icon edit glass-btn"
                                                             title="Edit Slot"
                                                             onClick={() => handleEditSlot(slot)}
                                                         >
                                                             <Pencil size={15} />
                                                         </button>
                                                         <button
-                                                            className="btn-icon reject"
+                                                            className="btn-icon reject glass-btn"
                                                             title="Delete Slot"
                                                             onClick={() => handleDeleteSlot(slot.id)}
                                                         >
@@ -981,24 +1023,117 @@ const BookingManagement = () => {
                 }
 
                 /* Slot Management Styles */
-                .slot-management-container {
-                    display: grid;
-                    grid-template-columns: 350px 1fr;
-                    gap: 2rem;
-                    align-items: start;
+                .slots-view-container, .add-slot-view-container {
+                    width: 100%;
+                    animation: fadeIn 0.3s ease-out;
+                }
+
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(5px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+
+                .panel-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 1.5rem;
+                    border-bottom: 1px solid rgba(255,255,255,0.05);
+                    padding-bottom: 1rem;
+                }
+
+                .panel-subtitle {
+                    color: var(--text-muted);
+                    font-size: 0.9rem;
+                    margin: 0.25rem 0 0 0;
+                }
+
+                .total-slots-badge {
+                    background: rgba(6, 182, 212, 0.1);
+                    color: var(--color-primary);
+                    padding: 0.5rem 1rem;
+                    border-radius: 2rem;
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                    border: 1px solid rgba(6, 182, 212, 0.2);
                 }
 
                 .add-slot-panel, .slots-list-panel {
-                    background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
-                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    background: linear-gradient(145deg, rgba(20, 24, 39, 0.8) 0%, rgba(15, 18, 30, 0.9) 100%);
+                    border: 1px solid rgba(255, 255, 255, 0.06);
                     border-radius: 1.5rem;
                     padding: 2rem;
-                    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+                    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+                    overflow: visible;
                 }
 
-                .add-slot-panel h3, .slots-list-panel h3 {
+                .slots-table-wrapper {
+                    overflow-x: auto;
+                    border-radius: 0.5rem;
+                }
+
+                .nice-scrollbar::-webkit-scrollbar { height: 8px; }
+                .nice-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 4px; }
+                .nice-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+                .nice-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+                .slot-table { min-width: 800px; }
+                .slot-table th { background: rgba(0,0,0,0.2); color: #94a3b8; font-weight: 600; padding: 1.2rem 1rem; }
+                .slot-table td { padding: 1.2rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.03); }
+                .slot-row { transition: all 0.2s; }
+                .slot-row:hover { background: rgba(255,255,255,0.02); }
+
+                .service-cell { display: flex; align-items: center; gap: 0.75rem; font-weight: 500; }
+                .service-icon-box { 
+                    width: 32px; height: 32px; 
+                    border-radius: 8px; 
+                    background: rgba(255,255,255,0.05); 
+                    display: flex; align-items: center; justify-content: center;
+                    color: var(--color-primary);
+                }
+
+                .date-cell, .time-cell { display: flex; align-items: center; gap: 0.5rem; color: #cbd5e1; }
+                .cell-icon { color: #64748b; }
+
+                .modern-badge {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    padding: 0.35rem 0.85rem;
+                    border-radius: 2rem;
+                    font-size: 0.75rem;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+                .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+                .status-dot.green { background: #10b981; box-shadow: 0 0 8px #10b981; }
+                .status-dot.red { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+                .status-dot.yellow { background: #fbbf24; box-shadow: 0 0 8px #fbbf24; }
+                .status-dot.gray { background: #9ca3af; }
+
+                .glass-btn {
+                    background: rgba(255,255,255,0.03);
+                    border: 1px solid rgba(255,255,255,0.05);
+                }
+                .glass-btn:hover { background: rgba(255,255,255,0.1); }
+
+                .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 0; color: var(--text-muted); }
+                .empty-state p { margin: 1rem 0; font-size: 1.1rem; }
+                .btn-link { background: none; border: none; color: var(--color-primary); text-decoration: underline; cursor: pointer; font-weight: 500; }
+
+                .add-slot-panel h3 {
                     margin-top: 0;
                     margin-bottom: 2rem;
+                    font-size: 1.5rem;
+                    font-weight: 700;
+                    background: linear-gradient(to right, #fff, #94a3b8);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                }
+
+                .slots-list-panel h3 {
+                    margin-top: 0;
+                    margin-bottom: 0;
                     font-size: 1.5rem;
                     font-weight: 700;
                     background: linear-gradient(to right, #fff, #94a3b8);
@@ -1094,8 +1229,8 @@ const BookingManagement = () => {
                 .text-center { text-align: center; color: var(--text-muted); }
 
                 @media (max-width: 1024px) {
-                    .slot-management-container {
-                        grid-template-columns: 1fr;
+                    .add-slot-panel, .slots-list-panel {
+                        padding: 1.5rem;
                     }
                 }
             `}</style>
