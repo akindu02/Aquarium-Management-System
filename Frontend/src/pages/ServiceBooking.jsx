@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Check, X, ChevronLeft, ChevronRight, Wrench, Sparkles, Settings, Phone, MapPin } from 'lucide-react';
+import { Calendar, Clock, Check, X, ChevronLeft, ChevronRight, Wrench, Sparkles, Settings, Phone, MapPin, Building, ChevronDown } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { isAuthenticated } from '../utils/auth';
 import { apiRequest } from '../utils/api';
@@ -353,13 +353,20 @@ const UpcomingBookings = ({ bookings, services, onCancelBooking }) => {
 // ===== BOOKING MODAL COMPONENT =====
 const BookingModal = ({ isOpen, service, date, slot, onConfirm, onClose }) => {
     const [phone, setPhone] = useState('');
+    const [city, setCity] = useState('');
     const [address, setAddress] = useState('');
     const [errors, setErrors] = useState({});
+
+    const MATARA_CITIES = [
+        'Matara', 'Weligama', 'Dickwella', 'Hakmana', 'Akuressa',
+        'Kamburugamuwa', 'Kamburupitiya', 'Deniyaya', 'Devinuwara', 'Kekanadura'
+    ];
 
     // Reset state when modal opens
     useEffect(() => {
         if (isOpen) {
             setPhone('');
+            setCity('');
             setAddress('');
             setErrors({});
         }
@@ -370,7 +377,9 @@ const BookingModal = ({ isOpen, service, date, slot, onConfirm, onClose }) => {
     const handleConfirm = () => {
         const newErrors = {};
         if (!phone.trim()) newErrors.phone = 'Phone number is required';
+        if (!city) newErrors.city = 'Please select a city (Matara District only)';
         if (!address.trim()) newErrors.address = 'Address is required';
+        
         // Basic phone validation
         if (phone.trim() && !/^\d{10,}$/.test(phone.replace(/\D/g, ''))) {
             newErrors.phone = 'Please enter a valid phone number';
@@ -381,20 +390,23 @@ const BookingModal = ({ isOpen, service, date, slot, onConfirm, onClose }) => {
             return;
         }
 
-        onConfirm({ phone, address });
+        onConfirm({ phone, city, address });
     };
 
     return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="booking-modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-overlay glass-overlay" onClick={onClose}>
+            <div className="booking-modal glass-modal" onClick={e => e.stopPropagation()}>
                 <button className="modal-close" onClick={onClose}>
                     <X size={24} />
                 </button>
-                <div className="modal-icon">
-                    <Check size={32} />
+                <div className="modal-icon-wrapper">
+                    <div className="modal-icon modern-icon">
+                        <Check size={32} />
+                    </div>
                 </div>
                 <h3>Confirm Your Booking</h3>
-                <div className="modal-details">
+                
+                <div className="modal-details modern-details">
                     <div className="modal-detail-row">
                         <span>Service:</span>
                         <strong>{service?.title}</strong>
@@ -411,29 +423,50 @@ const BookingModal = ({ isOpen, service, date, slot, onConfirm, onClose }) => {
                     </div>
                 </div>
 
-                <div className="modal-input-group">
-                    <label className="modal-label">Phone Number</label>
-                    <div className="input-wrapper">
-                        <Phone size={18} className="input-icon" />
-                        <input
-                            type="tel"
-                            className="modal-input with-icon"
-                            placeholder="Enter your phone number"
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
-                        />
+                <div className="modal-form-grid">
+                    <div className="modal-input-group">
+                        <label className="modal-label">Phone Number</label>
+                        <div className="input-wrapper">
+                            <Phone size={18} className="input-icon" />
+                            <input
+                                type="tel"
+                                className="modal-input with-icon"
+                                placeholder="Enter your phone number"
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                            />
+                        </div>
+                        {errors.phone && <p className="input-error">{errors.phone}</p>}
                     </div>
-                    {errors.phone && <p className="input-error">{errors.phone}</p>}
+
+                    <div className="modal-input-group">
+                        <label className="modal-label">City (Matara District)</label>
+                        <div className="input-wrapper select-wrapper-modern">
+                            <Building size={18} className="input-icon" />
+                            <select
+                                className="modal-input with-icon custom-select"
+                                value={city}
+                                onChange={(e) => setCity(e.target.value)}
+                            >
+                                <option value="" disabled>Select your city...</option>
+                                {MATARA_CITIES.map(c => (
+                                    <option key={c} value={c}>{c}</option>
+                                ))}
+                            </select>
+                            <ChevronDown size={18} className="select-arrow-icon" />
+                        </div>
+                        {errors.city && <p className="input-error">{errors.city}</p>}
+                    </div>
                 </div>
 
                 <div className="modal-input-group">
-                    <label className="modal-label">Address</label>
+                    <label className="modal-label">Detailed Address</label>
                     <div className="input-wrapper">
                         <MapPin size={18} className="input-icon textarea-icon" />
                         <textarea
                             className="modal-input with-icon"
-                            placeholder="Enter your address"
-                            rows="3"
+                            placeholder="Enter your street address"
+                            rows="2"
                             value={address}
                             onChange={(e) => setAddress(e.target.value)}
                         />
@@ -441,9 +474,9 @@ const BookingModal = ({ isOpen, service, date, slot, onConfirm, onClose }) => {
                     {errors.address && <p className="input-error">{errors.address}</p>}
                 </div>
 
-                <div className="modal-actions">
-                    <button className="btn-cancel" onClick={onClose}>Cancel</button>
-                    <button className="btn-confirm" onClick={handleConfirm}>Confirm Booking</button>
+                <div className="modal-actions mt-6">
+                    <button className="btn-cancel modern-cancel" onClick={onClose}>Cancel</button>
+                    <button className="btn-confirm modern-confirm" onClick={handleConfirm}>Confirm Booking</button>
                 </div>
             </div>
         </div>
@@ -565,6 +598,7 @@ const ServiceBooking = () => {
             date: selectedDate,
             slot: selectedSlot,
             phone: bookingDetails.phone,
+            city: bookingDetails.city,
             address: bookingDetails.address
         };
         // In a real app, you would send this to the backend
@@ -623,18 +657,13 @@ const ServiceBooking = () => {
                             />
                         </div>
 
-                        {/* Right: Slots and Upcoming */}
+                        {/* Right: Slots */}
                         <div className="booking-slots">
                             <SlotList
                                 slots={getSlotsForDate()}
                                 selectedService={selectedService}
                                 selectedDate={selectedDate}
                                 onSelectSlot={handleSelectSlot}
-                            />
-                            <UpcomingBookings
-                                bookings={bookings}
-                                services={SERVICES}
-                                onCancelBooking={handleCancelBooking}
                             />
                         </div>
                     </div>

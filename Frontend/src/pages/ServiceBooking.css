@@ -477,76 +477,116 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(11, 17, 32, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
     padding: 1rem;
+    animation: fadeIn 0.3s ease;
 }
 
-.booking-modal {
-    background: var(--color-surface);
-    border: 1px solid var(--glass-border);
-    border-radius: 1rem;
-    padding: 2rem;
-    max-width: 450px;
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.glass-modal {
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    border-radius: 1.5rem;
+    padding: 2.5rem 2rem 2rem;
+    max-width: 500px;
     width: 100%;
     position: relative;
+    transform: translateY(0);
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .modal-close {
     position: absolute;
-    top: 1rem;
-    right: 1rem;
-    background: none;
-    border: none;
+    top: 1.25rem;
+    right: 1.25rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: var(--text-muted);
     cursor: pointer;
-    transition: color 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 .modal-close:hover {
-    color: var(--text-main);
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.3);
+    transform: rotate(90deg);
 }
 
-.modal-icon {
-    width: 60px;
-    height: 60px;
-    margin: 0 auto 1rem;
+.modal-icon-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    margin-top: -4rem; /* Break out of the modal slightly */
+}
+
+.modern-icon {
+    width: 70px;
+    height: 70px;
     background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
+    box-shadow: 0 10px 25px -5px rgba(6, 182, 212, 0.5), 0 0 0 6px var(--color-bg);
 }
 
 .booking-modal h3 {
     text-align: center;
     font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--text-main);
+    font-weight: 700;
+    color: white;
     margin-bottom: 1.5rem;
+    letter-spacing: -0.025em;
 }
 
-.modal-details {
+.modern-details {
     background: rgba(255, 255, 255, 0.03);
-    border-radius: 0.75rem;
-    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+    padding: 1.25rem;
     margin-bottom: 1.5rem;
 }
 
 .modal-detail-row {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     padding: 0.75rem 0;
-    border-bottom: 1px solid var(--glass-border);
-    font-size: 0.9rem;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+    font-size: 0.95rem;
+}
+
+.modal-detail-row:first-child {
+    padding-top: 0;
 }
 
 .modal-detail-row:last-child {
     border-bottom: none;
+    padding-bottom: 0;
 }
 
 .modal-detail-row span {
@@ -554,39 +594,44 @@
 }
 
 .modal-detail-row strong {
-    color: var(--text-main);
-}
-
-.modal-detail-row.total {
-    padding-top: 1rem;
-    margin-top: 0.5rem;
-    border-top: 1px solid var(--glass-border);
-}
-
-.modal-detail-row.total strong {
-    color: var(--color-primary);
-    font-size: 1.1rem;
+    color: white;
+    font-weight: 500;
 }
 
 /* Modal Inputs */
+.modal-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 480px) {
+    .modal-form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .modal-input-group {
     margin-bottom: 1rem;
 }
 
 .modal-label {
     display: block;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 500;
     color: var(--text-muted);
     margin-bottom: 0.5rem;
+    margin-left: 0.25rem;
 }
 
 .modal-input {
     width: 100%;
-    padding: 0.75rem;
-    border-radius: 0.5rem;
-    border: 1px solid var(--glass-border);
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-main);
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.2);
+    color: white;
     font-size: 0.95rem;
     transition: all 0.2s ease;
 }
@@ -594,7 +639,12 @@
 .modal-input:focus {
     outline: none;
     border-color: var(--color-primary);
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+}
+
+.modal-input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
 }
 
 .input-wrapper {
@@ -603,11 +653,39 @@
     align-items: center;
 }
 
+.select-wrapper-modern {
+    position: relative;
+}
+
+.custom-select {
+    appearance: none;
+    cursor: pointer;
+    padding-right: 2.5rem;
+}
+
+.custom-select option {
+    background: var(--color-surface);
+    color: white;
+    padding: 10px;
+}
+
+.select-arrow-icon {
+    position: absolute;
+    right: 1rem;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
 .input-icon {
     position: absolute;
     left: 1rem;
     color: var(--text-muted);
     pointer-events: none;
+    transition: color 0.2s;
+}
+
+.input-wrapper:focus-within .input-icon {
+    color: var(--color-primary);
 }
 
 .input-icon.textarea-icon {
@@ -621,7 +699,19 @@
 .input-error {
     color: #ef4444;
     font-size: 0.8rem;
-    margin-top: 0.25rem;
+    margin-top: 0.4rem;
+    margin-left: 0.25rem;
+    display: flex;
+    align-items: center;
+}
+
+.input-error::before {
+    content: "•";
+    margin-right: 4px;
+}
+
+.mt-6 {
+    margin-top: 1.5rem;
 }
 
 .modal-actions {
@@ -633,32 +723,42 @@
 .btn-confirm {
     flex: 1;
     padding: 0.875rem;
-    border-radius: 0.5rem;
+    border-radius: 0.75rem;
     font-weight: 600;
+    font-size: 0.95rem;
     cursor: pointer;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.btn-cancel {
-    background: transparent;
-    border: 1px solid var(--glass-border);
-    color: var(--text-muted);
-}
-
-.btn-cancel:hover {
-    border-color: var(--text-main);
+.modern-cancel {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: var(--text-main);
 }
 
-.btn-confirm {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
-    border: none;
+.modern-cancel:hover {
+    background: rgba(255, 255, 255, 0.1);
     color: white;
 }
 
-.btn-confirm:hover {
+.modern-confirm {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    border: none;
+    color: white;
+    box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+}
+
+.modern-confirm:hover {
     filter: brightness(1.1);
-    box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4);
+    box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
+    transform: translateY(-1px);
+}
+
+.modern-confirm:active {
+    transform: translateY(1px);
 }
 
 /* ===== RESPONSIVE ===== */
