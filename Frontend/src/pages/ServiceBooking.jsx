@@ -135,7 +135,9 @@ const ServiceCardList = ({ services, selectedService, onSelectService }) => {
 
 // ===== CALENDAR PANEL COMPONENT =====
 const CalendarPanel = ({ selectedService, availableDates, selectedDate, onSelectDate }) => {
-    const [currentMonth, setCurrentMonth] = useState(new Date(2026, 0, 1)); // January 2026
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const [currentMonth, setCurrentMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
 
     const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'];
@@ -166,8 +168,14 @@ const CalendarPanel = ({ selectedService, availableDates, selectedDate, onSelect
         return `${year}-${month}-${dayStr}`;
     };
 
+    const isPastDay = (day) => {
+        if (!day) return false;
+        const d = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+        return d < today;
+    };
+
     const isDateAvailable = (day) => {
-        if (!day || !selectedService) return false;
+        if (!day || !selectedService || isPastDay(day)) return false;
         const dateStr = formatDateString(day);
         return availableDates.includes(dateStr);
     };
@@ -178,7 +186,11 @@ const CalendarPanel = ({ selectedService, availableDates, selectedDate, onSelect
     };
 
     const handlePrevMonth = () => {
-        setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+        const prevMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
+        const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        if (prevMonth >= thisMonth) {
+            setCurrentMonth(prevMonth);
+        }
     };
 
     const handleNextMonth = () => {
@@ -211,10 +223,11 @@ const CalendarPanel = ({ selectedService, availableDates, selectedDate, onSelect
                 {days.map((day, index) => (
                     <div
                         key={index}
-                        className={`calendar-day ${!day ? 'empty' : ''} 
-                            ${isDateAvailable(day) ? 'available' : 'unavailable'}
+                        className={`calendar-day ${!day ? 'empty' : ''}
+                            ${day && isPastDay(day) ? 'past' : ''}
+                            ${isDateAvailable(day) ? 'available' : (!day || isPastDay(day) ? '' : 'unavailable')}
                             ${isDateSelected(day) ? 'selected' : ''}`}
-                        onClick={() => day && isDateAvailable(day) && onSelectDate(formatDateString(day))}
+                        onClick={() => day && !isPastDay(day) && isDateAvailable(day) && onSelectDate(formatDateString(day))}
                     >
                         {day}
                     </div>
@@ -488,11 +501,13 @@ const ServiceBooking = () => {
         }
     };
 
-    // Get available dates for selected service
+    // Get available dates for selected service (today and future only)
     const getAvailableDates = () => {
         if (!selectedService) return [];
+        const todayStr = new Date().toISOString().split('T')[0];
         return availabilityData
             .filter(a => a.serviceId === selectedService.id)
+            .filter(a => a.date >= todayStr)
             .filter(a => a.slots.some(s => s.status === 'available'))
             .map(a => a.date);
     };
