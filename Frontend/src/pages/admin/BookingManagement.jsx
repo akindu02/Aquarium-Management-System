@@ -528,10 +528,11 @@ const BookingManagement = () => {
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <span className={`status-badge ${slot.status?.toLowerCase()} modern-badge`}>
+                                                    <span className={`status-badge ${slot.status?.toLowerCase().replace(' ', '-')} modern-badge`}>
                                                         {slot.status === 'Available' && <span className="status-dot green"></span>}
                                                         {slot.status === 'Booked' && <span className="status-dot red"></span>}
-                                                        {slot.status === 'Maintenance' && <span className="status-dot yellow"></span>}
+                                                        {slot.status === 'Under Process' && <span className="status-dot yellow"></span>}
+                                                        {slot.status === 'Completed' && <span className="status-dot blue"></span>}
                                                         {slot.status === 'Unavailable' && <span className="status-dot gray"></span>}
                                                         {slot.status}
                                                     </span>
@@ -629,7 +630,8 @@ const BookingManagement = () => {
                                         >
                                             <option value="Available">Available</option>
                                             <option value="Booked">Booked</option>
-                                            <option value="Maintenance">Maintenance</option>
+                                            <option value="Under Process">Under Process</option>
+                                            <option value="Completed">Completed</option>
                                             <option value="Unavailable">Unavailable</option>
                                         </select>
                                     </div>
@@ -1110,6 +1112,7 @@ const BookingManagement = () => {
                 .status-dot.red { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
                 .status-dot.yellow { background: #fbbf24; box-shadow: 0 0 8px #fbbf24; }
                 .status-dot.gray { background: #9ca3af; }
+                .status-dot.blue { background: #3b82f6; box-shadow: 0 0 8px #3b82f6; } /* Added for Completed */
 
                 .glass-btn {
                     background: rgba(255,255,255,0.03);
@@ -1218,6 +1221,8 @@ const BookingManagement = () => {
 
                 .status-badge.available { background: rgba(16, 185, 129, 0.15); color: #10b981; }
                 .status-badge.booked { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+                .status-badge.under-process { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+                .status-badge.completed { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
                 .status-badge.maintenance { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
                 .status-badge.unavailable { background: rgba(107, 114, 128, 0.15); color: #9ca3af; }
 
