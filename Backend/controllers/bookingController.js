@@ -78,6 +78,54 @@ const getTimeSlots = async (req, res) => {
     }
 };
 
+// Update a time slot
+const updateTimeSlot = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { service, date, start, end, status } = req.body;
+
+        // Find or create service
+        let serviceResult = await pool.query(
+            'SELECT service_id FROM services WHERE service_type = $1',
+            [service]
+        );
+
+        let service_id;
+        if (serviceResult.rows.length > 0) {
+            service_id = serviceResult.rows[0].service_id;
+        } else {
+            const newService = await pool.query(
+                'INSERT INTO services (service_type, base_price) VALUES ($1, $2) RETURNING service_id',
+                [service, 0.00]
+            );
+            service_id = newService.rows[0].service_id;
+        }
+
+        const start_time = `${date} ${start}:00`;
+        const end_time = `${date} ${end}:00`;
+
+        const result = await pool.query(
+            `UPDATE service_time_slots 
+             SET service_id = $1, start_time = $2, end_time = $3, status = $4
+             WHERE slot_id = $5 RETURNING *`,
+            [service_id, start_time, end_time, status, id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Time slot not found' });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Time slot updated successfully',
+            data: result.rows[0]
+        });
+    } catch (error) {
+        console.error('Error updating time slot:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
 // Delete a time slot
 const deleteTimeSlot = async (req, res) => {
     try {
@@ -101,5 +149,6 @@ const deleteTimeSlot = async (req, res) => {
 module.exports = {
     createTimeSlot,
     getTimeSlots,
+    updateTimeSlot,
     deleteTimeSlot
 };

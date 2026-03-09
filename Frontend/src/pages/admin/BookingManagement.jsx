@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Calendar, Check, X, Clock, Eye, AlertCircle, MapPin, User, ChevronDown, CheckCircle, Plus, Trash2 } from 'lucide-react';
+import { Search, Filter, Calendar, Check, X, Clock, Eye, AlertCircle, MapPin, User, ChevronDown, CheckCircle, Plus, Trash2, Pencil } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { apiRequest } from '../../utils/api';
 
@@ -34,6 +34,9 @@ const BookingManagement = () => {
         start: '',
         end: ''
     });
+
+    const [editSlot, setEditSlot] = useState(null);
+    const [showEditModal, setShowEditModal] = useState(false);
 
     useEffect(() => {
         fetchTimeSlots();
@@ -123,6 +126,45 @@ const BookingManagement = () => {
                 }
             }
         });
+    };
+
+    const handleEditSlot = (slot) => {
+        setEditSlot({ ...slot });
+        setShowEditModal(true);
+    };
+
+    const handleUpdateSlot = async (e) => {
+        e.preventDefault();
+        try {
+            const data = await apiRequest(`/bookings/slots/${editSlot.id}`, {
+                method: 'PUT',
+                body: JSON.stringify(editSlot)
+            });
+            if (data.success) {
+                fetchTimeSlots();
+                setShowEditModal(false);
+                setEditSlot(null);
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Slot Updated!',
+                    text: 'The time slot has been updated successfully.',
+                    background: '#1a1f2e',
+                    color: '#fff',
+                    confirmButtonColor: '#4ecdc4',
+                    timer: 2000,
+                    showConfirmButton: false,
+                });
+            }
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Update Failed',
+                text: error.message || 'Failed to update time slot.',
+                background: '#1a1f2e',
+                color: '#fff',
+                confirmButtonColor: '#f71a1a'
+            });
+        }
     };
 
     // Status Badge Colors
@@ -448,24 +490,113 @@ const BookingManagement = () => {
                                                 <td>{slot.date}</td>
                                                 <td>{slot.start} - {slot.end}</td>
                                                 <td>
-                                                    <span className={`status-badge ${slot.status === 'Available' ? 'available' : 'booked'}`}>
+                                                    <span className={`status-badge ${slot.status?.toLowerCase()}`}>
                                                         {slot.status}
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <button
-                                                        className="btn-icon reject"
-                                                        title="Delete Slot"
-                                                        onClick={() => handleDeleteSlot(slot.id)}
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
+                                                    <div className="td-actions">
+                                                        <button
+                                                            className="btn-icon edit"
+                                                            title="Edit Slot"
+                                                            onClick={() => handleEditSlot(slot)}
+                                                        >
+                                                            <Pencil size={15} />
+                                                        </button>
+                                                        <button
+                                                            className="btn-icon reject"
+                                                            title="Delete Slot"
+                                                            onClick={() => handleDeleteSlot(slot.id)}
+                                                        >
+                                                            <Trash2 size={15} />
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))
                                     )}
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Time Slot Modal */}
+            {showEditModal && editSlot && (
+                <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+                    <div className="modal-content slot-edit-modal" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <div>
+                                <h3>Edit Time Slot</h3>
+                                <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.85rem' }}>Update the slot details below</p>
+                            </div>
+                            <button className="modal-close" onClick={() => setShowEditModal(false)}><X size={20} /></button>
+                        </div>
+                        <div className="modal-body">
+                            <form onSubmit={handleUpdateSlot} className="slot-form">
+                                <div className="form-group">
+                                    <label>Service Type</label>
+                                    <div className="select-wrapper" style={{ display: 'block' }}>
+                                        <select
+                                            value={editSlot.service}
+                                            onChange={e => setEditSlot({ ...editSlot, service: e.target.value })}
+                                        >
+                                            <option value="Maintenance">Maintenance</option>
+                                            <option value="Cleaning">Cleaning</option>
+                                            <option value="Installation">Installation</option>
+                                            <option value="Setup">Setup</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="form-group">
+                                    <label>Date</label>
+                                    <input
+                                        type="date"
+                                        value={editSlot.date}
+                                        onChange={e => setEditSlot({ ...editSlot, date: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                                <div className="form-row">
+                                    <div className="form-group">
+                                        <label>Start Time</label>
+                                        <input
+                                            type="time"
+                                            value={editSlot.start}
+                                            onChange={e => setEditSlot({ ...editSlot, start: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>End Time</label>
+                                        <input
+                                            type="time"
+                                            value={editSlot.end}
+                                            onChange={e => setEditSlot({ ...editSlot, end: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div className="form-group">
+                                    <label>Status</label>
+                                    <div className="select-wrapper" style={{ display: 'block' }}>
+                                        <select
+                                            value={editSlot.status}
+                                            onChange={e => setEditSlot({ ...editSlot, status: e.target.value })}
+                                        >
+                                            <option value="Available">Available</option>
+                                            <option value="Booked">Booked</option>
+                                            <option value="Maintenance">Maintenance</option>
+                                            <option value="Unavailable">Unavailable</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="modal-actions-footer" style={{ paddingTop: '1.5rem', marginTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                                    <button type="button" className="btn-reject" onClick={() => setShowEditModal(false)}>Cancel</button>
+                                    <button type="submit" className="btn-accept">Save Changes</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -695,6 +826,7 @@ const BookingManagement = () => {
                 .btn-icon.accept { background: rgba(16, 185, 129, 0.1); color: #10b981; }
                 .btn-icon.reject { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
                 .btn-icon.complete { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+                .btn-icon.edit { background: rgba(251, 191, 36, 0.1); color: #fbbf24; }
 
                 .btn-icon:hover { transform: scale(1.1); }
 
@@ -951,6 +1083,13 @@ const BookingManagement = () => {
 
                 .status-badge.available { background: rgba(16, 185, 129, 0.15); color: #10b981; }
                 .status-badge.booked { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+                .status-badge.maintenance { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+                .status-badge.unavailable { background: rgba(107, 114, 128, 0.15); color: #9ca3af; }
+
+                .slot-edit-modal { max-width: 520px !important; }
+                .slot-edit-modal .modal-body { padding: 1.5rem; }
+                .slot-form .form-group { margin-bottom: 0; }
+                .slot-form .select-wrapper select { width: 100%; padding: 0.9rem 2.5rem 0.9rem 1rem; border-radius: 0.75rem; }
 
                 .text-center { text-align: center; color: var(--text-muted); }
 
