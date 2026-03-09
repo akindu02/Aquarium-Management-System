@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, Check, X, ChevronLeft, ChevronRight, Wrench, Sparkles, Settings, Phone, MapPin } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { isAuthenticated } from '../utils/auth';
+import { apiRequest } from '../utils/api';
 import Swal from 'sweetalert2';
 import './ServiceBooking.css';
 
@@ -443,11 +444,54 @@ const ServiceBooking = () => {
     const [selectedSlot, setSelectedSlot] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [bookings, setBookings] = useState([]);
+    const [availabilityData, setAvailabilityData] = useState(AVAILABILITY); // Fallback to dummy data initially
+
+    useEffect(() => {
+        fetchTimeSlots();
+    }, []);
+
+    const fetchTimeSlots = async () => {
+        try {
+            const data = await apiRequest('/bookings/slots');
+            if (data.success) {
+                // Group slots by date and service
+                const grouped = {};
+                
+                data.data.forEach(slot => {
+                    const serviceId = slot.service.toLowerCase(); // Map 'Maintenance' to 'maintenance'
+                    const date = slot.date;
+                    
+                    const key = `${serviceId}-${date}`;
+                    if (!grouped[key]) {
+                        grouped[key] = {
+                            date,
+                            serviceId,
+                            slots: []
+                        };
+                    }
+                    
+                    grouped[key].slots.push({
+                        id: slot.id,
+                        start: slot.start,
+                        end: slot.end,
+                        status: slot.status.toLowerCase() // map 'Available' to 'available'
+                    });
+                });
+                
+                // If there are actual slots from DB, replace the dummy data or merge
+                if (data.data.length > 0) {
+                    setAvailabilityData(Object.values(grouped));
+                }
+            }
+        } catch (error) {
+            console.error("Failed to fetch slots from DB:", error);
+        }
+    };
 
     // Get available dates for selected service
     const getAvailableDates = () => {
         if (!selectedService) return [];
-        return AVAILABILITY
+        return availabilityData
             .filter(a => a.serviceId === selectedService.id)
             .filter(a => a.slots.some(s => s.status === 'available'))
             .map(a => a.date);
@@ -456,7 +500,7 @@ const ServiceBooking = () => {
     // Get slots for selected date
     const getSlotsForDate = () => {
         if (!selectedService || !selectedDate) return [];
-        const availability = AVAILABILITY.find(
+        const availability = availabilityData.find(
             a => a.serviceId === selectedService.id && a.date === selectedDate
         );
         return availability?.slots || [];

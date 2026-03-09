@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Filter, Calendar, Check, X, Clock, Eye, AlertCircle, MapPin, User, ChevronDown, CheckCircle, Plus, Trash2 } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { apiRequest } from '../../utils/api';
 
 const BookingManagement = () => {
     // Dummy Data
@@ -34,27 +35,56 @@ const BookingManagement = () => {
         end: ''
     });
 
-    const handleAddSlot = (e) => {
+    useEffect(() => {
+        fetchTimeSlots();
+    }, []);
+
+    const fetchTimeSlots = async () => {
+        try {
+            const data = await apiRequest('/bookings/slots');
+            if (data.success) {
+                setManagedSlots(data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching time slots:', error);
+        }
+    };
+
+    const handleAddSlot = async (e) => {
         e.preventDefault();
         if (!newSlot.date || !newSlot.start || !newSlot.end) return;
 
-        const slot = {
-            id: Date.now(),
-            ...newSlot,
-            status: 'Available'
-        };
-        setManagedSlots([...managedSlots, slot]);
-        setNewSlot({ ...newSlot, date: '', start: '', end: '' }); // Reset form
-        Swal.fire({
-            icon: 'success',
-            title: 'Time Slot Added!',
-            text: 'The new time slot has been created successfully.',
-            background: '#1a1f2e',
-            color: '#fff',
-            confirmButtonColor: '#4ecdc4',
-            timer: 2000,
-            showConfirmButton: false,
-        });
+        try {
+            const data = await apiRequest('/bookings/slots', {
+                method: 'POST',
+                body: JSON.stringify(newSlot)
+            });
+
+            if (data.success) {
+                fetchTimeSlots();
+                setNewSlot({ ...newSlot, date: '', start: '', end: '' }); // Reset form
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Time Slot Added!',
+                    text: 'The new time slot has been created successfully.',
+                    background: '#1a1f2e',
+                    color: '#fff',
+                    confirmButtonColor: '#4ecdc4',
+                    timer: 2000,
+                    showConfirmButton: false,
+                });
+                setViewMode('slots'); // Switch to slots view
+            }
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message || 'Failed to add time slot.',
+                background: '#1a1f2e',
+                color: '#fff',
+                confirmButtonColor: '#f71a1a'
+            });
+        }
     };
 
     const handleDeleteSlot = (id) => {
@@ -69,19 +99,28 @@ const BookingManagement = () => {
             cancelButtonText: 'Cancel',
             background: '#1a1f2e',
             color: '#fff',
-        }).then((result) => {
+        }).then(async (result) => {
             if (result.isConfirmed) {
-                setManagedSlots(managedSlots.filter(slot => slot.id !== id));
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Removed!',
-                    text: 'Time slot has been deleted.',
-                    background: '#1a1f2e',
-                    color: '#fff',
-                    confirmButtonColor: '#4ecdc4',
-                    timer: 2000,
-                    showConfirmButton: false,
-                });
+                try {
+                    const data = await apiRequest(`/bookings/slots/${id}`, {
+                        method: 'DELETE'
+                    });
+                    if (data.success) {
+                        setManagedSlots(managedSlots.filter(slot => slot.id !== id));
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Removed!',
+                            text: 'Time slot has been deleted.',
+                            background: '#1a1f2e',
+                            color: '#fff',
+                            confirmButtonColor: '#4ecdc4',
+                            timer: 2000,
+                            showConfirmButton: false,
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error deleting slot:', error);
+                }
             }
         });
     };
