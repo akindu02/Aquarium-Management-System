@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Calendar, Check, X, Clock, Eye, AlertCircle, MapPin, User, ChevronDown, CheckCircle, Plus, Trash2, Pencil } from 'lucide-react';
+import { Search, Filter, Calendar, Check, X, Clock, Eye, AlertCircle, MapPin, User, ChevronDown, CheckCircle, Plus, Trash2, Pencil, Wrench, Sparkles, Hammer } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { apiRequest } from '../../utils/api';
 
@@ -684,8 +684,15 @@ const BookingManagement = () => {
                                             <tr key={slot.id} className="slot-row">
                                                 <td>
                                                     <div className="service-cell">
-                                                        <div className="service-icon-box">
-                                                            {slot.service.toLowerCase().includes('clean') ? <AlertCircle size={16} /> : 
+                                                        <div className={`service-icon-box ${
+                                                            slot.service.toLowerCase().includes('maintenance') ? 'maintenance-icon' :
+                                                            slot.service.toLowerCase().includes('clean') ? 'cleaning-icon' :
+                                                            slot.service.toLowerCase().includes('installation') ? 'installation-icon' :
+                                                            slot.service.toLowerCase().includes('setup') ? 'setup-icon' : ''
+                                                        }`}>
+                                                            {slot.service.toLowerCase().includes('maintenance') ? <Wrench size={16} /> :
+                                                             slot.service.toLowerCase().includes('clean') ? <Sparkles size={16} /> : 
+                                                             slot.service.toLowerCase().includes('installation') ? <Hammer size={16} /> :
                                                              slot.service.toLowerCase().includes('setup') ? <Plus size={16} /> : 
                                                              <Clock size={16} />}
                                                         </div>
@@ -1270,6 +1277,27 @@ const BookingManagement = () => {
                     background: rgba(255,255,255,0.05); 
                     display: flex; align-items: center; justify-content: center;
                     color: var(--color-primary);
+                }
+
+                /* Service Type Specific Icons */
+                .maintenance-icon {
+                    background: rgba(251, 191, 36, 0.1);
+                    color: #fbbf24;
+                }
+
+                .cleaning-icon {
+                    background: rgba(59, 130, 246, 0.1);
+                    color: #3b82f6;
+                }
+
+                .installation-icon {
+                    background: rgba(239, 68, 68, 0.1);
+                    color: #ef4444;
+                }
+
+                .setup-icon {
+                    background: rgba(16, 185, 129, 0.1);
+                    color: #10b981;
                 }
 
                 .date-cell, .time-cell { display: flex; align-items: center; gap: 0.5rem; color: #cbd5e1; }
