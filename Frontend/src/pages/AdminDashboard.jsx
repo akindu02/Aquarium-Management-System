@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Bell, Settings, LogOut, CalendarClock, AlertTriangle, Clock, CheckCircle, Activity, Coins, ChevronRight, RefreshCw } from "lucide-react";
+import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Bell, LogOut, CalendarClock, AlertTriangle, Clock, CheckCircle, Activity, Coins, ChevronRight, RefreshCw } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
@@ -47,7 +47,6 @@ const AdminDashboard = () => {
     { id: 'restock', label: 'Product Restock', icon: RefreshCw },
     { id: 'bookings', label: 'Service Bookings', icon: CalendarClock },
     { id: 'reports', label: 'Reports & Analytics', icon: BarChart3 },
-    { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   const renderContent = () => {
@@ -66,8 +65,6 @@ const AdminDashboard = () => {
         return <ProductRestock />;
       case 'reports':
         return <ReportsAnalytics />;
-      case 'settings':
-        return <PlaceholderContent title="Settings" description="Configure system preferences and features" />;
       default:
         return <DashboardContent />;
     }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, ClipboardList, Package, Settings, Bell, LogOut, CheckCircle2, AlertTriangle, CalendarClock, Store, Banknote, ChevronRight } from "lucide-react";
+import { LayoutDashboard, ClipboardList, Package, Bell, LogOut, CheckCircle2, AlertTriangle, CalendarClock, Store, Banknote, ChevronRight } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
@@ -41,7 +41,6 @@ const StaffDashboard = () => {
     { id: 'orders', label: 'Process Orders', icon: ClipboardList },
     { id: 'restock', label: 'Product Restock', icon: AlertTriangle },
     { id: 'bookings', label: 'Service Bookings', icon: CalendarClock },
-    { id: 'settings', label: 'My Settings', icon: Settings },
   ];
 
   const renderContent = () => {
@@ -58,8 +57,6 @@ const StaffDashboard = () => {
         return <ProductRestock />;
       case 'bookings':
         return <BookingManagement />;
-      case 'settings':
-        return <PlaceholderContent title="My Settings" description="Update your profile and work preferences" />;
       default:
         return <DashboardContent onNavigate={setActiveMenu} />;
     }
