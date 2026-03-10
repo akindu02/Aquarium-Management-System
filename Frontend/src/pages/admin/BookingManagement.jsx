@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Calendar, Check, X, Clock, Eye, AlertCircle, MapPin, User, ChevronDown, CheckCircle, Plus, Trash2, Pencil, Wrench, Sparkles, Hammer } from 'lucide-react';
+import { Search, Filter, Calendar, Check, X, Clock, Eye, AlertCircle, MapPin, User, ChevronDown, CheckCircle, Plus, Trash2, Pencil, Wrench, Sparkles, Hammer, RefreshCw, Loader2 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { apiRequest } from '../../utils/api';
 
@@ -332,26 +332,57 @@ const BookingManagement = () => {
         return matchesSearch && matchesService && matchesStatus && matchesDate;
     });
 
-    // Actions — call API then update local state
+    // Actions — confirm → call API → re-fetch → return true/false
     const updateStatus = async (id, uiStatus) => {
-        // Map UI action labels to DB enum values
         const DB_STATUS_MAP = {
-            Accepted:    'Confirmed',
-            Rejected:    'Cancelled',
-            Confirmed:   'Confirmed',
+            Accepted:      'Confirmed',
+            Rejected:      'Cancelled',
+            Confirmed:     'Confirmed',
             'In Progress': 'In Progress',
-            Completed:   'Completed',
-            Cancelled:   'Cancelled',
+            Completed:     'Completed',
+            Cancelled:     'Cancelled',
         };
         const dbStatus = DB_STATUS_MAP[uiStatus] || uiStatus;
         const booking = bookings.find(b => b.id === id);
-        if (!booking) return;
+        if (!booking) return false;
+
+        // Require confirmation for consequential status changes
+        if (dbStatus === 'Confirmed' || dbStatus === 'Cancelled') {
+            const isConfirm = dbStatus === 'Confirmed';
+            const result = await Swal.fire({
+                title: isConfirm ? 'Confirm this booking?' : 'Cancel this booking?',
+                text: isConfirm
+                    ? `Booking ${booking.id} for ${booking.customer} will be confirmed.`
+                    : `Booking ${booking.id} for ${booking.customer} will be cancelled.`,
+                icon: isConfirm ? 'question' : 'warning',
+                showCancelButton: true,
+                confirmButtonColor: isConfirm ? '#10b981' : '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: isConfirm ? 'Yes, Confirm' : 'Yes, Cancel',
+                cancelButtonText: 'Go Back',
+                background: '#1a1f2e',
+                color: '#fff',
+            });
+            if (!result.isConfirmed) return false;
+        }
+
         try {
             await apiRequest(`/bookings/${booking.booking_id}/status`, {
                 method: 'PATCH',
                 body: JSON.stringify({ status: dbStatus }),
             });
-            setBookings(prev => prev.map(b => b.id === id ? { ...b, status: dbStatus } : b));
+            await fetchBookings();
+            Swal.fire({
+                icon: 'success',
+                title: 'Status Updated',
+                text: `${booking.id} is now "${dbStatus}".`,
+                background: '#1a1f2e',
+                color: '#fff',
+                confirmButtonColor: '#4ecdc4',
+                timer: 2000,
+                showConfirmButton: false,
+            });
+            return true;
         } catch (err) {
             Swal.fire({
                 icon: 'error',
@@ -361,6 +392,7 @@ const BookingManagement = () => {
                 color: '#fff',
                 confirmButtonColor: '#e74c3c',
             });
+            return false;
         }
     };
 
@@ -427,18 +459,19 @@ const BookingManagement = () => {
 
                         {selectedBooking.status === 'Pending' && (
                             <div className="modal-actions-footer">
-                                <button className="btn-reject" onClick={() => { updateStatus(selectedBooking.id, 'Cancelled'); setSelectedBooking(null); }}>Cancel</button>
-                                <button className="btn-accept" onClick={() => { updateStatus(selectedBooking.id, 'Confirmed'); setSelectedBooking(null); }}>Confirm Booking</button>
+                                <button className="btn-reject" onClick={async () => { const ok = await updateStatus(selectedBooking.id, 'Cancelled'); if (ok) setSelectedBooking(null); }}>Cancel Booking</button>
+                                <button className="btn-accept" onClick={async () => { const ok = await updateStatus(selectedBooking.id, 'Confirmed'); if (ok) setSelectedBooking(null); }}>Confirm Booking</button>
                             </div>
                         )}
                         {selectedBooking.status === 'Confirmed' && (
                             <div className="modal-actions-footer">
-                                <button className="btn-complete" onClick={() => { updateStatus(selectedBooking.id, 'In Progress'); setSelectedBooking(null); }}>Mark In Progress</button>
+                                <button className="btn-reject" onClick={async () => { const ok = await updateStatus(selectedBooking.id, 'Cancelled'); if (ok) setSelectedBooking(null); }}>Cancel Booking</button>
+                                <button className="btn-complete" onClick={async () => { const ok = await updateStatus(selectedBooking.id, 'In Progress'); if (ok) setSelectedBooking(null); }}>Mark In Progress</button>
                             </div>
                         )}
                         {selectedBooking.status === 'In Progress' && (
                             <div className="modal-actions-footer">
-                                <button className="btn-complete" onClick={() => { updateStatus(selectedBooking.id, 'Completed'); setSelectedBooking(null); }}>Mark Completed</button>
+                                <button className="btn-complete" onClick={async () => { const ok = await updateStatus(selectedBooking.id, 'Completed'); if (ok) setSelectedBooking(null); }}>Mark Completed</button>
                             </div>
                         )}
                     </div>
@@ -453,6 +486,16 @@ const BookingManagement = () => {
                 <div>
                     <h2 className="bm-title">Bookings</h2>
                     <p className="bm-subtitle">Manage service requests and schedules</p>
+                </div>
+                <div className="bm-header-actions">
+                    {viewMode === 'bookings' && (
+                        <span className="total-slots-badge">
+                            {filteredBookings.length} Booking{filteredBookings.length !== 1 ? 's' : ''}
+                        </span>
+                    )}
+                    <button className="btn-refresh" onClick={() => { fetchBookings(); fetchTimeSlots(); }} title="Refresh data">
+                        <RefreshCw size={16} />
+                    </button>
                 </div>
             </div>
 
@@ -587,7 +630,28 @@ const BookingManagement = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredBookings.map(booking => {
+                            {bookingsLoading ? (
+                                <tr>
+                                    <td colSpan="7">
+                                        <div className="empty-state">
+                                            <Loader2 size={32} className="spin-icon" />
+                                            <p>Loading bookings...</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : filteredBookings.length === 0 ? (
+                                <tr>
+                                    <td colSpan="7">
+                                        <div className="empty-state">
+                                            <Calendar size={48} opacity={0.2} />
+                                            <p>{bookings.length === 0 ? 'No booking requests yet.' : 'No bookings match your filters.'}</p>
+                                            {bookings.length > 0 && (
+                                                <button className="btn-link" onClick={clearFilters}>Clear filters</button>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : filteredBookings.map(booking => {
                                 const statusStyle = getStatusStyle(booking.status);
                                 return (
                                     <tr key={booking.id}>
@@ -899,6 +963,37 @@ const BookingManagement = () => {
             <style>{`
                 .bm-header {
                     margin-bottom: 2rem;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                }
+                .bm-header-actions {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                }
+                .btn-refresh {
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 0.5rem;
+                    color: var(--text-muted);
+                    padding: 0.5rem 0.75rem;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    transition: all 0.2s;
+                }
+                .btn-refresh:hover {
+                    background: rgba(255, 255, 255, 0.1);
+                    color: var(--text-main);
+                }
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+                .spin-icon {
+                    animation: spin 1s linear infinite;
+                    color: var(--color-primary);
                 }
                 .bm-title {
                     font-size: 1.75rem;

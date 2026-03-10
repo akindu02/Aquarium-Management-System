@@ -351,7 +351,7 @@ async function cancelBooking(req, res) {
              LEFT JOIN service_time_slots ts ON sb.slot_id = ts.slot_id
              LEFT JOIN services s ON ts.service_id = s.service_id
              WHERE sb.booking_id = $1
-             FOR UPDATE`,
+             FOR UPDATE OF sb`,
             [bookingId]
         );
 
@@ -574,7 +574,7 @@ async function updateBookingStatus(req, res) {
              FROM service_bookings sb
              LEFT JOIN service_time_slots ts ON sb.slot_id = ts.slot_id
              LEFT JOIN services s ON ts.service_id = s.service_id
-             WHERE sb.booking_id = $1 FOR UPDATE`,
+             WHERE sb.booking_id = $1 FOR UPDATE OF sb`,
             [bookingId]
         );
 
