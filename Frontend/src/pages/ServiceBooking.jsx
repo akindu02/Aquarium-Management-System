@@ -489,7 +489,6 @@ const ServiceBooking = () => {
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedSlot, setSelectedSlot] = useState(null);
     const [showModal, setShowModal] = useState(false);
-    const [bookings, setBookings] = useState([]);
     const [availabilityData, setAvailabilityData] = useState(AVAILABILITY); // Fallback to dummy data initially
 
     useEffect(() => {
@@ -592,30 +591,62 @@ const ServiceBooking = () => {
         setShowModal(true);
     };
 
-    const handleConfirmBooking = (bookingDetails) => {
-        const newBooking = {
-            serviceId: selectedService.id,
-            date: selectedDate,
-            slot: selectedSlot,
-            phone: bookingDetails.phone,
-            city: bookingDetails.city,
-            address: bookingDetails.address
-        };
-        // In a real app, you would send this to the backend
-        console.log('Booking Confirmed:', newBooking);
-        setBookings([...bookings, newBooking]);
-        setShowModal(false);
-        setSelectedSlot(null);
-        setSelectedDate(null);
-        setSelectedService(null);
-        Swal.fire({
-            icon: 'success',
-            title: 'Booking Confirmed!',
-            text: 'Your service booking has been confirmed successfully.',
-            background: '#1a1f2e',
-            color: '#fff',
-            confirmButtonColor: '#4ecdc4',
-        });
+    const handleConfirmBooking = async (bookingDetails) => {
+        try {
+            const data = await apiRequest('/bookings', {
+                method: 'POST',
+                body: JSON.stringify({
+                    slot_id: selectedSlot.id,
+                    phone: bookingDetails.phone,
+                    city: bookingDetails.city,
+                    address: bookingDetails.address,
+                }),
+            });
+
+            if (data.success) {
+                // Mark the booked slot as unavailable in local state so calendar refreshes
+                setAvailabilityData(prev =>
+                    prev.map(avail => {
+                        if (avail.serviceId === selectedService.id && avail.date === selectedDate) {
+                            return {
+                                ...avail,
+                                slots: avail.slots.map(s =>
+                                    s.id === selectedSlot.id ? { ...s, status: 'booked' } : s
+                                ),
+                            };
+                        }
+                        return avail;
+                    })
+                );
+
+                setShowModal(false);
+                setSelectedSlot(null);
+                setSelectedDate(null);
+                setSelectedService(null);
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Booking Confirmed!',
+                    html: `
+                        <p>Your <strong>${data.data.service}</strong> booking is <strong>Pending</strong> confirmation.</p>
+                        <p style="margin-top:8px;font-size:0.9rem;opacity:0.8;">Booking ID: #${data.data.booking_id}</p>
+                    `,
+                    background: '#1a1f2e',
+                    color: '#fff',
+                    confirmButtonColor: '#4ecdc4',
+                });
+            }
+        } catch (error) {
+            console.error('Booking error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Booking Failed',
+                text: error.message || 'Unable to complete booking. Please try again.',
+                background: '#1a1f2e',
+                color: '#fff',
+                confirmButtonColor: '#e74c3c',
+            });
+        }
     };
 
     const handleCancelBooking = (index) => {

@@ -4,19 +4,8 @@ import Swal from 'sweetalert2';
 import { apiRequest } from '../../utils/api';
 
 const BookingManagement = () => {
-    // Dummy Data
-    const initialBookings = [
-        { id: 'BK-1001', customer: 'Kasun Perera', email: 'kasun@gmail.com', phone: '0712345678', service: 'Aquarium Maintenance', serviceType: 'Maintenance', date: '2025-10-15', time: '10:00 - 12:00', location: '123 Beach Rd, Matara', price: 3500, status: 'Pending', assignedTo: 'Unassigned', notes: 'Tank has algae issue', tankSize: '50 Gallon', created: '2025-10-10' },
-        { id: 'BK-1002', customer: 'Nimali Silva', email: 'nimali@yahoo.com', phone: '0765432109', service: 'Deep Cleaning', serviceType: 'Cleaning', date: '2025-10-16', time: '14:00 - 16:00', location: '45 Galle Rd, Colombo', price: 5500, status: 'Accepted', assignedTo: 'Kamal Perera', notes: 'Fragile corals present', tankSize: '100 Gallon', created: '2025-10-11' },
-        { id: 'BK-1003', customer: 'Saman Kumara', email: 'saman@hotmail.com', phone: '0771122334', service: 'Fish Tank Setup', serviceType: 'Setup', date: '2025-10-17', time: '09:00 - 13:00', location: '88 Main St, Kandy', price: 12000, status: 'Completed', assignedTo: 'Nimal Silva', notes: 'New installation', tankSize: '30 Gallon', created: '2025-10-09' },
-        { id: 'BK-1004', customer: 'Chathuri Bandara', email: 'chathuri@gmail.com', phone: '0755566778', service: 'Filter Replacement', serviceType: 'Maintenance', date: '2025-10-18', time: '11:00 - 12:00', location: '12 Flower Rd, Galle', price: 2500, status: 'Cancelled', assignedTo: '-', notes: 'Customer cancelled via call', tankSize: '20 Gallon', created: '2025-10-12' },
-        { id: 'BK-1005', customer: 'Ruwan Dissanayake', email: 'ruwan@outlook.com', phone: '0709988776', service: 'Water Testing', serviceType: 'Maintenance', date: '2025-10-19', time: '15:30 - 16:00', location: '56 Lake Dr, Nuwara Eliya', price: 1500, status: 'Rejected', assignedTo: '-', notes: 'Out of service area', tankSize: 'N/A', created: '2025-10-13' },
-        { id: 'BK-1006', customer: 'Dilshan Fernando', email: 'dilshan@gmail.com', phone: '0722233445', service: 'Aquarium Maintenance', serviceType: 'Maintenance', date: '2025-10-20', time: '08:00 - 10:00', location: '78 Hill St, Badulla', price: 3500, status: 'Pending', assignedTo: 'Unassigned', notes: 'Check pump noise', tankSize: '75 Gallon', created: '2025-10-14' },
-        { id: 'BK-1007', customer: 'Anoma Rathnayake', email: 'anoma@yahoo.com', phone: '0788899000', service: 'Deep Cleaning', serviceType: 'Cleaning', date: '2025-10-21', time: '13:00 - 16:00', location: '34 Sea view, Negombo', price: 6000, status: 'Pending', assignedTo: 'Unassigned', notes: 'Needs urgent cleaning', tankSize: '120 Gallon', created: '2025-10-15' },
-        { id: 'BK-1008', customer: 'Mahesh Gunawardena', email: 'mahesh@gmail.com', phone: '0711122233', service: 'Plantation Setup', serviceType: 'Setup', date: '2025-10-22', time: '10:00 - 14:00', location: '90 Garden Ln, Kurunegala', price: 8500, status: 'Accepted', assignedTo: 'Sunil Perera', notes: 'Aquascaping required', tankSize: '60 Gallon', created: '2025-10-16' },
-    ];
-
-    const [bookings, setBookings] = useState(initialBookings);
+    const [bookings, setBookings] = useState([]);
+    const [bookingsLoading, setBookingsLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterService, setFilterService] = useState('All');
     const [filterStatus, setFilterStatus] = useState('All');
@@ -46,6 +35,7 @@ const BookingManagement = () => {
 
     useEffect(() => {
         fetchTimeSlots();
+        fetchBookings();
         
         // Check expired slots every minute
         const interval = setInterval(() => {
@@ -70,6 +60,41 @@ const BookingManagement = () => {
             }
         } catch (error) {
             console.error('Error fetching time slots:', error);
+        }
+    };
+
+    const fetchBookings = async () => {
+        setBookingsLoading(true);
+        try {
+            const data = await apiRequest('/bookings');
+            if (data.success) {
+                // Map DB fields to UI fields
+                const mapped = data.data.map(b => ({
+                    id: `BK-${String(b.booking_id).padStart(4, '0')}`,
+                    booking_id: b.booking_id,
+                    customer: b.customer_name || 'Unknown',
+                    email: b.customer_email || '',
+                    phone: b.service_phone || '',
+                    service: b.service_type || '',
+                    serviceType: b.service_type || '',
+                    date: b.start_time
+                        ? new Date(b.start_time).toLocaleDateString('en-CA')
+                        : new Date(b.booking_date).toLocaleDateString('en-CA'),
+                    time: b.start_time
+                        ? `${new Date(b.start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - ${new Date(b.end_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
+                        : '',
+                    location: [b.service_address, b.service_city].filter(Boolean).join(', ') || '—',
+                    status: b.status,
+                    notes: b.notes || '',
+                    created: new Date(b.created_at).toLocaleDateString('en-CA'),
+                    price: b.base_price ? parseFloat(b.base_price) : null,
+                }));
+                setBookings(mapped);
+            }
+        } catch (error) {
+            console.error('Error fetching bookings:', error);
+        } finally {
+            setBookingsLoading(false);
         }
     };
 
@@ -279,20 +304,20 @@ const BookingManagement = () => {
     // Status Badge Colors
     const getStatusStyle = (status) => {
         switch (status) {
-            case 'Pending': return { bg: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '#f59e0b' };
-            case 'Accepted': return { bg: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', border: '#3b82f6' };
-            case 'Completed': return { bg: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '#10b981' };
-            case 'Rejected': return { bg: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: '#ef4444' };
-            case 'Cancelled': return { bg: 'rgba(107, 114, 128, 0.15)', color: '#9ca3af', border: '#9ca3af' };
+            case 'Pending':     return { bg: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '#f59e0b' };
+            case 'Confirmed':   return { bg: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', border: '#3b82f6' };
+            case 'In Progress': return { bg: 'rgba(168, 85, 247, 0.15)', color: '#a855f7', border: '#a855f7' };
+            case 'Completed':   return { bg: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '#10b981' };
+            case 'Cancelled':   return { bg: 'rgba(107, 114, 128, 0.15)', color: '#9ca3af', border: '#9ca3af' };
             default: return { bg: 'rgba(255, 255, 255, 0.1)', color: '#fff', border: '#fff' };
         }
     };
 
-    // Filter Logic
+    // Filter Logic (serviceType is now the raw service_type string from DB)
     const filteredBookings = bookings.filter(b => {
         const matchesSearch = b.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
             b.id.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesService = filterService === 'All' || b.serviceType === filterService;
+        const matchesService = filterService === 'All' || (b.serviceType || '').toLowerCase().includes(filterService.toLowerCase());
         const matchesStatus = filterStatus === 'All' || b.status === filterStatus;
         return matchesSearch && matchesService && matchesStatus;
     });
@@ -307,9 +332,36 @@ const BookingManagement = () => {
         return matchesSearch && matchesService && matchesStatus && matchesDate;
     });
 
-    // Actions
-    const updateStatus = (id, newStatus) => {
-        setBookings(bookings.map(b => b.id === id ? { ...b, status: newStatus } : b));
+    // Actions — call API then update local state
+    const updateStatus = async (id, uiStatus) => {
+        // Map UI action labels to DB enum values
+        const DB_STATUS_MAP = {
+            Accepted:    'Confirmed',
+            Rejected:    'Cancelled',
+            Confirmed:   'Confirmed',
+            'In Progress': 'In Progress',
+            Completed:   'Completed',
+            Cancelled:   'Cancelled',
+        };
+        const dbStatus = DB_STATUS_MAP[uiStatus] || uiStatus;
+        const booking = bookings.find(b => b.id === id);
+        if (!booking) return;
+        try {
+            await apiRequest(`/bookings/${booking.booking_id}/status`, {
+                method: 'PATCH',
+                body: JSON.stringify({ status: dbStatus }),
+            });
+            setBookings(prev => prev.map(b => b.id === id ? { ...b, status: dbStatus } : b));
+        } catch (err) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Update Failed',
+                text: err.message || 'Could not update booking status.',
+                background: '#1a1f2e',
+                color: '#fff',
+                confirmButtonColor: '#e74c3c',
+            });
+        }
     };
 
     const clearFilters = () => {
@@ -375,11 +427,16 @@ const BookingManagement = () => {
 
                         {selectedBooking.status === 'Pending' && (
                             <div className="modal-actions-footer">
-                                <button className="btn-reject" onClick={() => { updateStatus(selectedBooking.id, 'Rejected'); setSelectedBooking(null); }}>Reject</button>
-                                <button className="btn-accept" onClick={() => { updateStatus(selectedBooking.id, 'Accepted'); setSelectedBooking(null); }}>Accept Booking</button>
+                                <button className="btn-reject" onClick={() => { updateStatus(selectedBooking.id, 'Cancelled'); setSelectedBooking(null); }}>Cancel</button>
+                                <button className="btn-accept" onClick={() => { updateStatus(selectedBooking.id, 'Confirmed'); setSelectedBooking(null); }}>Confirm Booking</button>
                             </div>
                         )}
-                        {selectedBooking.status === 'Accepted' && (
+                        {selectedBooking.status === 'Confirmed' && (
+                            <div className="modal-actions-footer">
+                                <button className="btn-complete" onClick={() => { updateStatus(selectedBooking.id, 'In Progress'); setSelectedBooking(null); }}>Mark In Progress</button>
+                            </div>
+                        )}
+                        {selectedBooking.status === 'In Progress' && (
                             <div className="modal-actions-footer">
                                 <button className="btn-complete" onClick={() => { updateStatus(selectedBooking.id, 'Completed'); setSelectedBooking(null); }}>Mark Completed</button>
                             </div>
@@ -449,10 +506,10 @@ const BookingManagement = () => {
                             <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
                                 <option value="All">All Status</option>
                                 <option value="Pending">Pending</option>
-                                <option value="Accepted">Accepted</option>
+                                <option value="Confirmed">Confirmed</option>
+                                <option value="In Progress">In Progress</option>
                                 <option value="Completed">Completed</option>
                                 <option value="Cancelled">Cancelled</option>
-                                <option value="Rejected">Rejected</option>
                             </select>
                             <ChevronDown size={14} className="select-arrow" />
                         </div>
@@ -562,16 +619,22 @@ const BookingManagement = () => {
 
                                                 {booking.status === 'Pending' && (
                                                     <>
-                                                        <button className="btn-icon accept" title="Accept" onClick={() => updateStatus(booking.id, 'Accepted')}>
+                                                        <button className="btn-icon accept" title="Confirm" onClick={() => updateStatus(booking.id, 'Confirmed')}>
                                                             <Check size={16} />
                                                         </button>
-                                                        <button className="btn-icon reject" title="Reject" onClick={() => updateStatus(booking.id, 'Rejected')}>
+                                                        <button className="btn-icon reject" title="Cancel" onClick={() => updateStatus(booking.id, 'Cancelled')}>
                                                             <X size={16} />
                                                         </button>
                                                     </>
                                                 )}
 
-                                                {booking.status === 'Accepted' && (
+                                                {booking.status === 'Confirmed' && (
+                                                    <button className="btn-icon complete" title="Mark In Progress" onClick={() => updateStatus(booking.id, 'In Progress')}>
+                                                        <CheckCircle size={16} />
+                                                    </button>
+                                                )}
+
+                                                {booking.status === 'In Progress' && (
                                                     <button className="btn-icon complete" title="Mark Completed" onClick={() => updateStatus(booking.id, 'Completed')}>
                                                         <CheckCircle size={16} />
                                                     </button>

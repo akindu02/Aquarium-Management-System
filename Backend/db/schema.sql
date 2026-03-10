@@ -214,16 +214,20 @@ CREATE TABLE IF NOT EXISTS order_items (
         subtotal DECIMAL(10, 2) GENERATED ALWAYS AS (quantity * unit_price) STORED
 );
 -- Service Bookings Table
+-- service_id is intentionally omitted: it is derivable via slot_id -> service_time_slots.service_id
+-- slot_id uses RESTRICT so a booked slot cannot be deleted (correct business rule)
 CREATE TABLE IF NOT EXISTS service_bookings (
     booking_id SERIAL PRIMARY KEY,
     customer_id INTEGER REFERENCES customers(user_id) ON DELETE CASCADE,
-    service_id INTEGER REFERENCES services(service_id) ON DELETE
-    SET NULL,
-        booking_date TIMESTAMP WITH TIME ZONE NOT NULL,
-        status booking_status DEFAULT 'Pending',
-        notes TEXT,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    slot_id INTEGER REFERENCES service_time_slots(slot_id) ON DELETE RESTRICT,
+    booking_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    status booking_status DEFAULT 'Pending',
+    service_phone VARCHAR(20),
+    service_city VARCHAR(100),
+    service_address TEXT,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 -- =============================================
 -- 7. PAYMENTS, RECEIPTS & NOTIFICATIONS
