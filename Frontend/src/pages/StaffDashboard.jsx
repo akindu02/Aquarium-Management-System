@@ -40,7 +40,7 @@ const StaffDashboard = () => {
     { id: 'products', label: 'Products / Inventory', icon: Package },
     { id: 'orders', label: 'Process Orders', icon: ClipboardList },
     { id: 'restock', label: 'Product Restock', icon: AlertTriangle },
-    { id: 'bookings', label: 'Bookings', icon: CalendarClock },
+    { id: 'bookings', label: 'Service Bookings', icon: CalendarClock },
     { id: 'settings', label: 'My Settings', icon: Settings },
   ];
 

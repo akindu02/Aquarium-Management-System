@@ -45,7 +45,7 @@ const AdminDashboard = () => {
     { id: 'products', label: 'Products / Inventory', icon: Package },
     { id: 'orders', label: 'Order Management', icon: ShoppingCart },
     { id: 'restock', label: 'Product Restock', icon: RefreshCw },
-    { id: 'bookings', label: 'Bookings', icon: CalendarClock },
+    { id: 'bookings', label: 'Service Bookings', icon: CalendarClock },
     { id: 'reports', label: 'Reports & Analytics', icon: BarChart3 },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];

@@ -647,10 +647,6 @@ const BookingManagement = () => {
                             <div>
                                 <h3>Existing Time Slots</h3>
                                 <p className="panel-subtitle">Manage availability and assigned slots</p>
-                                <p className="auto-expire-info">
-                                    <AlertCircle size={14} />
-                                    <span>Available slots automatically become unavailable after their end time</span>
-                                </p>
                             </div>
                             <div className="total-slots-badge">
                                 {filteredSlots.length} {filteredSlots.length !== managedSlots.length && `of ${managedSlots.length}`} Slot{filteredSlots.length !== 1 ? 's' : ''}
@@ -1230,24 +1226,6 @@ const BookingManagement = () => {
                     color: var(--text-muted);
                     font-size: 0.9rem;
                     margin: 0.25rem 0 0 0;
-                }
-
-                .auto-expire-info {
-                    display: flex;
-                    align-items: center;
-                    gap: 0.5rem;
-                    color: rgba(251, 191, 36, 0.9);
-                    font-size: 0.8rem;
-                    margin: 0.75rem 0 0 0;
-                    padding: 0.5rem 0.75rem;
-                    background: rgba(251, 191, 36, 0.08);
-                    border-radius: 0.5rem;
-                    border-left: 3px solid rgba(251, 191, 36, 0.5);
-                    max-width: fit-content;
-                }
-
-                .auto-expire-info span {
-                    font-weight: 500;
                 }
 
                 .total-slots-badge {
