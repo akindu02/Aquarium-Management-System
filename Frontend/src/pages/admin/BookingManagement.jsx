@@ -46,7 +46,21 @@ const BookingManagement = () => {
 
     useEffect(() => {
         fetchTimeSlots();
+        
+        // Check expired slots every minute
+        const interval = setInterval(() => {
+            checkAndUpdateExpiredSlots();
+        }, 60000); // Check every 60 seconds
+
+        return () => clearInterval(interval);
     }, []);
+
+    useEffect(() => {
+        // Check expired slots whenever managedSlots changes
+        if (managedSlots.length > 0) {
+            checkAndUpdateExpiredSlots();
+        }
+    }, [managedSlots]);
 
     const fetchTimeSlots = async () => {
         try {
@@ -56,6 +70,44 @@ const BookingManagement = () => {
             }
         } catch (error) {
             console.error('Error fetching time slots:', error);
+        }
+    };
+
+    const checkAndUpdateExpiredSlots = async () => {
+        const now = new Date();
+        const currentDate = now.toISOString().split('T')[0];
+        const currentTime = now.toTimeString().split(' ')[0].substring(0, 5); // HH:MM format
+
+        const expiredSlots = managedSlots.filter(slot => {
+            // Only check slots that are "Available" (not booked)
+            if (slot.status !== 'Available') return false;
+
+            // Check if the slot date is before today
+            if (slot.date < currentDate) return true;
+
+            // If slot date is today, check if end time has passed
+            if (slot.date === currentDate && slot.end <= currentTime) return true;
+
+            return false;
+        });
+
+        // Update expired slots to "Unavailable"
+        if (expiredSlots.length > 0) {
+            for (const slot of expiredSlots) {
+                try {
+                    await apiRequest(`/bookings/slots/${slot.id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify({
+                            ...slot,
+                            status: 'Unavailable'
+                        })
+                    });
+                } catch (error) {
+                    console.error(`Error updating expired slot ${slot.id}:`, error);
+                }
+            }
+            // Refresh the slots list after updating
+            fetchTimeSlots();
         }
     };
 
@@ -595,6 +647,10 @@ const BookingManagement = () => {
                             <div>
                                 <h3>Existing Time Slots</h3>
                                 <p className="panel-subtitle">Manage availability and assigned slots</p>
+                                <p className="auto-expire-info">
+                                    <AlertCircle size={14} />
+                                    <span>Available slots automatically become unavailable after their end time</span>
+                                </p>
                             </div>
                             <div className="total-slots-badge">
                                 {filteredSlots.length} {filteredSlots.length !== managedSlots.length && `of ${managedSlots.length}`} Slot{filteredSlots.length !== 1 ? 's' : ''}
@@ -1174,6 +1230,24 @@ const BookingManagement = () => {
                     color: var(--text-muted);
                     font-size: 0.9rem;
                     margin: 0.25rem 0 0 0;
+                }
+
+                .auto-expire-info {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    color: rgba(251, 191, 36, 0.9);
+                    font-size: 0.8rem;
+                    margin: 0.75rem 0 0 0;
+                    padding: 0.5rem 0.75rem;
+                    background: rgba(251, 191, 36, 0.08);
+                    border-radius: 0.5rem;
+                    border-left: 3px solid rgba(251, 191, 36, 0.5);
+                    max-width: fit-content;
+                }
+
+                .auto-expire-info span {
+                    font-weight: 500;
                 }
 
                 .total-slots-badge {
