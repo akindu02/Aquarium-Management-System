@@ -38,6 +38,12 @@ const BookingManagement = () => {
     const [editSlot, setEditSlot] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
 
+    // Time Slot Filters
+    const [slotSearchTerm, setSlotSearchTerm] = useState('');
+    const [filterSlotService, setFilterSlotService] = useState('All');
+    const [filterSlotStatus, setFilterSlotStatus] = useState('All');
+    const [filterSlotDate, setFilterSlotDate] = useState('');
+
     useEffect(() => {
         fetchTimeSlots();
     }, []);
@@ -239,6 +245,16 @@ const BookingManagement = () => {
         return matchesSearch && matchesService && matchesStatus;
     });
 
+    // Time Slot Filter Logic
+    const filteredSlots = managedSlots.filter(slot => {
+        const matchesSearch = slot.service.toLowerCase().includes(slotSearchTerm.toLowerCase()) ||
+            slot.date.includes(slotSearchTerm.toLowerCase());
+        const matchesService = filterSlotService === 'All' || slot.service === filterSlotService;
+        const matchesStatus = filterSlotStatus === 'All' || slot.status === filterSlotStatus;
+        const matchesDate = !filterSlotDate || slot.date === filterSlotDate;
+        return matchesSearch && matchesService && matchesStatus && matchesDate;
+    });
+
     // Actions
     const updateStatus = (id, newStatus) => {
         setBookings(bookings.map(b => b.id === id ? { ...b, status: newStatus } : b));
@@ -248,6 +264,13 @@ const BookingManagement = () => {
         setSearchTerm('');
         setFilterService('All');
         setFilterStatus('All');
+    };
+
+    const clearSlotFilters = () => {
+        setSlotSearchTerm('');
+        setFilterSlotService('All');
+        setFilterSlotStatus('All');
+        setFilterSlotDate('');
     };
 
     // Modal Content
@@ -383,6 +406,56 @@ const BookingManagement = () => {
                         </div>
 
                         <button className="btn-clear" onClick={clearFilters}>
+                            Clear Filters
+                        </button>
+                    </div>
+                )}
+
+                {viewMode === 'slots' && (
+                    <div className="bm-filter-group">
+                        <div className="search-box">
+                            <Search size={16} />
+                            <input
+                                type="text"
+                                placeholder="Search Service or Date..."
+                                value={slotSearchTerm}
+                                onChange={e => setSlotSearchTerm(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="select-wrapper">
+                            <select value={filterSlotService} onChange={e => setFilterSlotService(e.target.value)}>
+                                <option value="All">All Services</option>
+                                <option value="Maintenance">Maintenance</option>
+                                <option value="Cleaning">Cleaning</option>
+                                <option value="Installation">Installation</option>
+                                <option value="Setup">Setup</option>
+                            </select>
+                            <ChevronDown size={14} className="select-arrow" />
+                        </div>
+
+                        <div className="select-wrapper">
+                            <select value={filterSlotStatus} onChange={e => setFilterSlotStatus(e.target.value)}>
+                                <option value="All">All Status</option>
+                                <option value="Available">Available</option>
+                                <option value="Booked">Booked</option>
+                                <option value="Under Process">Under Process</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Unavailable">Unavailable</option>
+                            </select>
+                            <ChevronDown size={14} className="select-arrow" />
+                        </div>
+
+                        <div className="date-input">
+                            <span className="date-label">Date:</span>
+                            <input
+                                type="date"
+                                value={filterSlotDate}
+                                onChange={e => setFilterSlotDate(e.target.value)}
+                            />
+                        </div>
+
+                        <button className="btn-clear" onClick={clearSlotFilters}>
                             Clear Filters
                         </button>
                     </div>
@@ -524,7 +597,7 @@ const BookingManagement = () => {
                                 <p className="panel-subtitle">Manage availability and assigned slots</p>
                             </div>
                             <div className="total-slots-badge">
-                                {managedSlots.length} Total Slot{managedSlots.length !== 1 ? 's' : ''}
+                                {filteredSlots.length} {filteredSlots.length !== managedSlots.length && `of ${managedSlots.length}`} Slot{filteredSlots.length !== 1 ? 's' : ''}
                             </div>
                         </div>
                         <div className="slots-table-wrapper nice-scrollbar">
@@ -539,23 +612,23 @@ const BookingManagement = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {managedSlots.length === 0 ? (
+                                    {filteredSlots.length === 0 ? (
                                         <tr>
                                             <td colSpan="5" className="text-center py-8">
                                                 <div className="empty-state">
                                                     <Calendar size={48} opacity={0.2} />
-                                                    <p>No time slots have been created yet.</p>
+                                                    <p>{managedSlots.length === 0 ? 'No time slots have been created yet.' : 'No time slots match your filters.'}</p>
                                                     <button 
                                                         className="btn-link"
-                                                        onClick={() => setViewMode('add-slot')}
+                                                        onClick={() => managedSlots.length === 0 ? setViewMode('add-slot') : clearSlotFilters()}
                                                     >
-                                                        Create your first slot
+                                                        {managedSlots.length === 0 ? 'Create your first slot' : 'Clear filters'}
                                                     </button>
                                                 </div>
                                             </td>
                                         </tr>
                                     ) : (
-                                        managedSlots.map(slot => (
+                                        filteredSlots.map(slot => (
                                             <tr key={slot.id} className="slot-row">
                                                 <td>
                                                     <div className="service-cell">
