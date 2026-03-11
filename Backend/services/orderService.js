@@ -466,7 +466,7 @@ const cancelOrder = async (orderId, customerId) => {
 const updateOrderStatus = async (orderId, newStatus) => {
     const { rows } = await pool.query(
         `UPDATE orders SET status = $1 WHERE order_id = $2
-         RETURNING order_id, status, total_amount, order_date`,
+         RETURNING order_id, customer_id, status, total_amount, order_date`,
         [newStatus, orderId]
     );
     if (!rows[0]) return null;

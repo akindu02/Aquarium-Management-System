@@ -1,4 +1,5 @@
 const orderService = require('../services/orderService');
+const notificationService = require('../services/notificationService');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/orders
@@ -26,6 +27,8 @@ const createOrder = async (req, res) => {
             phone: phone.trim(),
             totalAmount,
         });
+
+        await notificationService.createNotification(customerId, `Your order ${result.orderRef} has been created successfully.`, 'Order');
 
         return res.status(201).json(result);
     } catch (err) {
@@ -127,6 +130,12 @@ const updateOrderStatus = async (req, res) => {
         if (!order) {
             return res.status(404).json({ success: false, message: 'Order not found' });
         }
+
+        await notificationService.createNotification(
+            order.customer_id,
+            `Your order ${order.order_ref} status has been updated to ${status}.`,
+            'Order'
+        );
 
         return res.json({ success: true, data: order, message: `Order status updated to "${status}"` });
     } catch (err) {
