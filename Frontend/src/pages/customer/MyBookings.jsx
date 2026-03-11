@@ -10,11 +10,11 @@ import Swal from 'sweetalert2';
 // â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const STATUS_META = {
-    Pending:       { label: 'Pending',     color: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/30', Icon: Clock },
-    Confirmed:     { label: 'Confirmed',   color: 'text-blue-400 bg-blue-400/10 border-blue-400/30',   Icon: CheckCircle },
-    'In Progress': { label: 'In Progress', color: 'text-purple-400 bg-purple-400/10 border-purple-400/30', Icon: AlertCircle },
-    Completed:     { label: 'Completed',   color: 'text-green-400 bg-green-400/10 border-green-400/30', Icon: CheckCircle },
-    Cancelled:     { label: 'Cancelled',   color: 'text-red-400 bg-red-400/10 border-red-400/30',     Icon: XCircle },
+    Pending:       { label: 'Pending',     color: 'badge-yellow', accent: '#f59e0b', Icon: Clock },
+    Confirmed:     { label: 'Confirmed',   color: 'badge-blue',   accent: '#3b82f6', Icon: CheckCircle },
+    'In Progress': { label: 'In Progress', color: 'badge-purple', accent: '#8b5cf6', Icon: AlertCircle },
+    Completed:     { label: 'Completed',   color: 'badge-green',  accent: '#22c55e', Icon: CheckCircle },
+    Cancelled:     { label: 'Cancelled',   color: 'badge-red',    accent: '#ef4444', Icon: XCircle },
 };
 
 const formatDate = (iso) => {
@@ -263,69 +263,65 @@ const MyBookings = () => {
 
                         return (
                             <div key={booking.booking_id} className="booking-card">
-                                <div className="booking-main-info">
-                                    <div className="booking-header-row">
-                                        <h3 className="service-type">{booking.service_type}</h3>
-                                        <span className={`status-badge ${meta.color}`}>
-                                            <Icon size={13} />
-                                            {meta.label}
-                                        </span>
-                                    </div>
-                                    <div className="booking-id">ID: BK-{String(booking.booking_id).padStart(4, '0')}</div>
-
-                                    <div className="booking-details-grid">
-                                        <div className="detail-item">
-                                            <Calendar size={15} className="detail-icon" />
-                                            <span>
-                                                {formatDate(booking.start_time || booking.booking_date)}
+                                <div className="bk-card-accent" style={{ background: meta.accent }} />
+                                <div className="bk-card-body">
+                                    <div className="bk-card-top">
+                                        <div className="bk-card-title-row">
+                                            <h3 className="bk-service-type">{booking.service_type}</h3>
+                                            <span className={`bk-status-badge ${meta.color}`}>
+                                                <Icon size={12} />{meta.label}
                                             </span>
                                         </div>
-                                        <div className="detail-item">
-                                            <Clock size={15} className="detail-icon" />
+                                        <p className="bk-booking-id">#{String(booking.booking_id).padStart(4, '0')}</p>
+                                    </div>
+
+                                    <div className="bk-info-grid">
+                                        <div className="bk-info-item">
+                                            <Calendar size={14} className="bk-info-icon" />
+                                            <span>{formatDate(booking.start_time || booking.booking_date)}</span>
+                                        </div>
+                                        <div className="bk-info-item">
+                                            <Clock size={14} className="bk-info-icon" />
                                             <span>
                                                 {booking.start_time
-                                                    ? `${formatTime(booking.start_time)} â€“ ${formatTime(booking.end_time)}`
+                                                    ? `${formatTime(booking.start_time)} - ${formatTime(booking.end_time)}`
                                                     : formatTime(booking.booking_date)}
                                             </span>
                                         </div>
                                         {booking.service_city && (
-                                            <div className="detail-item">
-                                                <Building size={15} className="detail-icon" />
+                                            <div className="bk-info-item">
+                                                <Building size={14} className="bk-info-icon" />
                                                 <span>{booking.service_city}</span>
                                             </div>
                                         )}
                                         {booking.service_address && (
-                                            <div className="detail-item address">
-                                                <MapPin size={15} className="detail-icon" />
+                                            <div className="bk-info-item">
+                                                <MapPin size={14} className="bk-info-icon" />
                                                 <span>{booking.service_address}</span>
                                             </div>
                                         )}
                                         {booking.service_phone && (
-                                            <div className="detail-item">
-                                                <Phone size={15} className="detail-icon" />
+                                            <div className="bk-info-item">
+                                                <Phone size={14} className="bk-info-icon" />
                                                 <span>{booking.service_phone}</span>
                                             </div>
                                         )}
                                     </div>
-                                </div>
 
-                                <div className="booking-actions">
-                                    {canCancel && (
-                                        <button
-                                            className="cancel-btn"
-                                            onClick={() => handleCancel(booking)}
-                                            disabled={isCancelling}
-                                        >
-                                            {isCancelling ? (
-                                                <Loader2 size={14} className="spin" />
-                                            ) : (
-                                                'Cancel Booking'
-                                            )}
+                                    <div className="bk-card-footer">
+                                        <button className="bk-details-btn" onClick={() => setDetailBooking(booking)}>
+                                            View Details <ChevronRight size={14} />
                                         </button>
-                                    )}
-                                    <button className="details-btn" onClick={() => setDetailBooking(booking)}>
-                                        View Details <ChevronRight size={15} />
-                                    </button>
+                                        {canCancel && (
+                                            <button
+                                                className="bk-cancel-btn"
+                                                onClick={() => handleCancel(booking)}
+                                                disabled={isCancelling}
+                                            >
+                                                {isCancelling ? <Loader2 size={13} className="spin" /> : 'Cancel'}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         );
@@ -358,26 +354,32 @@ const MyBookings = () => {
                 .retry-btn { margin-top: 0.5rem; background: rgba(78,205,196,0.15); color: #4ecdc4; border: 1px solid rgba(78,205,196,0.3); padding: 0.5rem 1.25rem; border-radius: 8px; cursor: pointer; font-weight: 600; }
                 .spin { animation: spin 1s linear infinite; }
                 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-                .bookings-list { display: flex; flex-direction: column; gap: 1rem; }
-                .booking-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; transition: all 0.2s; }
-                .booking-card:hover { border-color: rgba(78,205,196,0.3); background: rgba(255,255,255,0.05); }
-                .booking-main-info { flex: 1; min-width: 0; }
-                .booking-header-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
-                .service-type { font-size: 1.05rem; font-weight: 600; color: var(--text-main); margin: 0; }
-                .booking-id { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.75rem; font-family: monospace; }
-                .status-badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.65rem; border-radius: 50px; font-size: 0.72rem; font-weight: 600; border: 1px solid; }
-                .booking-details-grid { display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; }
-                .detail-item { display: flex; align-items: flex-start; gap: 0.4rem; color: var(--text-muted); font-size: 0.875rem; }
-                .detail-item.address { max-width: 300px; }
-                .detail-icon { opacity: 0.6; flex-shrink: 0; margin-top: 2px; }
-                .booking-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 0.6rem; flex-shrink: 0; }
-                .price-tag { font-size: 1rem; font-weight: 700; color: #4ecdc4; }
-                .cancel-btn { display: flex; align-items: center; justify-content: center; gap: 0.3rem; background: transparent; color: #ef4444; border: 1px solid #ef4444; padding: 0.4rem 0.9rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; min-width: 120px; }
-                .cancel-btn:hover:not(:disabled) { background: rgba(239,68,68,0.12); }
-                .cancel-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-                .details-btn { display: flex; align-items: center; gap: 0.25rem; background: transparent; color: var(--text-muted); border: none; font-size: 0.85rem; cursor: pointer; padding: 0; transition: color 0.2s; }
-                .details-btn:hover { color: var(--text-main); }
+                .bookings-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; }
+                .booking-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; display: flex; flex-direction: row; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; }
+                .booking-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); border-color: rgba(255,255,255,0.16); }
                 .mt-4 { margin-top: 1rem; }
+                /* ── Card BK styles ── */
+                .bk-card-accent { width: 5px; flex-shrink: 0; }
+                .bk-card-body { flex: 1; padding: 1.1rem 1.25rem; display: flex; flex-direction: column; gap: 0.8rem; min-width: 0; }
+                .bk-card-top { display: flex; flex-direction: column; gap: 0.1rem; }
+                .bk-card-title-row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; }
+                .bk-service-type { font-size: 0.98rem; font-weight: 700; color: var(--text-main); margin: 0; }
+                .bk-booking-id { font-size: 0.7rem; color: var(--text-muted); font-family: monospace; margin: 0; }
+                .bk-status-badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.18rem 0.6rem; border-radius: 50px; font-size: 0.68rem; font-weight: 700; border: 1px solid; white-space: nowrap; }
+                .badge-yellow { color: #f59e0b; background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.3); }
+                .badge-blue { color: #60a5fa; background: rgba(96,165,250,0.12); border-color: rgba(96,165,250,0.3); }
+                .badge-purple { color: #a78bfa; background: rgba(167,139,250,0.12); border-color: rgba(167,139,250,0.3); }
+                .badge-green { color: #4ade80; background: rgba(74,222,128,0.12); border-color: rgba(74,222,128,0.3); }
+                .badge-red { color: #f87171; background: rgba(248,113,113,0.12); border-color: rgba(248,113,113,0.3); }
+                .bk-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem 0.75rem; }
+                .bk-info-item { display: flex; align-items: flex-start; gap: 0.35rem; color: var(--text-muted); font-size: 0.8rem; line-height: 1.4; }
+                .bk-info-icon { opacity: 0.5; flex-shrink: 0; margin-top: 1px; }
+                .bk-card-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 0.7rem; border-top: 1px solid rgba(255,255,255,0.07); margin-top: auto; }
+                .bk-details-btn { display: inline-flex; align-items: center; gap: 0.2rem; background: transparent; border: none; color: #4ecdc4; font-size: 0.8rem; font-weight: 600; cursor: pointer; padding: 0; transition: opacity 0.2s; }
+                .bk-details-btn:hover { opacity: 0.7; }
+                .bk-cancel-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem; background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.3); padding: 0.28rem 0.8rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+                .bk-cancel-btn:hover:not(:disabled) { background: rgba(239,68,68,0.2); }
+                .bk-cancel-btn:disabled { opacity: 0.45; cursor: not-allowed; }
                 /* Detail Modal */
                 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; backdrop-filter: blur(4px); }
                 .booking-detail-modal { background: #1a1f2e; border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 2rem; width: 100%; max-width: 480px; position: relative; display: flex; flex-direction: column; gap: 1rem; max-height: 90vh; overflow-y: auto; }
@@ -393,8 +395,8 @@ const MyBookings = () => {
                 .modal-close-action { width: 100%; padding: 0.75rem; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--text-main); cursor: pointer; font-weight: 600; transition: all 0.2s; margin-top: 0.5rem; }
                 .modal-close-action:hover { background: rgba(255,255,255,0.1); }
                 @media (max-width: 640px) {
-                    .booking-card { flex-direction: column; align-items: flex-start; }
-                    .booking-actions { width: 100%; flex-direction: row; align-items: center; justify-content: space-between; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.08); }
+                    .bookings-list { grid-template-columns: 1fr; }
+                    .bk-info-grid { grid-template-columns: 1fr; }
                 }
             `}</style>
         </div>
