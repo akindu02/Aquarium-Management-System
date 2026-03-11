@@ -310,11 +310,6 @@ const MyBookings = () => {
                                 </div>
 
                                 <div className="booking-actions">
-                                    {booking.base_price && (
-                                        <div className="price-tag">
-                                            Rs. {parseFloat(booking.base_price).toFixed(2)}
-                                        </div>
-                                    )}
                                     {canCancel && (
                                         <button
                                             className="cancel-btn"
