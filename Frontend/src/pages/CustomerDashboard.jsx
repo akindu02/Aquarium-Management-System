@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { LayoutDashboard, ShoppingBag, CalendarDays, CalendarCheck, Bell, LogOut, Store } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { LayoutDashboard, ShoppingBag, CalendarDays, CalendarCheck, Bell, LogOut, Store, Package, Clock } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
-import { logoutAPI } from '../utils/api';
+import { logoutAPI, getOrdersAPI, apiRequest } from '../utils/api';
 import ProfileModal from '../components/ProfileModal';
 import NotificationPopup from '../components/NotificationPopup';
 import MyBookings from './customer/MyBookings';
@@ -44,13 +44,13 @@ const CustomerDashboard = () => {
   const renderContent = () => {
     switch (activeMenu) {
       case 'dashboard':
-        return <DashboardContent />;
+        return <DashboardContent setActiveMenu={setActiveMenu} />;
       case 'orders':
         return <MyOrders />;
       case 'booking':
         return <MyBookings />;
       default:
-        return <DashboardContent />;
+        return <DashboardContent setActiveMenu={setActiveMenu} />;
     }
   };
 
@@ -422,9 +422,9 @@ const CustomerDashboard = () => {
 
                 .dashboard-grid {
                     display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-                    gap: 1.5rem;
-                    margin-top: 2rem;
+                    grid-template-columns: repeat(4, 1fr);
+                    gap: 1rem;
+                    margin-top: 1.5rem;
                 }
 
                 /* Quick Actions */
@@ -487,9 +487,8 @@ const CustomerDashboard = () => {
                 }
 
                 .dashboard-card {
-                    padding: 2rem;
-                    border-radius: 16px;
-                    background: rgba(255, 255, 255, 0.03);
+                      padding: 1.25rem 1.5rem;
+                      border-radius: 14px;
                     border: 1px solid rgba(255, 255, 255, 0.08);
                     transition: all 0.3s ease;
                     cursor: pointer;
@@ -502,10 +501,9 @@ const CustomerDashboard = () => {
                 }
 
                 .dashboard-card h3 {
-                    font-size: 1.25rem;
-                    color: var(--text-main);
-                    margin-bottom: 0.5rem;
-                }
+                      font-size: 1rem;
+                      color: var(--text-main);
+                      margin-bottom: 0.4rem;
 
                 .dashboard-card p {
                     color: var(--text-muted);
@@ -516,22 +514,27 @@ const CustomerDashboard = () => {
                 .card-stat {
                     display: flex;
                     flex-direction: column;
-                    padding-top: 1rem;
+                    padding-top: 0.75rem;
                     border-top: 1px solid rgba(255, 255, 255, 0.08);
                 }
 
                 .stat-number {
-                    font-size: 2rem;
-                    font-weight: 700;
+                    display: block;
+                    font-size: 2.4rem;
+                    font-weight: 800;
                     color: var(--color-primary);
-                    margin-bottom: 0.25rem;
+                    margin-bottom: 0.3rem;
+                    line-height: 1;
+                    letter-spacing: -0.5px;
                 }
 
                 .stat-label {
-                    font-size: 0.8rem;
-                    color: var(--text-muted);
+                    display: block;
+                    font-size: 0.72rem;
+                    color: rgba(255,255,255,0.5);
                     text-transform: uppercase;
-                    letter-spacing: 0.5px;
+                    letter-spacing: 0.8px;
+                    margin-top: 0.25rem;
                 }
 
                 /* Placeholder Content Styles */
@@ -588,29 +591,128 @@ const CustomerDashboard = () => {
                     }
 
                     .dashboard-grid {
-                        grid-template-columns: 1fr;
+                        grid-template-columns: repeat(2, 1fr);
                     }
                 }
         .nav-icon { width: 20px; height: 20px; flex-shrink: 0; }
         .notification-icon { width: 18px; height: 18px; }
         .logout-icon { width: 18px; height: 18px; }
-        .card-icon { width: 42px; height: 42px; margin-bottom: 1rem; opacity: 0.9; }
+          .card-icon { width: 32px; height: 32px; margin-bottom: 0.6rem; opacity: 0.9; }
       `}</style>
     </div>
   );
 };
 
 // Dashboard Content Component
-const DashboardContent = () => {
+const DashboardContent = ({ setActiveMenu }) => {
   const navigate = useNavigate();
+  const [stats, setStats] = useState({
+    totalOrders: 0,
+    pendingOrders: 0,
+    totalBookings: 0,
+    upcomingBookings: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        // Fetch Orders and Bookings concurrently using Promise.allSettled
+        const [ordersRes, bookingsRes] = await Promise.allSettled([
+          getOrdersAPI(),
+          apiRequest('/bookings/my')
+        ]);
+
+        let orders = [];
+        if (ordersRes.status === 'fulfilled' && ordersRes.value.success) {
+          orders = ordersRes.value.data || [];
+        }
+
+        let bookings = [];
+        if (bookingsRes.status === 'fulfilled' && bookingsRes.value.data) {
+          bookings = bookingsRes.value.data || [];
+        }
+
+        const totalOrders = orders.length;
+        const pendingOrders = orders.filter(
+          (o) => o.status === 'Pending' || o.status === 'Processing'
+        ).length;
+
+        const totalBookings = bookings.length;
+        const upcomingBookings = bookings.filter(
+          (b) => b.status === 'Pending' || b.status === 'Confirmed'
+        ).length;
+
+        setStats({ totalOrders, pendingOrders, totalBookings, upcomingBookings });
+      } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="dashboard-welcome">
+        <h1 className="dashboard-heading">Welcome Back!</h1>
+        <p className="dashboard-subtitle">Loading your dashboard...</p>
+      </div>
+    );
+  }
 
   return (
     <>
       <div className="dashboard-welcome">
         <h1 className="dashboard-heading">Welcome Back!</h1>
         <p className="dashboard-subtitle">
-          Quick access to shopping and services.
+          Here's an overview of your activity.
         </p>
+      </div>
+
+      <div className="dashboard-grid">
+        {/* Total Orders Card */}
+        <div className="dashboard-card" onClick={() => setActiveMenu('orders')}>
+          <ShoppingBag className="card-icon" style={{ color: "var(--color-primary)" }} />
+          <h3>Total Orders</h3>
+          <div className="card-stat">
+            <span className="stat-number">{stats.totalOrders}</span>
+            <span className="stat-label">Orders Placed</span>
+          </div>
+        </div>
+
+        {/* Pending Orders Card */}
+        <div className="dashboard-card" onClick={() => setActiveMenu('orders')}>
+          <Package className="card-icon" style={{ color: "#f59e0b" }} />
+          <h3>Pending Orders</h3>
+          <div className="card-stat">
+            <span className="stat-number">{stats.pendingOrders}</span>
+            <span className="stat-label">Awaiting Fulfillment</span>
+          </div>
+        </div>
+
+        {/* Total Bookings Card */}
+        <div className="dashboard-card" onClick={() => setActiveMenu('booking')}>
+          <CalendarDays className="card-icon" style={{ color: "#3b82f6" }} />
+          <h3>Total Bookings</h3>
+          <div className="card-stat">
+            <span className="stat-number">{stats.totalBookings}</span>
+            <span className="stat-label">Services Booked</span>
+          </div>
+        </div>
+
+        {/* Upcoming Bookings Card */}
+        <div className="dashboard-card" onClick={() => setActiveMenu('booking')}>
+          <Clock className="card-icon" style={{ color: "#8b5cf6" }} />
+          <h3>Upcoming Bookings</h3>
+          <div className="card-stat">
+            <span className="stat-number">{stats.upcomingBookings}</span>
+            <span className="stat-label">Pending / Confirmed</span>
+          </div>
+        </div>
       </div>
 
       <div className="quick-actions">
