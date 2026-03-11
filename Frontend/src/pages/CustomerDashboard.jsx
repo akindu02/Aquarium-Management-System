@@ -680,7 +680,6 @@ const DashboardContent = ({ setActiveMenu }) => {
           <h3>Total Orders</h3>
           <div className="card-stat">
             <span className="stat-number">{stats.totalOrders}</span>
-            <span className="stat-label">Orders Placed</span>
           </div>
         </div>
 
@@ -690,7 +689,6 @@ const DashboardContent = ({ setActiveMenu }) => {
           <h3>Pending Orders</h3>
           <div className="card-stat">
             <span className="stat-number">{stats.pendingOrders}</span>
-            <span className="stat-label">Awaiting Fulfillment</span>
           </div>
         </div>
 
@@ -700,7 +698,6 @@ const DashboardContent = ({ setActiveMenu }) => {
           <h3>Total Bookings</h3>
           <div className="card-stat">
             <span className="stat-number">{stats.totalBookings}</span>
-            <span className="stat-label">Services Booked</span>
           </div>
         </div>
 
@@ -710,7 +707,6 @@ const DashboardContent = ({ setActiveMenu }) => {
           <h3>Upcoming Bookings</h3>
           <div className="card-stat">
             <span className="stat-number">{stats.upcomingBookings}</span>
-            <span className="stat-label">Pending / Confirmed</span>
           </div>
         </div>
       </div>
