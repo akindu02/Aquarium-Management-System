@@ -458,7 +458,7 @@ const UserManagement = () => {
                         {/* Modal Header */}
                         <div className="modal-header">
                             <div className="modal-header-left">
-                                <div className="modal-icon-wrapper">
+                                <div className="um-modal-icon-wrapper">
                                     <UserPlus size={22} />
                                 </div>
                                 <div>
@@ -602,7 +602,7 @@ const UserManagement = () => {
                     <div className="modal-content add-user-modal">
                         <div className="modal-header">
                             <div className="modal-header-left">
-                                <div className="modal-icon-wrapper" style={{ background: 'linear-gradient(135deg, rgba(96,165,250,0.15), rgba(96,165,250,0.05))', borderColor: 'rgba(96,165,250,0.2)', color: '#60a5fa' }}>
+                                <div className="um-modal-icon-wrapper" style={{ background: 'linear-gradient(135deg, rgba(96,165,250,0.15), rgba(96,165,250,0.05))', borderColor: 'rgba(96,165,250,0.2)', color: '#60a5fa' }}>
                                     <Edit size={22} />
                                 </div>
                                 <div>
@@ -992,7 +992,7 @@ const UserManagement = () => {
                     gap: 1rem;
                 }
 
-                .modal-icon-wrapper {
+                .um-modal-icon-wrapper {
                     width: 44px;
                     height: 44px;
                     border-radius: 12px;
