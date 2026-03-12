@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Filter, Calendar, Check, X, Clock, Eye, AlertCircle, MapPin, User, ChevronDown, CheckCircle, Plus, Trash2, Pencil, Wrench, Sparkles, Hammer, RefreshCw, Loader2 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { apiRequest } from '../../utils/api';
+import ServiceBooking from '../ServiceBooking';
 
 const BookingManagement = () => {
     const [bookings, setBookings] = useState([]);
@@ -520,6 +521,12 @@ const BookingManagement = () => {
                     >
                         Add New Time Slot
                     </button>
+                    <button
+                        className={`bm-tab ${viewMode === 'walk-in' ? 'active' : ''}`}
+                        onClick={() => setViewMode('walk-in')}
+                    >
+                        Walk-in Bookings
+                    </button>
                 </div>
 
                 {viewMode === 'bookings' && (
@@ -766,6 +773,16 @@ const BookingManagement = () => {
                             </button>
                         </form>
                     </div>
+                </div>
+            ) : viewMode === 'walk-in' ? (
+                <div className="walk-in-view-container" style={{ 
+                    background: '#111827', 
+                    borderRadius: '1rem',
+                    border: '1px solid rgba(255,255,255,0.05)',
+                    overflow: 'hidden',
+                    minHeight: '600px'
+                }}>
+                    <ServiceBooking isStaffView={true} />
                 </div>
             ) : (
                 <div className="slots-view-container">

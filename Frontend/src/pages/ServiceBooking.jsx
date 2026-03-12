@@ -484,7 +484,7 @@ const BookingModal = ({ isOpen, service, date, slot, onConfirm, onClose }) => {
 };
 
 // ===== MAIN SERVICE BOOKING PAGE =====
-const ServiceBooking = () => {
+const ServiceBooking = ({ isStaffView = false }) => {
     const [selectedService, setSelectedService] = useState(null);
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedSlot, setSelectedSlot] = useState(null);
@@ -654,7 +654,7 @@ const ServiceBooking = () => {
     };
 
     return (
-        <div className="service-booking-page">
+        <div className={`service-booking-page ${isStaffView ? 'staff-view' : ''}`}>
             <div className="container">
                 {/* Header */}
                 <div className="booking-header">

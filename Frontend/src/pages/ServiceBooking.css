@@ -781,3 +781,7 @@
         font-size: 2rem;
     }
 }
+/* Staff View Overrides */
+.service-booking-page.staff-view { padding-top: 2rem; padding-bottom: 2rem; min-height: auto; }
+.service-booking-page.staff-view .booking-header { margin-bottom: 2rem; }
+.service-booking-page.staff-view .booking-title { font-size: 2rem; }
