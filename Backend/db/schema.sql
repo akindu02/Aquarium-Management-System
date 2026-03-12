@@ -219,6 +219,7 @@ CREATE TABLE IF NOT EXISTS order_items (
 CREATE TABLE IF NOT EXISTS service_bookings (
     booking_id SERIAL PRIMARY KEY,
     customer_id INTEGER REFERENCES customers(user_id) ON DELETE CASCADE,
+    pos_customer_id INTEGER REFERENCES pos_customers(pos_customer_id) ON DELETE SET NULL,
     slot_id INTEGER REFERENCES service_time_slots(slot_id) ON DELETE RESTRICT,
     booking_date TIMESTAMP WITH TIME ZONE NOT NULL,
     status booking_status DEFAULT 'Pending',
@@ -226,8 +227,11 @@ CREATE TABLE IF NOT EXISTS service_bookings (
     service_city VARCHAR(100),
     service_address TEXT,
     notes TEXT,
+    booked_by_staff_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    -- partial unique index enforced via migration (uq_service_bookings_active_slot)
+    -- only active (non-cancelled) bookings enforce slot uniqueness
 );
 -- =============================================
 -- 7. PAYMENTS, RECEIPTS & NOTIFICATIONS

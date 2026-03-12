@@ -6,6 +6,7 @@ const {
     updateTimeSlot,
     deleteTimeSlot,
     createBooking,
+    createWalkInBooking,
     getCustomerBookings,
     cancelBooking,
     getAllBookings,
@@ -26,6 +27,9 @@ router.delete('/slots/:id', authenticate, staffOrAdmin, deleteTimeSlot);
 // ─── Booking Routes ─────────────────────────────────────────────────────────
 // Customer: create a booking (authenticated customers only)
 router.post('/', authenticate, authorize('customer'), createBooking);
+
+// Staff / Admin: create a walk-in booking on behalf of a customer
+router.post('/walk-in', authenticate, staffOrAdmin, createWalkInBooking);
 
 // Customer: view own bookings
 router.get('/my', authenticate, authorize('customer'), getCustomerBookings);

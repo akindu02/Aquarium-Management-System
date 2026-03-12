@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Check, X, ChevronLeft, ChevronRight, Wrench, Sparkles, Settings, Phone, MapPin, Building, ChevronDown } from 'lucide-react';
+import { Calendar, Clock, Check, X, ChevronLeft, ChevronRight, Wrench, Sparkles, Settings, Phone, MapPin, Building, ChevronDown, User } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { isAuthenticated } from '../utils/auth';
 import { apiRequest } from '../utils/api';
@@ -351,7 +351,8 @@ const UpcomingBookings = ({ bookings, services, onCancelBooking }) => {
 };
 
 // ===== BOOKING MODAL COMPONENT =====
-const BookingModal = ({ isOpen, service, date, slot, onConfirm, onClose }) => {
+const BookingModal = ({ isOpen, service, date, slot, onConfirm, onClose, isStaffView = false }) => {
+    const [customerName, setCustomerName] = useState('');
     const [phone, setPhone] = useState('');
     const [city, setCity] = useState('');
     const [address, setAddress] = useState('');
@@ -365,6 +366,7 @@ const BookingModal = ({ isOpen, service, date, slot, onConfirm, onClose }) => {
     // Reset state when modal opens
     useEffect(() => {
         if (isOpen) {
+            setCustomerName('');
             setPhone('');
             setCity('');
             setAddress('');
@@ -376,6 +378,7 @@ const BookingModal = ({ isOpen, service, date, slot, onConfirm, onClose }) => {
 
     const handleConfirm = () => {
         const newErrors = {};
+        if (isStaffView && !customerName.trim()) newErrors.customerName = 'Customer name is required';
         if (!phone.trim()) newErrors.phone = 'Phone number is required';
         if (!city) newErrors.city = 'Please select a city (Matara District only)';
         if (!address.trim()) newErrors.address = 'Address is required';
@@ -390,7 +393,9 @@ const BookingModal = ({ isOpen, service, date, slot, onConfirm, onClose }) => {
             return;
         }
 
-        onConfirm({ phone, city, address });
+        const details = { phone, city, address };
+        if (isStaffView) details.customer_name = customerName;
+        onConfirm(details);
     };
 
     return (
@@ -404,7 +409,7 @@ const BookingModal = ({ isOpen, service, date, slot, onConfirm, onClose }) => {
                         <Check size={32} />
                     </div>
                 </div>
-                <h3>Confirm Your Booking</h3>
+                <h3>{isStaffView ? 'Walk-in Booking' : 'Confirm Your Booking'}</h3>
                 
                 <div className="modal-details modern-details">
                     <div className="modal-detail-row">
@@ -422,6 +427,23 @@ const BookingModal = ({ isOpen, service, date, slot, onConfirm, onClose }) => {
                         <strong>{slot?.start} - {slot?.end}</strong>
                     </div>
                 </div>
+
+                {isStaffView && (
+                    <div className="modal-input-group" style={{ marginBottom: '1rem' }}>
+                        <label className="modal-label">Customer Name</label>
+                        <div className="input-wrapper">
+                            <User size={18} className="input-icon" />
+                            <input
+                                type="text"
+                                className="modal-input with-icon"
+                                placeholder="Enter customer name"
+                                value={customerName}
+                                onChange={(e) => setCustomerName(e.target.value)}
+                            />
+                        </div>
+                        {errors.customerName && <p className="input-error">{errors.customerName}</p>}
+                    </div>
+                )}
 
                 <div className="modal-form-grid">
                     <div className="modal-input-group">
@@ -567,7 +589,7 @@ const ServiceBooking = ({ isStaffView = false }) => {
     }, [location.state]);
 
     const handleSelectService = (service) => {
-        if (!isAuthenticated()) {
+        if (!isStaffView && !isAuthenticated()) {
             navigate('/signin', {
                 state: {
                     from: location.pathname,
@@ -593,14 +615,18 @@ const ServiceBooking = ({ isStaffView = false }) => {
 
     const handleConfirmBooking = async (bookingDetails) => {
         try {
-            const data = await apiRequest('/bookings', {
+            const endpoint = isStaffView ? '/bookings/walk-in' : '/bookings';
+            const payload = {
+                slot_id: selectedSlot.id,
+                phone: bookingDetails.phone,
+                city: bookingDetails.city,
+                address: bookingDetails.address,
+            };
+            if (isStaffView) payload.customer_name = bookingDetails.customer_name;
+
+            const data = await apiRequest(endpoint, {
                 method: 'POST',
-                body: JSON.stringify({
-                    slot_id: selectedSlot.id,
-                    phone: bookingDetails.phone,
-                    city: bookingDetails.city,
-                    address: bookingDetails.address,
-                }),
+                body: JSON.stringify(payload),
             });
 
             if (data.success) {
@@ -624,11 +650,12 @@ const ServiceBooking = ({ isStaffView = false }) => {
                 setSelectedDate(null);
                 setSelectedService(null);
 
+                const statusText = isStaffView ? 'Confirmed' : 'Pending';
                 Swal.fire({
                     icon: 'success',
                     title: 'Booking Confirmed!',
                     html: `
-                        <p>Your <strong>${data.data.service}</strong> booking is <strong>Pending</strong> confirmation.</p>
+                        <p>${isStaffView ? 'Walk-in' : 'Your'} <strong>${data.data.service}</strong> booking is <strong>${statusText}</strong>.</p>
                         <p style="margin-top:8px;font-size:0.9rem;opacity:0.8;">Booking ID: #${data.data.booking_id}</p>
                     `,
                     background: '#1a1f2e',
@@ -709,6 +736,7 @@ const ServiceBooking = ({ isStaffView = false }) => {
                 slot={selectedSlot}
                 onConfirm={handleConfirmBooking}
                 onClose={() => setShowModal(false)}
+                isStaffView={isStaffView}
             />
         </div>
     );

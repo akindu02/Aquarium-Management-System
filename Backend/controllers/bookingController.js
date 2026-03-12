@@ -158,6 +158,7 @@ module.exports = {
     deleteTimeSlot,
     // Booking CRUD
     createBooking,
+    createWalkInBooking,
     getCustomerBookings,
     cancelBooking,
     getAllBookings,
@@ -285,6 +286,133 @@ async function createBooking(req, res) {
         await client.query('ROLLBACK');
         console.error('createBooking error:', error);
         return res.status(500).json({ success: false, message: 'Server error creating booking.' });
+    } finally {
+        client.release();
+    }
+}
+
+/**
+ * POST /api/bookings/walk-in
+ * Staff creates a booking on behalf of a walk-in customer.
+ * Uses pos_customers table to store walk-in customer info.
+ */
+async function createWalkInBooking(req, res) {
+    const client = await pool.connect();
+    try {
+        const staffId = req.user.id;
+        const { slot_id, phone, city, address, notes, customer_name } = req.body;
+
+        if (!slot_id) {
+            return res.status(400).json({ success: false, message: 'slot_id is required.' });
+        }
+        if (!phone || !city || !address) {
+            return res.status(400).json({ success: false, message: 'phone, city and address are required.' });
+        }
+        if (!customer_name || !customer_name.trim()) {
+            return res.status(400).json({ success: false, message: 'customer_name is required for walk-in bookings.' });
+        }
+
+        // Validate phone
+        const digits = phone.replace(/\D/g, '');
+        if (digits.length < 9 || digits.length > 15) {
+            return res.status(400).json({ success: false, message: 'Please provide a valid phone number.' });
+        }
+
+        await client.query('BEGIN');
+
+        // 1. Lock and check the slot
+        const slotResult = await client.query(
+            `SELECT ts.slot_id, ts.service_id, ts.start_time, ts.end_time, ts.status,
+                    s.service_type
+             FROM service_time_slots ts
+             JOIN services s ON ts.service_id = s.service_id
+             WHERE ts.slot_id = $1
+             FOR UPDATE`,
+            [slot_id]
+        );
+
+        if (slotResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ success: false, message: 'Time slot not found.' });
+        }
+
+        const slot = slotResult.rows[0];
+
+        if (slot.status !== 'Available') {
+            await client.query('ROLLBACK');
+            return res.status(409).json({ success: false, message: 'This slot is no longer available. Please choose another slot.' });
+        }
+
+        // 2. Find or create a pos_customer record
+        let posCustomerId;
+        const existingCustomer = await client.query(
+            `SELECT pos_customer_id FROM pos_customers WHERE phone = $1 LIMIT 1`,
+            [phone.trim()]
+        );
+
+        if (existingCustomer.rows.length > 0) {
+            posCustomerId = existingCustomer.rows[0].pos_customer_id;
+            // Update name/address if changed
+            await client.query(
+                `UPDATE pos_customers SET name = $1, address = $2 WHERE pos_customer_id = $3`,
+                [customer_name.trim(), address.trim(), posCustomerId]
+            );
+        } else {
+            const newCustomer = await client.query(
+                `INSERT INTO pos_customers (name, phone, address) VALUES ($1, $2, $3) RETURNING pos_customer_id`,
+                [customer_name.trim(), phone.trim(), address.trim()]
+            );
+            posCustomerId = newCustomer.rows[0].pos_customer_id;
+        }
+
+        // 3. Create the booking (customer_id is NULL for walk-in)
+        const bookingResult = await client.query(
+            `INSERT INTO service_bookings
+             (customer_id, pos_customer_id, slot_id, booking_date, status, service_phone, service_city, service_address, notes, booked_by_staff_id)
+             VALUES (NULL, $1, $2, $3, 'Confirmed', $4, $5, $6, $7, $8)
+             RETURNING *`,
+            [
+                posCustomerId,
+                slot_id,
+                slot.start_time,
+                phone.trim(),
+                city.trim(),
+                address.trim(),
+                notes ? notes.trim() : null,
+                staffId,
+            ]
+        );
+
+        // 4. Mark slot as Booked
+        await client.query(
+            `UPDATE service_time_slots SET status = 'Booked' WHERE slot_id = $1`,
+            [slot_id]
+        );
+
+        await client.query('COMMIT');
+
+        const booking = bookingResult.rows[0];
+
+        return res.status(201).json({
+            success: true,
+            message: 'Walk-in booking created successfully.',
+            data: {
+                booking_id: booking.booking_id,
+                service: slot.service_type,
+                booking_date: slot.start_time,
+                end_time: slot.end_time,
+                status: booking.status,
+                service_phone: booking.service_phone,
+                service_city: booking.service_city,
+                service_address: booking.service_address,
+                customer_name: customer_name.trim(),
+                walk_in: true,
+            },
+        });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('createWalkInBooking error:', error);
+        return res.status(500).json({ success: false, message: 'Server error creating walk-in booking.' });
     } finally {
         client.release();
     }
@@ -446,17 +574,21 @@ async function getAllBookings(req, res) {
                 sb.service_address,
                 sb.notes,
                 sb.created_at,
+                sb.pos_customer_id,
+                sb.booked_by_staff_id,
                 s.service_type,
                 s.base_price,
                 ts.start_time,
                 ts.end_time,
-                u.name  AS customer_name,
-                u.email AS customer_email
+                COALESCE(u.name, pc.name)  AS customer_name,
+                COALESCE(u.email, pc.email) AS customer_email,
+                CASE WHEN sb.pos_customer_id IS NOT NULL THEN true ELSE false END AS is_walk_in
              FROM service_bookings sb
              LEFT JOIN service_time_slots ts ON sb.slot_id = ts.slot_id
              LEFT JOIN services s ON ts.service_id = s.service_id
              LEFT JOIN customers c ON sb.customer_id = c.user_id
              LEFT JOIN users u ON c.user_id = u.id
+             LEFT JOIN pos_customers pc ON sb.pos_customer_id = pc.pos_customer_id
              ${whereClause}
              ORDER BY sb.booking_date DESC
              LIMIT $${params.length - 1} OFFSET $${params.length}`,
