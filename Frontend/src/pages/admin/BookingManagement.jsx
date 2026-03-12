@@ -444,17 +444,12 @@ const BookingManagement = () => {
                                 <h4><MapPin size={16} /> Location & Service</h4>
                                 <p><strong>Address:</strong> {selectedBooking.location}</p>
                                 <p><strong>Service:</strong> {selectedBooking.service}</p>
-                                <p><strong>Tank Info:</strong> {selectedBooking.tankSize}</p>
                             </div>
                             <div className="detail-section">
                                 <h4><Clock size={16} /> Timing</h4>
                                 <p><strong>Date:</strong> {selectedBooking.date}</p>
                                 <p><strong>Slot:</strong> {selectedBooking.time}</p>
                                 <p><strong>Created:</strong> {selectedBooking.created}</p>
-                            </div>
-                            <div className="detail-section">
-                                <h4><AlertCircle size={16} /> Notes</h4>
-                                <p className="notes-text">{selectedBooking.notes}</p>
                             </div>
                         </div>
 

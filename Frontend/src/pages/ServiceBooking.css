@@ -497,9 +497,9 @@
     background: linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-    border-radius: 1.5rem;
-    padding: 2.5rem 2rem 2rem;
-    max-width: 500px;
+    border-radius: 1.25rem;
+    padding: 1.75rem 1.5rem 1.5rem;
+    max-width: 440px;
     width: 100%;
     position: relative;
     transform: translateY(0);
@@ -538,46 +538,46 @@
 .modal-icon-wrapper {
     display: flex;
     justify-content: center;
-    margin-bottom: 1.5rem;
-    margin-top: -4rem; /* Break out of the modal slightly */
+    margin-bottom: 1rem;
+    margin-top: -3rem; /* Break out of the modal slightly */
 }
 
 .modern-icon {
-    width: 70px;
-    height: 70px;
+    width: 60px;
+    height: 60px;
     background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    box-shadow: 0 10px 25px -5px rgba(6, 182, 212, 0.5), 0 0 0 6px var(--color-bg);
+    box-shadow: 0 10px 25px -5px rgba(6, 182, 212, 0.5), 0 0 0 5px var(--color-bg);
 }
 
 .booking-modal h3 {
     text-align: center;
-    font-size: 1.5rem;
+    font-size: 1.35rem;
     font-weight: 700;
     color: white;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
     letter-spacing: -0.025em;
 }
 
 .modern-details {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 1rem;
-    padding: 1.25rem;
-    margin-bottom: 1.5rem;
+    border-radius: 0.875rem;
+    padding: 1rem;
+    margin-bottom: 1.25rem;
 }
 
 .modal-detail-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.75rem 0;
+    padding: 0.6rem 0;
     border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
 }
 
 .modal-detail-row:first-child {
@@ -627,12 +627,12 @@
 
 .modal-input {
     width: 100%;
-    padding: 0.75rem 1rem;
-    border-radius: 0.75rem;
+    padding: 0.65rem 0.875rem;
+    border-radius: 0.6rem;
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(0, 0, 0, 0.2);
     color: white;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     transition: all 0.2s ease;
 }
 
@@ -640,11 +640,11 @@
     outline: none;
     border-color: var(--color-primary);
     background: rgba(0, 0, 0, 0.4);
-    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
 }
 
 .modal-input::placeholder {
-    color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.25);
 }
 
 .input-wrapper {
