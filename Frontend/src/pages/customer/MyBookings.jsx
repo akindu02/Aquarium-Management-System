@@ -39,61 +39,81 @@ const BookingDetailModal = ({ booking, onClose }) => {
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="booking-detail-modal" onClick={(e) => e.stopPropagation()}>
-                <button className="modal-close-btn" onClick={onClose}><X size={22} /></button>
+                <button className="modal-close-btn" onClick={onClose}><X size={20} /></button>
 
-                <h3 className="detail-modal-title">{booking.service_type}</h3>
-                <span className={`status-badge ${meta.color}`}>
-                    <Icon size={14} /> {meta.label}
-                </span>
-
-                <div className="detail-grid">
-                    <div className="detail-row">
-                        <span className="detail-label">Booking ID</span>
-                        <span className="detail-value mono">BK-{String(booking.booking_id).padStart(4, '0')}</span>
-                    </div>
-                    <div className="detail-row">
-                        <span className="detail-label">Date</span>
-                        <span className="detail-value">{formatDate(booking.start_time || booking.booking_date)}</span>
-                    </div>
-                    <div className="detail-row">
-                        <span className="detail-label">Time</span>
-                        <span className="detail-value">
-                            {booking.start_time
-                                ? `${formatTime(booking.start_time)} â€“ ${formatTime(booking.end_time)}`
-                                : formatTime(booking.booking_date)}
+                <div className="dm-header">
+                    <h3 className="dm-title">{booking.service_type}</h3>
+                    <div className="dm-header-meta">
+                        <span className={`bk-status-badge ${meta.color}`}>
+                            <Icon size={12} /> {meta.label}
                         </span>
-                    </div>
-                    {booking.base_price && (
-                        <div className="detail-row">
-                            <span className="detail-label">Base Price</span>
-                            <span className="detail-value primary">Rs. {parseFloat(booking.base_price).toFixed(2)}</span>
-                        </div>
-                    )}
-                    <div className="detail-row">
-                        <span className="detail-label">Phone</span>
-                        <span className="detail-value">{booking.service_phone || 'â€”'}</span>
-                    </div>
-                    <div className="detail-row">
-                        <span className="detail-label">City</span>
-                        <span className="detail-value">{booking.service_city || 'â€”'}</span>
-                    </div>
-                    <div className="detail-row">
-                        <span className="detail-label">Address</span>
-                        <span className="detail-value">{booking.service_address || 'â€”'}</span>
-                    </div>
-                    {booking.notes && (
-                        <div className="detail-row">
-                            <span className="detail-label">Notes</span>
-                            <span className="detail-value">{booking.notes}</span>
-                        </div>
-                    )}
-                    <div className="detail-row">
-                        <span className="detail-label">Booked On</span>
-                        <span className="detail-value">{formatDate(booking.created_at)}</span>
+                        <span className="dm-id">#BK-{String(booking.booking_id).padStart(4, '0')}</span>
                     </div>
                 </div>
 
-                <button className="modal-close-action" onClick={onClose}>Close</button>
+                <div className="dm-content">
+                    <div className="dm-section">
+                        <div className="dm-row-2">
+                            <div className="dm-info-block">
+                                <Calendar size={18} className="dm-icon" />
+                                <div>
+                                    <span className="dm-label">Date</span>
+                                    <span className="dm-val">{formatDate(booking.start_time || booking.booking_date)}</span>
+                                </div>
+                            </div>
+                            <div className="dm-info-block">
+                                <Clock size={18} className="dm-icon" />
+                                <div>
+                                    <span className="dm-label">Time</span>
+                                    <span className="dm-val">
+                                        {booking.start_time
+                                            ? `${formatTime(booking.start_time)} – ${formatTime(booking.end_time)}`
+                                            : formatTime(booking.booking_date)}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {booking.base_price && parseFloat(booking.base_price) > 0 && (
+                            <div className="dm-info-block mt-3">
+                                <div className="dm-icon-text">Rs.</div>
+                                <div>
+                                    <span className="dm-label">Base Price</span>
+                                    <span className="dm-val dm-price">Rs. {parseFloat(booking.base_price).toFixed(2)}</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="dm-section">
+                        <h4 className="dm-section-title">Location & Contact</h4>
+                        <div className="dm-info-group">
+                            <div className="dm-info-row">
+                                <MapPin size={16} className="dm-icon-sm" />
+                                <div>
+                                    <span className="dm-val d-block">{booking.service_address || '—'}</span>
+                                    {booking.service_city && <span className="dm-subval">{booking.service_city}</span>}
+                                </div>
+                            </div>
+                            <div className="dm-info-row mt-2">
+                                <Phone size={16} className="dm-icon-sm" />
+                                <span className="dm-val">{booking.service_phone || '—'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {booking.notes && (
+                        <div className="dm-section">
+                            <h4 className="dm-section-title">Notes</h4>
+                            <div className="dm-notes">{booking.notes}</div>
+                        </div>
+                    )}
+                </div>
+
+                <div className="dm-footer">
+                    <span className="dm-booked-info">Booked on {formatDate(booking.created_at)}</span>
+                    <button className="dm-close-action" onClick={onClose}>Close window</button>
+                </div>
             </div>
         </div>
     );
@@ -381,22 +401,49 @@ const MyBookings = () => {
                 .bk-cancel-btn:hover:not(:disabled) { background: rgba(239,68,68,0.2); }
                 .bk-cancel-btn:disabled { opacity: 0.45; cursor: not-allowed; }
                 /* Detail Modal */
-                .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; backdrop-filter: blur(4px); }
-                .booking-detail-modal { background: #1a1f2e; border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 2rem; width: 100%; max-width: 480px; position: relative; display: flex; flex-direction: column; gap: 1rem; max-height: 90vh; overflow-y: auto; }
-                .modal-close-btn { position: absolute; top: 1rem; right: 1rem; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
-                .modal-close-btn:hover { background: rgba(255,255,255,0.12); color: var(--text-main); }
-                .detail-modal-title { font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin: 0; padding-right: 2.5rem; }
-                .detail-grid { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem; }
-                .detail-row { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.9rem; }
-                .detail-label { color: var(--text-muted); flex-shrink: 0; }
-                .detail-value { color: var(--text-main); text-align: right; word-break: break-word; }
-                .detail-value.primary { color: #4ecdc4; font-weight: 600; }
-                .detail-value.mono { font-family: monospace; }
-                .modal-close-action { width: 100%; padding: 0.75rem; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--text-main); cursor: pointer; font-weight: 600; transition: all 0.2s; margin-top: 0.5rem; }
-                .modal-close-action:hover { background: rgba(255,255,255,0.1); }
+                .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; backdrop-filter: blur(4px); animation: fadeIn 0.2s ease-in-out; }
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                .booking-detail-modal { background: #1a1f2e; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 1.75rem; width: 100%; max-width: 440px; position: relative; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); transform: translateY(0); transition: transform 0.3s; }
+                .modal-close-btn { position: absolute; top: 1.25rem; right: 1.25rem; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+                .modal-close-btn:hover { background: rgba(255,255,255,0.15); color: var(--text-main); }
+                
+                .dm-header { padding-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 1.25rem; padding-right: 2rem; }
+                .dm-title { font-size: 1.4rem; font-weight: 700; color: var(--text-main); margin: 0; }
+                .dm-header-meta { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.6rem; flex-wrap: wrap; }
+                .dm-id { font-family: monospace; font-size: 0.85rem; color: var(--text-muted); background: rgba(255,255,255,0.05); padding: 0.2rem 0.5rem; border-radius: 4px; }
+                
+                .dm-content { display: flex; flex-direction: column; gap: 1.5rem; }
+                .dm-section { display: flex; flex-direction: column; gap: 0.75rem; }
+                .dm-section-title { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin: 0 0 0.25rem 0; font-weight: 600; }
+                
+                .dm-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+                .dm-info-block { display: flex; align-items: flex-start; gap: 0.75rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 0.85rem; border-radius: 12px; }
+                .dm-icon { color: #4ecdc4; flex-shrink: 0; margin-top: 0.1rem; }
+                .dm-icon-text { color: #4ecdc4; font-weight: 700; font-size: 0.9rem; margin-top: 0.1rem; flex-shrink: 0; }
+                .dm-label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.15rem; }
+                .dm-val { display: block; font-size: 0.95rem; color: var(--text-main); font-weight: 500; }
+                .dm-price { color: #4ecdc4; font-size: 1.05rem; }
+                
+                .dm-info-group { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 1rem; }
+                .dm-info-row { display: flex; align-items: flex-start; gap: 0.75rem; }
+                .dm-icon-sm { color: var(--text-muted); flex-shrink: 0; margin-top: 0.15rem; }
+                .d-block { display: block; margin-bottom: 0.1rem; }
+                .dm-subval { display: block; font-size: 0.85rem; color: var(--text-muted); }
+                .mt-2 { margin-top: 1rem; }
+                .mt-3 { margin-top: 0.75rem; }
+                
+                .dm-notes { background: rgba(245, 158, 11, 0.05); border-left: 3px solid #f59e0b; padding: 0.75rem 1rem; border-radius: 0 8px 8px 0; font-size: 0.9rem; color: rgba(255,255,255,0.85); line-height: 1.5; font-style: italic; }
+                
+                .dm-footer { display: flex; flex-direction: column; align-items: center; gap: 1rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.08); }
+                .dm-booked-info { font-size: 0.8rem; color: var(--text-muted); text-align: center; }
+                .dm-close-action { width: 100%; padding: 0.8rem; background: var(--color-primary, #4ecdc4); border: none; border-radius: 10px; color: #ffffff; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2); }
+                .dm-close-action:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 6px 16px rgba(78, 205, 196, 0.3); }
+                
                 @media (max-width: 640px) {
                     .bookings-list { grid-template-columns: 1fr; }
                     .bk-info-grid { grid-template-columns: 1fr; }
+                    .dm-row-2 { grid-template-columns: 1fr; gap: 0.75rem; }
+                    .booking-detail-modal { padding: 1.25rem; }
                 }
             `}</style>
         </div>
