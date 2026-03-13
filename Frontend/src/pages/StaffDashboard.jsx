@@ -490,24 +490,24 @@ const StaffDashboard = () => {
                 .dashboard-grid {
                     display: grid;
                     grid-template-columns: repeat(4, 1fr);
-                    gap: 1.25rem;
-                    margin-top: 1.5rem;
+                    gap: 0.75rem;
+                    margin-top: 1rem;
                     transition: all 0.3s ease;
                 }
 
                 .primary-card {
                     grid-column: span 2;
-                    min-height: 180px;
+                    min-height: 140px;
                 }
 
                 .action-card {
                     grid-column: span 1;
-                    min-height: 140px;
+                    min-height: 110px;
                 }
 
                 .dashboard-card {
-                    padding: 1.25rem;
-                    border-radius: 16px;
+                    padding: 0.85rem;
+                    border-radius: 12px;
                     background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
                     border: 1px solid rgba(255, 255, 255, 0.08);
                     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -537,17 +537,22 @@ const StaffDashboard = () => {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    margin-bottom: 1rem;
+                    margin-bottom: 0.5rem;
                 }
 
                 .icon-wrapper {
-                    width: 42px;
-                    height: 42px;
-                    border-radius: 12px;
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 8px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     transition: transform 0.3s ease;
+                }
+
+                .card-icon-new {
+                  width: 18px;
+                  height: 18px;
                 }
 
                 .dashboard-card:hover .icon-wrapper {
@@ -564,37 +569,42 @@ const StaffDashboard = () => {
                 .card-body { position: relative; z-index: 1; }
 
                 .context-label {
-                    font-size: 0.7rem;
+                    font-size: 0.6rem;
                     font-weight: 700;
                     text-transform: uppercase;
-                    letter-spacing: 1px;
+                    letter-spacing: 0.8px;
                     color: rgba(255,255,255,0.4);
-                    margin-bottom: 0.25rem;
+                    margin-bottom: 0.15rem;
                     display: block;
                 }
 
                 .dashboard-card h3 {
-                    font-size: 1.2rem;
+                    font-size: 1rem;
                     color: var(--text-main);
-                    margin-bottom: 0.25rem;
+                    margin-bottom: 0.1rem;
                     letter-spacing: -0.01em;
                 }
 
                 .dashboard-card p {
                     color: var(--text-muted);
-                    font-size: 0.85rem;
-                    margin-bottom: 1rem;
+                    font-size: 0.75rem;
+                    margin-bottom: 0.5rem;
+                }
+
+                .description-small {
+                    font-size: 0.7rem !important;
+                    margin-bottom: 0 !important;
                 }
 
                 .stat-row {
                     display: flex;
                     align-items: flex-end;
                     justify-content: space-between;
-                    margin-top: 1rem;
+                    margin-top: 0.5rem;
                 }
 
                 .stat-value {
-                    font-size: 1.75rem;
+                    font-size: 1.4rem;
                     font-weight: 800;
                     color: var(--text-main);
                     line-height: 1;
@@ -602,28 +612,28 @@ const StaffDashboard = () => {
                 }
 
                 .stat-subtext {
-                    font-size: 0.75rem;
+                    font-size: 0.65rem;
                     color: var(--text-muted);
                 }
 
                 .stat-minimal {
                     display: flex;
                     align-items: center;
-                    gap: 0.75rem;
-                    margin-bottom: 0.5rem;
+                    gap: 0.5rem;
+                    margin-bottom: 0.2rem;
                 }
 
                 .stat-value-large {
-                    font-size: 2.5rem;
+                    font-size: 1.8rem;
                     font-weight: 800;
                     color: var(--text-main);
                     line-height: 1;
                 }
 
                 .badge {
-                    padding: 0.35rem 0.75rem;
-                    border-radius: 8px;
-                    font-size: 0.7rem;
+                    padding: 0.2rem 0.4rem;
+                    border-radius: 6px;
+                    font-size: 0.6rem;
                     font-weight: 700;
                     text-transform: uppercase;
                 }
