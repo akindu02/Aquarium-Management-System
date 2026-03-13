@@ -10,6 +10,7 @@ const posRoutes = require('./routes/posRoutes');
 const restockRoutes = require('./routes/restockRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
+const staffRoutes = require('./routes/staffRoutes');
 const { pool } = require('./config/db');
 
 const app = express();
@@ -97,6 +98,9 @@ app.use('/api/restock', restockRoutes);
 
 // Notification routes
 app.use('/api/notifications', notificationRoutes);
+
+// Staff routes
+app.use('/api/staff', staffRoutes);
 
 // Booking/Time slot routes
 app.use('/api/bookings', bookingRoutes);

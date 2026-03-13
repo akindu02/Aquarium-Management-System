@@ -122,6 +122,15 @@ export const resetPasswordAPI = async (email, token, newPassword) => {
     });
 };
 
+/**
+ * Staff Dashboard Stats
+ */
+export const getStaffDashboardStatsAPI = async () => {
+    return apiRequest('/staff/dashboard-stats', {
+        method: 'GET',
+    });
+};
+
 // =============================================
 // ADMIN USER MANAGEMENT APIs
 // =============================================

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { LayoutDashboard, ClipboardList, Package, Bell, LogOut, CheckCircle2, AlertTriangle, CalendarClock, Store, Banknote, ChevronRight } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { LayoutDashboard, ClipboardList, Package, Bell, LogOut, CheckCircle2, AlertTriangle, CalendarClock, Store, Banknote, ChevronRight, RefreshCcw, Globe } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
-import { logoutAPI } from '../utils/api';
+import { logoutAPI, getStaffDashboardStatsAPI } from '../utils/api';
 import ProfileModal from '../components/ProfileModal';
 import BookingManagement from './admin/BookingManagement';
 import InventoryManagement from './admin/InventoryManagement';
@@ -17,6 +17,37 @@ const StaffDashboard = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [user, setUser] = useState(getUserData());
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [stats, setStats] = useState({
+    totalDailySales: 0,
+    todayTransactionsCount: 0,
+    pendingOrdersCount: 0,
+    todayBookingsCount: 0,
+    lowStockCount: 0,
+    onlineSalesRevenue: 0,
+    onlineOrdersCount: 0,
+    pendingRestocksCount: 0,
+  });
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  const fetchStats = async () => {
+    try {
+      setLoadingStats(true);
+      const response = await getStaffDashboardStatsAPI();
+      if (response.success) {
+        setStats(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeMenu === 'dashboard') {
+      fetchStats();
+    }
+  }, [activeMenu]);
 
   const getInitials = (name) => { if (!name) return '?'; const p = name.trim().split(/\s+/); return p.length >= 2 ? (p[0][0] + p[p.length-1][0]).toUpperCase() : p[0][0].toUpperCase(); };
 
@@ -46,7 +77,7 @@ const StaffDashboard = () => {
   const renderContent = () => {
     switch (activeMenu) {
       case 'dashboard':
-        return <DashboardContent onNavigate={setActiveMenu} />;
+        return <DashboardContent onNavigate={setActiveMenu} stats={stats} loading={loadingStats} onRefresh={fetchStats} />;
       case 'pos':
         return <PointOfSale />;
       case 'products':
@@ -431,45 +462,193 @@ const StaffDashboard = () => {
                     color: var(--text-muted);
                 }
 
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+
+                .spin {
+                    animation: spin 1s linear infinite;
+                }
+
+                .loading-opacity {
+                    opacity: 0.6;
+                    pointer-events: none;
+                    filter: blur(1px);
+                }
+
+                .refresh-btn:hover {
+                    opacity: 0.9;
+                    transform: scale(1.02);
+                }
+
+                .refresh-btn:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+
                 .dashboard-grid {
                     display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-                    gap: 1.5rem;
-                    margin-top: 2rem;
+                    grid-template-columns: repeat(4, 1fr);
+                    gap: 1.25rem;
+                    margin-top: 1.5rem;
+                    transition: all 0.3s ease;
+                }
+
+                .primary-card {
+                    grid-column: span 2;
+                    min-height: 180px;
+                }
+
+                .action-card {
+                    grid-column: span 1;
+                    min-height: 140px;
                 }
 
                 .dashboard-card {
-                    padding: 2rem;
+                    padding: 1.25rem;
                     border-radius: 16px;
-                    background: rgba(255, 255, 255, 0.03);
+                    background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
                     border: 1px solid rgba(255, 255, 255, 0.08);
-                    transition: all 0.3s ease;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                     cursor: pointer;
+                    display: flex;
+                    flex-direction: column;
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .dashboard-card::before {
+                    content: '';
+                    position: absolute;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.02) 100%);
+                    pointer-events: none;
                 }
 
                 .dashboard-card:hover {
-                    transform: translateY(-5px);
-                    box-shadow: 0 10px 30px rgba(78, 205, 196, 0.15);
+                    transform: translateY(-4px);
+                    background: rgba(255, 255, 255, 0.06);
                     border-color: rgba(78, 205, 196, 0.3);
+                    box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.4);
+                }
+
+                .card-top {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 1rem;
+                }
+
+                .icon-wrapper {
+                    width: 42px;
+                    height: 42px;
+                    border-radius: 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: transform 0.3s ease;
+                }
+
+                .dashboard-card:hover .icon-wrapper {
+                    transform: scale(1.1) rotate(-5deg);
+                }
+
+                .online-bg { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+                .store-bg { background: rgba(78, 205, 196, 0.15); color: var(--color-primary); }
+                .pending-bg { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+                .booking-bg { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+                .alert-bg { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+                .restock-bg { background: rgba(20, 184, 166, 0.15); color: #14b8a6; }
+
+                .card-body { position: relative; z-index: 1; }
+
+                .context-label {
+                    font-size: 0.7rem;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    color: rgba(255,255,255,0.4);
+                    margin-bottom: 0.25rem;
+                    display: block;
                 }
 
                 .dashboard-card h3 {
-                    font-size: 1.25rem;
+                    font-size: 1.2rem;
                     color: var(--text-main);
-                    margin-bottom: 0.5rem;
+                    margin-bottom: 0.25rem;
+                    letter-spacing: -0.01em;
                 }
 
                 .dashboard-card p {
                     color: var(--text-muted);
-                    margin-bottom: 1.5rem;
-                    font-size: 0.9rem;
+                    font-size: 0.85rem;
+                    margin-bottom: 1rem;
                 }
 
-                .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
-                .card-arrow { color: var(--text-muted); opacity: 0; transition: all 0.2s; }
-                .dashboard-card:hover .card-arrow { opacity: 1; transform: translateX(5px); }
+                .stat-row {
+                    display: flex;
+                    align-items: flex-end;
+                    justify-content: space-between;
+                    margin-top: 1rem;
+                }
 
-                .card-stat {
+                .stat-value {
+                    font-size: 1.75rem;
+                    font-weight: 800;
+                    color: var(--text-main);
+                    line-height: 1;
+                    display: block;
+                }
+
+                .stat-subtext {
+                    font-size: 0.75rem;
+                    color: var(--text-muted);
+                }
+
+                .stat-minimal {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                    margin-bottom: 0.5rem;
+                }
+
+                .stat-value-large {
+                    font-size: 2.5rem;
+                    font-weight: 800;
+                    color: var(--text-main);
+                    line-height: 1;
+                }
+
+                .badge {
+                    padding: 0.35rem 0.75rem;
+                    border-radius: 8px;
+                    font-size: 0.7rem;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                }
+
+                .online-badge { background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2); }
+                .store-badge { background: rgba(78, 205, 196, 0.1); color: var(--color-primary); border: 1px solid rgba(78, 205, 196, 0.2); }
+                .pending-badge { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); }
+                .booking-badge { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.2); }
+                .alert-badge { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
+                .restock-badge { background: rgba(20, 184, 166, 0.1); color: #14b8a6; border: 1px solid rgba(20, 184, 166, 0.2); }
+
+                .card-arrow { color: var(--text-muted); opacity: 0; transition: all 0.2s; }
+                .dashboard-card:hover .card-arrow { opacity: 1; color: var(--color-primary); }
+
+                /* Mobile overrides for designer grid */
+                @media (max-width: 1200px) {
+                    .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
+                    .primary-card { grid-column: span 2; }
+                    .action-card { grid-column: span 1; }
+                }
+
+                @media (max-width: 640px) {
+                    .dashboard-grid { grid-template-columns: 1fr; }
+                    .primary-card, .action-card { grid-column: span 1; }
+                }
                     display: flex;
                     flex-direction: column;
                     padding-top: 1rem;
@@ -557,55 +736,159 @@ const StaffDashboard = () => {
 };
 
 // Dashboard Content Component
-const DashboardContent = ({ onNavigate }) => (
+const DashboardContent = ({ onNavigate, stats, loading, onRefresh }) => (
   <>
-    <div className="dashboard-welcome">
-      <h1 className="dashboard-heading">Staff Dashboard</h1>
-      <p className="dashboard-subtitle">
-        Overview of today's store activities and tasks.
-      </p>
+    <div className="dashboard-welcome" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+      <div>
+        <h1 className="dashboard-heading">Staff Dashboard</h1>
+        <p className="dashboard-subtitle">
+          Overview of today's store activities and tasks.
+        </p>
+      </div>
+      <button 
+        className="refresh-btn" 
+        onClick={onRefresh} 
+        disabled={loading}
+        title="Sync with real data"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          padding: '0.6rem 1rem',
+          backgroundColor: 'rgba(78, 205, 196, 0.1)',
+          border: '1px solid var(--color-primary)',
+          color: 'var(--color-primary)',
+          borderRadius: '8px',
+          cursor: 'pointer',
+          fontSize: '0.85rem',
+          fontWeight: '600',
+          transition: 'all 0.2s',
+          marginTop: '-1rem'
+        }}
+      >
+        <RefreshCcw size={16} className={loading ? 'spin' : ''} />
+        {loading ? 'Syncing...' : 'Sync Data'}
+      </button>
     </div>
 
-    <div className="dashboard-grid">
-      {/* Sales / POS Summary */}
-      <div className="dashboard-card" onClick={() => onNavigate('pos')}>
-        <div className="card-header">
-          <Store className="card-icon" style={{ color: "var(--color-primary)" }} />
-          <ChevronRight size={20} className="card-arrow" />
+    <div className={`dashboard-grid ${loading ? 'loading-opacity' : ''}`}>
+      {/* Primary Row: High-Level Sales Overview */}
+      <div className="dashboard-card primary-card online-card" onClick={() => onNavigate('orders')}>
+        <div className="card-top">
+          <div className="icon-wrapper online-bg">
+            <Globe size={24} className="card-icon-new" />
+          </div>
+          <ChevronRight size={18} className="card-arrow" />
         </div>
-        <h3>Daily Sales</h3>
-        <p>Revenue generated today via POS</p>
-        <div className="card-stat">
-          <span className="stat-number">LKR 42,500</span>
-          <span className="stat-label">12 Transactions</span>
-        </div>
-      </div>
-
-      {/* Orders Summary */}
-      <div className="dashboard-card" onClick={() => onNavigate('orders')}>
-        <div className="card-header">
-          <ClipboardList className="card-icon" style={{ color: "#f59e0b" }} />
-          <ChevronRight size={20} className="card-arrow" />
-        </div>
-        <h3>Pending Orders</h3>
-        <p>Customer & Supplier orders to process</p>
-        <div className="card-stat">
-          <span className="stat-number">5</span>
-          <span className="stat-label">Action Required</span>
+        <div className="card-body">
+          <span className="context-label">Operational Performance</span>
+          <h3>Total Online Sales</h3>
+          <p>Historical revenue from all customer orders</p>
+          <div className="stat-row">
+            <div className="stat-group">
+              <span className="stat-value">
+                LKR {stats.onlineSalesRevenue.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+              </span>
+              <span className="stat-subtext">Total Revenue</span>
+            </div>
+            <div className="badge online-badge">{stats.onlineOrdersCount} Lifetime Orders</div>
+          </div>
         </div>
       </div>
 
-      {/* Bookings Summary */}
-      <div className="dashboard-card" onClick={() => onNavigate('bookings')}>
-        <div className="card-header">
-          <CalendarClock className="card-icon" style={{ color: "#8b5cf6" }} />
-          <ChevronRight size={20} className="card-arrow" />
+      <div className="dashboard-card primary-card store-card" onClick={() => onNavigate('pos')}>
+        <div className="card-top">
+          <div className="icon-wrapper store-bg">
+            <Store size={24} className="card-icon-new" />
+          </div>
+          <ChevronRight size={18} className="card-arrow" />
         </div>
-        <h3>Service Bookings</h3>
-        <p>Upcoming maintenance & services</p>
-        <div className="card-stat">
-          <span className="stat-number">3</span>
-          <span className="stat-label">Scheduled Today</span>
+        <div className="card-body">
+          <span className="context-label">Daily Activities</span>
+          <h3>POS Sales Today</h3>
+          <p>Revenue generated today via walk-ins</p>
+          <div className="stat-row">
+            <div className="stat-group">
+              <span className="stat-value">
+                LKR {stats.totalDailySales.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+              </span>
+              <span className="stat-subtext">Today's Earnings</span>
+            </div>
+            <div className="badge store-badge">{stats.todayTransactionsCount} Transactions</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Secondary Row: Action Items */}
+      <div className="dashboard-card action-card pending-card" onClick={() => onNavigate('orders')}>
+        <div className="card-top">
+          <div className="icon-wrapper pending-bg">
+            <ClipboardList size={20} className="card-icon-new" />
+          </div>
+          <ChevronRight size={18} className="card-arrow" />
+        </div>
+        <div className="card-body">
+          <span className="context-label">Logistics</span>
+          <h3>Active Shipments</h3>
+          <div className="stat-minimal">
+            <span className="stat-value-large">{stats.pendingOrdersCount}</span>
+            <div className="badge pending-badge">Action Required</div>
+          </div>
+          <p className="description-small">Pending customer & supplier orders</p>
+        </div>
+      </div>
+
+      <div className="dashboard-card action-card booking-card" onClick={() => onNavigate('bookings')}>
+        <div className="card-top">
+          <div className="icon-wrapper booking-bg">
+            <CalendarClock size={20} className="card-icon-new" />
+          </div>
+          <ChevronRight size={18} className="card-arrow" />
+        </div>
+        <div className="card-body">
+          <span className="context-label">Maintenance</span>
+          <h3>Service Bookings</h3>
+          <div className="stat-minimal">
+            <span className="stat-value-large">{stats.todayBookingsCount}</span>
+            <div className="badge booking-badge">Today</div>
+          </div>
+          <p className="description-small">Upcoming maintenance & services</p>
+        </div>
+      </div>
+
+      <div className="dashboard-card action-card alert-card" onClick={() => onNavigate('products')}>
+        <div className="card-top">
+          <div className="icon-wrapper alert-bg">
+            <AlertTriangle size={20} className="card-icon-new" />
+          </div>
+          <ChevronRight size={18} className="card-arrow" />
+        </div>
+        <div className="card-body">
+          <span className="context-label">Inventory</span>
+          <h3>Low Stock Items</h3>
+          <div className="stat-minimal">
+            <span className="stat-value-large">{stats.lowStockCount}</span>
+            <div className="badge alert-badge">Restock Needed</div>
+          </div>
+          <p className="description-small">Products below safety threshold</p>
+        </div>
+      </div>
+
+      <div className="dashboard-card action-card restock-card" onClick={() => onNavigate('restock')}>
+        <div className="card-top">
+          <div className="icon-wrapper restock-bg">
+            <Bell size={20} className="card-icon-new" />
+          </div>
+          <ChevronRight size={18} className="card-arrow" />
+        </div>
+        <div className="card-body">
+          <span className="context-label">Supply Chain</span>
+          <h3>Restock Requests</h3>
+          <div className="stat-minimal">
+            <span className="stat-value-large">{stats.pendingRestocksCount}</span>
+            <div className="badge restock-badge">Waiting</div>
+          </div>
+          <p className="description-small">Pending requests to suppliers</p>
         </div>
       </div>
     </div>
