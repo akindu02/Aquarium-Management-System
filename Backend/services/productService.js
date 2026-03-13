@@ -74,15 +74,15 @@ const getProductById = async (productId) => {
 /**
  * Create a new product and sync its primary/secondary suppliers.
  */
-const createProduct = async ({ name, category, description, price, discount_percent, stock_quantity, supplier_id, secondary_supplier_id, image_url }) => {
+const createProduct = async ({ name, category, description, price, discount_percent, stock_quantity, supplier_id, secondary_supplier_id, image_url, expiry_date }) => {
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
 
         // 1 — Insert into products
         const { rows: prodRows } = await client.query(`
-            INSERT INTO products (name, category, description, price, discount_percent, stock_quantity, supplier_id, image_url)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            INSERT INTO products (name, category, description, price, discount_percent, stock_quantity, supplier_id, image_url, expiry_date)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING *
         `, [
             name,
@@ -93,6 +93,7 @@ const createProduct = async ({ name, category, description, price, discount_perc
             stock_quantity,
             supplier_id || null, // Primary supplier in main table
             image_url || null,
+            expiry_date || null,
         ]);
 
         const newProduct = prodRows[0];
@@ -131,7 +132,7 @@ const createProduct = async ({ name, category, description, price, discount_perc
  * Update an existing product and its supplier mappings.
  */
 const updateProduct = async (productId, fields) => {
-    const { name, category, description, price, discount_percent, stock_quantity, supplier_id, secondary_supplier_id, image_url } = fields;
+    const { name, category, description, price, discount_percent, stock_quantity, supplier_id, secondary_supplier_id, image_url, expiry_date } = fields;
 
     const client = await pool.connect();
     try {
@@ -151,8 +152,9 @@ const updateProduct = async (productId, fields) => {
                 stock_quantity   = COALESCE($6, stock_quantity),
                 supplier_id      = $7,
                 image_url        = COALESCE($8, image_url),
+                expiry_date      = $9,
                 updated_at       = CURRENT_TIMESTAMP
-            WHERE product_id = $9
+            WHERE product_id = $10
             RETURNING *
         `, [
             name        ?? null,
@@ -163,6 +165,7 @@ const updateProduct = async (productId, fields) => {
             stock_quantity   ?? null,
             supplier_id      ?? null,
             image_url        ?? null,
+            expiry_date      ?? null,
             productId,
         ]);
 

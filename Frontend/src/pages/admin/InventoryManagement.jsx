@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import {
     Search, Plus, Edit, Trash2, Package, AlertTriangle,
     CheckCircle, XCircle, ChevronDown, Tag, Banknote,
-    Layers, Image, FileText, Percent, User, RefreshCw, X
+    Layers, Image, FileText, Percent, User, RefreshCw, X,
+    Calendar
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 
@@ -19,6 +20,7 @@ const EMPTY_FORM = {
     stock_quantity: '',
     supplier_id: '',
     secondary_supplier_id: '',
+    expiry_date: '',
     image: null,
     imagePreview: null,
 };
@@ -156,6 +158,7 @@ const InventoryManagement = () => {
             body.append('stock_quantity', formData.stock_quantity);
             body.append('supplier_id', formData.supplier_id);
             body.append('secondary_supplier_id', formData.secondary_supplier_id);
+            body.append('expiry_date', formData.expiry_date);
             if (formData.image) body.append('image', formData.image);
 
             const res = await fetch(`${API}/products`, {
@@ -205,6 +208,7 @@ const InventoryManagement = () => {
                 stock_quantity: p.stock_quantity ?? '',
                 supplier_id:           p.supplier_id || '',
                 secondary_supplier_id: p.secondary_supplier_id || '',
+                expiry_date: p.expiry_date ? p.expiry_date.split('T')[0] : '',
                 image: null,
                 imagePreview: p.image_url ? `http://localhost:5001${p.image_url}` : null,
             });
@@ -266,6 +270,7 @@ const InventoryManagement = () => {
             body.append('stock_quantity', editFormData.stock_quantity);
             body.append('supplier_id', editFormData.supplier_id);
             body.append('secondary_supplier_id', editFormData.secondary_supplier_id);
+            body.append('expiry_date', editFormData.expiry_date);
             if (editFormData.image) body.append('image', editFormData.image);
 
             const res = await fetch(`${API}/products/${editingProduct.id}`, {
@@ -560,6 +565,18 @@ const InventoryManagement = () => {
                                 {errors.stock_quantity && <span className="error-msg">{errors.stock_quantity}</span>}
                             </div>
 
+                            {/* Expiry Date */}
+                            <div className="ap-form-group">
+                                <label><Calendar size={13} /> Expiry Date (Optional)</label>
+                                <input
+                                    type="date"
+                                    name="expiry_date"
+                                    value={formData.expiry_date}
+                                    onChange={handleChange}
+                                />
+                                <span className="image-hint">Leave empty if the product doesn't expire.</span>
+                            </div>
+
                             {/* Suppliers */}
                             <div className="ap-form-row">
                                 <div className="ap-form-group">
@@ -740,6 +757,18 @@ const InventoryManagement = () => {
                                     className={editErrors.stock_quantity ? 'input-error' : ''}
                                 />
                                 {editErrors.stock_quantity && <span className="error-msg">{editErrors.stock_quantity}</span>}
+                            </div>
+
+                            {/* Expiry Date */}
+                            <div className="ap-form-group">
+                                <label><Calendar size={13} /> Expiry Date (Optional)</label>
+                                <input
+                                    type="date"
+                                    name="expiry_date"
+                                    value={editFormData.expiry_date}
+                                    onChange={handleEditChange}
+                                />
+                                <span className="image-hint">Leave empty if the product doesn't expire.</span>
                             </div>
 
                             {/* Suppliers */}

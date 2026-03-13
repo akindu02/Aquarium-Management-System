@@ -38,7 +38,7 @@ const getProductById = async (req, res) => {
  */
 const createProduct = async (req, res) => {
     try {
-        const { name, category, description, price, discount_percent, stock_quantity, supplier_id, secondary_supplier_id } = req.body;
+        const { name, category, description, price, discount_percent, stock_quantity, supplier_id, secondary_supplier_id, expiry_date } = req.body;
 
         // Validation
         if (!name || !name.trim()) return res.status(400).json({ success: false, message: 'Product name is required.' });
@@ -63,6 +63,7 @@ const createProduct = async (req, res) => {
             supplier_id: supplier_id && supplier_id !== '' ? parseInt(supplier_id) : null,
             secondary_supplier_id: secondary_supplier_id && secondary_supplier_id !== '' ? parseInt(secondary_supplier_id) : null,
             image_url,
+            expiry_date: expiry_date && expiry_date !== '' ? expiry_date : null,
         });
 
         res.status(201).json({ success: true, message: 'Product created successfully.', data: product });
@@ -78,7 +79,7 @@ const createProduct = async (req, res) => {
  */
 const updateProduct = async (req, res) => {
     try {
-        const { name, category, description, price, discount_percent, stock_quantity, supplier_id, secondary_supplier_id } = req.body;
+        const { name, category, description, price, discount_percent, stock_quantity, supplier_id, secondary_supplier_id, expiry_date } = req.body;
 
         let image_url = undefined;
         if (req.file) {
@@ -96,6 +97,7 @@ const updateProduct = async (req, res) => {
             supplier_id:           supplier_id && supplier_id !== '' ? parseInt(supplier_id) : null,
             secondary_supplier_id: secondary_supplier_id && secondary_supplier_id !== '' ? parseInt(secondary_supplier_id) : null,
             image_url,
+            expiry_date:           expiry_date && expiry_date !== '' ? expiry_date : null,
         });
 
         if (!product) return res.status(404).json({ success: false, message: 'Product not found.' });
