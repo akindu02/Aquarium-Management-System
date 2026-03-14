@@ -15,6 +15,9 @@ router.get('/unread-count', notificationController.getUnreadCount);
 // PATCH – mark all notifications as read
 router.patch('/read-all', notificationController.markAllAsRead);
 
+// DELETE – delete all notifications
+router.delete('/clear-all', notificationController.clearAll);
+
 // PATCH – mark a single notification as read
 router.patch('/:id/read', notificationController.markAsRead);
 

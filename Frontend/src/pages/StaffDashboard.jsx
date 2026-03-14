@@ -10,6 +10,7 @@ import PointOfSale from './staff/PointOfSale';
 import StaffOrderManagement from './staff/StaffOrderManagement';
 import ProductRestock from './staff/ProductRestock';
 import ProductExpire from './staff/ProductExpire';
+import NotificationPanel from '../components/NotificationPanel';
 import '../index.css';
 
 const StaffDashboard = () => {
@@ -18,6 +19,7 @@ const StaffDashboard = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [user, setUser] = useState(getUserData());
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [stats, setStats] = useState({
     totalDailySales: 0,
     todayTransactionsCount: 0,
@@ -143,10 +145,7 @@ const StaffDashboard = () => {
         <header className="staff-header">
           <div className="header-left"></div>
           <div className="header-right">
-            <button className="notification-btn" title="Notifications">
-              <Bell size={18} className="notification-icon" />
-              <span className="notification-badge">7</span>
-            </button>
+            <NotificationPanel unreadCount={unreadCount} setUnreadCount={setUnreadCount} />
             <div className="header-divider" />
             <div className="header-profile" onClick={() => setShowProfileModal(true)} title="Profile settings">
               <div className="header-avatar">
@@ -341,46 +340,6 @@ const StaffDashboard = () => {
                     gap: 1rem;
                 }
 
-                /* Notification Button */
-                .notification-btn {
-                    position: relative;
-                    background: none;
-                    border: none;
-                    padding: 6px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    color: var(--text-muted);
-                    border-radius: 8px;
-                    transition: color 0.15s;
-                }
-
-                .notification-btn:hover {
-                    color: var(--text-main);
-                }
-
-                .notification-icon {
-                    color: inherit;
-                }
-
-                .notification-badge {
-                    position: absolute;
-                    top: 2px;
-                    right: 2px;
-                    min-width: 16px;
-                    height: 16px;
-                    padding: 0 4px;
-                    border-radius: 8px;
-                    background: #ef4444;
-                    color: white;
-                    font-size: 0.62rem;
-                    font-weight: 700;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    line-height: 1;
-                }
 
                 .header-divider {
                     width: 1px;

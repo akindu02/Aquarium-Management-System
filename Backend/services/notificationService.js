@@ -81,6 +81,56 @@ const deleteNotification = async (notificationId, userId) => {
     return rowCount > 0;
 };
 
+/**
+ * Clear all notifications for a user.
+ */
+const clearAll = async (userId) => {
+    const { rowCount } = await pool.query(
+        `DELETE FROM notifications WHERE user_id = $1`,
+        [userId]
+    );
+    return rowCount;
+};
+
+/**
+ * Notify all active staff members.
+ */
+const notifyAllStaff = async (message, type = 'Info') => {
+    const { rows: staffUsers } = await pool.query(
+        `SELECT id FROM users WHERE role = 'staff' AND is_active = true`
+    );
+    const promises = staffUsers.map(u =>
+        createNotification(u.id, message, type)
+    );
+    return Promise.allSettled(promises);
+};
+
+/**
+ * Notify all active admins.
+ */
+const notifyAllAdmins = async (message, type = 'Info') => {
+    const { rows: adminUsers } = await pool.query(
+        `SELECT id FROM users WHERE role = 'admin' AND is_active = true`
+    );
+    const promises = adminUsers.map(u =>
+        createNotification(u.id, message, type)
+    );
+    return Promise.allSettled(promises);
+};
+
+/**
+ * Notify all staff AND admins.
+ */
+const notifyStaffAndAdmins = async (message, type = 'Info') => {
+    const { rows: users } = await pool.query(
+        `SELECT id FROM users WHERE role IN ('staff', 'admin') AND is_active = true`
+    );
+    const promises = users.map(u =>
+        createNotification(u.id, message, type)
+    );
+    return Promise.allSettled(promises);
+};
+
 module.exports = {
     createNotification,
     getUserNotifications,
@@ -88,4 +138,8 @@ module.exports = {
     markAsRead,
     markAllAsRead,
     deleteNotification,
+    clearAll,
+    notifyAllStaff,
+    notifyAllAdmins,
+    notifyStaffAndAdmins,
 };

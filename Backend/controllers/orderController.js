@@ -30,6 +30,12 @@ const createOrder = async (req, res) => {
 
         await notificationService.createNotification(customerId, `Your order ${result.orderRef} has been created successfully.`, 'Order');
 
+        // Notify staff about new online order
+        notificationService.notifyAllStaff(
+            `New online order ${result.orderRef} placed (LKR ${Number(totalAmount).toLocaleString('en-LK', { minimumFractionDigits: 2 })}).`,
+            'Order'
+        ).catch(err => console.error('Staff notification error:', err));
+
         return res.status(201).json(result);
     } catch (err) {
         console.error('createOrder error:', err.message);
@@ -102,6 +108,13 @@ const cancelOrder = async (req, res) => {
         const customerId = req.user.id;
 
         const result = await orderService.cancelOrder(orderId, customerId);
+
+        // Notify staff about cancelled order
+        notificationService.notifyAllStaff(
+            `Order #ORD-${String(orderId).padStart(4, '0')} was cancelled by the customer.`,
+            'Alert'
+        ).catch(err => console.error('Staff notification error:', err));
+
         return res.json(result);
     } catch (err) {
         console.error('cancelOrder error:', err.message);

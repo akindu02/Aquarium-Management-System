@@ -440,6 +440,13 @@ export const deleteNotificationAPI = async (notificationId) => {
     return apiRequest(`/notifications/${notificationId}`, { method: 'DELETE' });
 };
 
+/**
+ * Clear all notifications
+ */
+export const clearAllNotificationsAPI = async () => {
+    return apiRequest('/notifications/clear-all', { method: 'DELETE' });
+};
+
 // =============================================
 // ADMIN DASHBOARD APIs
 // =============================================

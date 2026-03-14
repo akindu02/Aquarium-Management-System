@@ -77,10 +77,25 @@ const deleteNotification = async (req, res) => {
     }
 };
 
+/**
+ * DELETE /api/notifications/clear-all
+ * Delete all notifications for the authenticated user.
+ */
+const clearAll = async (req, res) => {
+    try {
+        const count = await notificationService.clearAll(req.user.id);
+        res.json({ success: true, message: `${count} notification(s) deleted.` });
+    } catch (err) {
+        console.error('clearAll error:', err);
+        res.status(500).json({ success: false, message: 'Failed to clear notifications.' });
+    }
+};
+
 module.exports = {
     getNotifications,
     getUnreadCount,
     markAsRead,
     markAllAsRead,
     deleteNotification,
+    clearAll,
 };

@@ -263,6 +263,11 @@ async function createBooking(req, res) {
                     `Your booking for "${slot.service_type}" on ${new Date(slot.start_time).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })} has been received and is Pending confirmation.`,
                     'Booking'
                 );
+                // Notify staff about new booking
+                await notificationService.notifyAllStaff(
+                    `New booking request for "${slot.service_type}" on ${new Date(slot.start_time).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })} — needs confirmation.`,
+                    'Booking'
+                );
             } catch (e) {
                 console.error('Notification error:', e);
             }
@@ -527,6 +532,11 @@ async function cancelBooking(req, res) {
                 await notificationService.createNotification(
                     customerId,
                     `Your booking for "${booking.service_type}" on ${new Date(booking.booking_date).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })} has been cancelled.`,
+                    'Booking'
+                );
+                // Notify staff about cancelled booking
+                await notificationService.notifyAllStaff(
+                    `Booking #BK-${String(bookingId).padStart(3, '0')} for "${booking.service_type}" was cancelled by the customer. Slot is now available.`,
                     'Booking'
                 );
             } catch (e) {
