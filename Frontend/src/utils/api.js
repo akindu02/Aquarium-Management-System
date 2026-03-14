@@ -440,3 +440,14 @@ export const deleteNotificationAPI = async (notificationId) => {
     return apiRequest(`/notifications/${notificationId}`, { method: 'DELETE' });
 };
 
+// =============================================
+// ADMIN DASHBOARD APIs
+// =============================================
+
+/**
+ * Admin - Get comprehensive dashboard statistics
+ */
+export const getAdminDashboardStatsAPI = async () => {
+    return apiRequest('/admin/dashboard-stats', { method: 'GET' });
+};
+
