@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, ClipboardList, Package, Bell, LogOut, CheckCircle2, AlertTriangle, CalendarClock, Store, Banknote, ChevronRight, RefreshCcw, Globe } from "lucide-react";
+import { LayoutDashboard, ClipboardList, Package, Bell, LogOut, CheckCircle2, AlertTriangle, CalendarClock, Store, Banknote, ChevronRight, RefreshCcw, Globe, Clock } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI, getStaffDashboardStatsAPI } from '../utils/api';
@@ -9,6 +9,7 @@ import InventoryManagement from './admin/InventoryManagement';
 import PointOfSale from './staff/PointOfSale';
 import StaffOrderManagement from './staff/StaffOrderManagement';
 import ProductRestock from './staff/ProductRestock';
+import ProductExpire from './staff/ProductExpire';
 import '../index.css';
 
 const StaffDashboard = () => {
@@ -71,6 +72,7 @@ const StaffDashboard = () => {
     { id: 'products', label: 'Products / Inventory', icon: Package },
     { id: 'orders', label: 'Process Orders', icon: ClipboardList },
     { id: 'restock', label: 'Product Restock', icon: AlertTriangle },
+    { id: 'expire', label: 'Product Expire', icon: Clock },
     { id: 'bookings', label: 'Service Bookings', icon: CalendarClock },
   ];
 
@@ -86,6 +88,8 @@ const StaffDashboard = () => {
         return <StaffOrderManagement />;
       case 'restock':
         return <ProductRestock />;
+      case 'expire':
+        return <ProductExpire />;
       case 'bookings':
         return <BookingManagement />;
       default:

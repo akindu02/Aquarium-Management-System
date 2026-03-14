@@ -138,6 +138,20 @@ const getLowStockProducts = async (req, res) => {
 };
 
 /**
+ * GET /api/products/expiring
+ * Staff / Admin – products expiring soon
+ */
+const getExpiringProducts = async (req, res) => {
+    try {
+        const products = await productService.getExpiringProducts();
+        res.json({ success: true, data: products });
+    } catch (err) {
+        console.error('getExpiringProducts error:', err);
+        res.status(500).json({ success: false, message: 'Failed to fetch expiring products.' });
+    }
+};
+
+/**
  * GET /api/products/:id/suppliers
  * Staff / Admin – suppliers linked to a product
  */
@@ -151,4 +165,4 @@ const getProductSuppliers = async (req, res) => {
     }
 };
 
-module.exports = { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct, getLowStockProducts, getProductSuppliers };
+module.exports = { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct, getLowStockProducts, getExpiringProducts, getProductSuppliers };

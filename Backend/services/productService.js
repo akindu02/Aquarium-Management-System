@@ -241,6 +241,30 @@ const getLowStockProducts = async () => {
 };
 
 /**
+ * Get expiring products (have expiry_date set, ordered by date)
+ */
+const getExpiringProducts = async () => {
+    const { rows } = await pool.query(`
+        SELECT
+            p.product_id,
+            p.name,
+            p.category,
+            p.price,
+            p.stock_quantity,
+            p.image_url,
+            p.supplier_id,
+            p.expiry_date,
+            s.company_name AS supplier_name
+        FROM products p
+        LEFT JOIN suppliers s ON p.supplier_id = s.user_id
+        WHERE p.expiry_date IS NOT NULL
+          AND p.expiry_date <= CURRENT_DATE + INTERVAL '30 days'
+        ORDER BY p.expiry_date ASC, p.name ASC
+    `);
+    return rows.map(r => ({ ...r, stock_status: getStockStatus(r.stock_quantity) }));
+};
+
+/**
  * Get suppliers linked to a specific product via product_suppliers bridge table
  */
 const getProductSuppliers = async (productId) => {
@@ -260,4 +284,4 @@ const getProductSuppliers = async (productId) => {
     return rows;
 };
 
-module.exports = { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct, getLowStockProducts, getProductSuppliers };
+module.exports = { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct, getLowStockProducts, getExpiringProducts, getProductSuppliers };

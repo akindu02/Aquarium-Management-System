@@ -336,6 +336,13 @@ export const getProductsAPI = async (filters = {}) => {
     return apiRequest(`/products${qs ? `?${qs}` : ''}`, { method: 'GET' });
 };
 
+/**
+ * Get expiring soon products (Staff / Admin)
+ */
+export const getExpiringProductsAPI = async () => {
+    return apiRequest(`/products/expiring`, { method: 'GET' });
+};
+
 // =============================================
 // POS APIs (Cash-only)
 // =============================================
