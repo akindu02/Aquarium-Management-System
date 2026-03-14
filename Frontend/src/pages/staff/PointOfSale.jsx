@@ -485,7 +485,7 @@ const PointOfSale = () => {
                                     <span>Discount (%)</span>
                                     <input
                                         type="number"
-                                        style={{ width: '100px', padding: '4px 8px', borderRadius: '4px', border: '1px solid #e1e4e8', background: '#f8fafc', color: '#0f172a', textAlign: 'right' }}
+                                        style={{ width: '100px', padding: '4px 8px', borderRadius: '4px', border: '1px solid rgba(255, 255, 255, 0.2)', background: 'transparent', color: '#f1f5f9', textAlign: 'right', outline: 'none' }}
                                         min="0"
                                         max="100"
                                         step="0.01"
@@ -862,6 +862,16 @@ const PointOfSale = () => {
                 }
                 .qpos-totals-row.grand { font-size: 1.05rem; font-weight: 700; color: #f1f5f9; margin-top: 1px; }
                 .qpos-totals-sep { height: 1px; background: rgba(255,255,255,0.07); margin: 0.5rem 0; }
+                
+                /* Hide number arrows for discount */
+                .qpos-totals-row-discount input[type=number]::-webkit-inner-spin-button,
+                .qpos-totals-row-discount input[type=number]::-webkit-outer-spin-button {
+                    -webkit-appearance: none;
+                    margin: 0;
+                }
+                .qpos-totals-row-discount input[type=number] {
+                    -moz-appearance: textfield;
+                }
 
                 .qpos-cash-label { display: block; font-size: 0.75rem; font-weight: 600; color: #94a3b8; margin-bottom: 0.4rem; }
                 .qpos-cash-input {
