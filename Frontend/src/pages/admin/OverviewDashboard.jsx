@@ -344,7 +344,7 @@ const OverviewDashboard = () => {
         </div>
 
         {/* Pending Restocks */}
-        <div className="ov-kpi-card">
+        <div className="ov-kpi-card ov-kpi-restock">
           <div className="ov-kpi-icon" style={{ background: 'rgba(139,92,246,0.12)', color: '#8b5cf6' }}>
             <RefreshCw size={22} />
           </div>
@@ -354,6 +354,38 @@ const OverviewDashboard = () => {
             <div className="ov-kpi-meta">
               <span className="ov-kpi-tag" style={{ background: 'rgba(139,92,246,0.1)', color: '#8b5cf6' }}>
                 <Package size={12} /> Awaiting supplier
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Today's Bookings */}
+        <div className="ov-kpi-card ov-kpi-today-bookings">
+          <div className="ov-kpi-icon" style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981' }}>
+            <CalendarClock size={22} />
+          </div>
+          <div className="ov-kpi-body">
+            <span className="ov-kpi-label">Today's Bookings</span>
+            <span className="ov-kpi-value">{stats.bookings.today}</span>
+            <div className="ov-kpi-meta">
+              <span className="ov-kpi-tag ov-kpi-tag-green">
+                scheduled today
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Monthly Revenue */}
+        <div className="ov-kpi-card ov-kpi-monthly-rev">
+          <div className="ov-kpi-icon" style={{ background: 'rgba(78,205,196,0.12)', color: '#4ecdc4' }}>
+            <TrendingUp size={22} />
+          </div>
+          <div className="ov-kpi-body">
+            <span className="ov-kpi-label">This Month</span>
+            <span className="ov-kpi-value">{fmtCurrency(stats.revenue.thisMonth)}</span>
+            <div className="ov-kpi-meta">
+              <span className="ov-kpi-tag" style={{ background: 'rgba(78,205,196,0.1)', color: '#4ecdc4' }}>
+                monthly revenue
               </span>
             </div>
           </div>
@@ -603,29 +635,7 @@ const OverviewDashboard = () => {
           </div>
         </div>
 
-        {/* Today's Bookings */}
-        <div className="ov-quick-card">
-          <div className="ov-quick-icon" style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981' }}>
-            <CalendarClock size={20} />
-          </div>
-          <div>
-            <span className="ov-quick-label">Today's Bookings</span>
-            <span className="ov-quick-value">{stats.bookings.today}</span>
-            <span className="ov-quick-sub">scheduled today</span>
-          </div>
-        </div>
 
-        {/* Monthly Revenue */}
-        <div className="ov-quick-card">
-          <div className="ov-quick-icon" style={{ background: 'rgba(78,205,196,0.12)', color: '#4ecdc4' }}>
-            <TrendingUp size={20} />
-          </div>
-          <div>
-            <span className="ov-quick-label">This Month</span>
-            <span className="ov-quick-value">{fmtCurrency(stats.revenue.thisMonth)}</span>
-            <span className="ov-quick-sub">monthly revenue</span>
-          </div>
-        </div>
 
         {/* Total Orders */}
         <div className="ov-quick-card">
