@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
 import ProfileModal from '../components/ProfileModal';
-import NotificationPopup from '../components/NotificationPopup';
+import NotificationPanel from '../components/NotificationPanel';
 import SupplierOrderRequests from './supplier/SupplierOrderRequests';
 import SupplierOrderHistory from './supplier/SupplierOrderHistory';
 import SupplierMyDetails from './supplier/SupplierMyDetails';
@@ -16,6 +16,7 @@ const SupplierDashboard = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [user, setUser] = useState(getUserData());
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const getInitials = (name) => {
     if (!name) return '?';
@@ -104,7 +105,7 @@ const SupplierDashboard = () => {
         <header className="supplier-header">
           <div className="header-left"></div>
           <div className="header-right">
-            <NotificationPopup accentColor="#667eea" />
+            <NotificationPanel unreadCount={unreadCount} setUnreadCount={setUnreadCount} />
             <div className="header-divider" />
             <div className="header-profile" onClick={() => setShowProfileModal(true)} title="Profile settings">
               <div className="header-avatar">
