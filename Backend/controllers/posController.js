@@ -5,9 +5,9 @@ const posService = require('../services/posService');
 const createPosOrder = async (req, res) => {
     try {
         const staffId = req.user.id;
-        const { customer, items } = req.body;
+        const { customer, items, discount } = req.body;
 
-        const result = await posService.createPosOrder({ staffId, customer, items });
+        const result = await posService.createPosOrder({ staffId, customer, items, discount: parseFloat(discount) || 0 });
         return res.status(201).json(result);
     } catch (err) {
         console.error('createPosOrder error:', err.message);

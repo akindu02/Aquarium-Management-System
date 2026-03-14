@@ -30,6 +30,7 @@ const PointOfSale = () => {
 
     // ── Payment ───────────────────────────────────────────────────────────────
     const [cashGiven, setCashGiven] = useState('');
+    const [discount, setDiscount] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [receiptData, setReceiptData] = useState(null);
     const [showReceiptModal, setShowReceiptModal] = useState(false);
@@ -75,7 +76,9 @@ const PointOfSale = () => {
     });
 
     const subtotal = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
-    const total = subtotal;
+    const discountPercent = parseFloat(discount) || 0;
+    const discountAmount = subtotal * (discountPercent / 100);
+    const total = Math.max(0, subtotal - discountAmount);
     const cashAmount = parseFloat(cashGiven) || 0;
     const balance = cashAmount - total;
     const cartCount = cart.reduce((s, i) => s + i.qty, 0);
@@ -153,11 +156,14 @@ const PointOfSale = () => {
                     address: customer.address.trim() || null,
                 },
                 items: cart.map(i => ({ productId: i.id, quantity: i.qty })),
+                discount: discountPercent,
             });
             if (result.success) {
                 setReceiptData({
                     orderRef: result.orderRef,
                     receiptNumber: result.receiptNumber,
+                    subtotalAmount: result.subtotalAmount,
+                    discountAmount: result.discountAmount,
                     totalAmount: result.totalAmount,
                     customer: { ...customer },
                     items: cart.map(i => ({ ...i })),
@@ -184,6 +190,7 @@ const PointOfSale = () => {
         setCustomer({ name: '', phone: '', email: '', address: '' });
         setReceiptData(null);
         setCashGiven('');
+        setDiscount('');
         setSaleCount(c => c + 1);
         setActiveTab('products');
     };
@@ -474,6 +481,19 @@ const PointOfSale = () => {
                             {/* Totals */}
                             <div className="qpos-scard">
                                 <div className="qpos-totals-row"><span>Subtotal</span><span>LKR {subtotal.toLocaleString()}</span></div>
+                                <div className="qpos-totals-row-discount" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
+                                    <span>Discount (%)</span>
+                                    <input
+                                        type="number"
+                                        style={{ width: '100px', padding: '4px 8px', borderRadius: '4px', border: '1px solid #e1e4e8', background: '#f8fafc', color: '#0f172a', textAlign: 'right' }}
+                                        min="0"
+                                        max="100"
+                                        step="0.01"
+                                        value={discount}
+                                        onChange={e => setDiscount(e.target.value)}
+                                        placeholder="0"
+                                    />
+                                </div>
                                 <div className="qpos-totals-sep" />
                                 <div className="qpos-totals-row grand"><span>Total Balance</span><span>LKR {total.toLocaleString()}</span></div>
                             </div>

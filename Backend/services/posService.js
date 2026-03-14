@@ -21,7 +21,7 @@ const fmtReceiptNumber = (orderId) => {
  * - inserts payments (method Cash, status Completed)
  * - inserts receipts (1 per order)
  */
-const createPosOrder = async ({ staffId, customer, items }) => {
+const createPosOrder = async ({ staffId, customer, items, discount = 0 }) => {
     const client = await getClient();
 
     try {
@@ -76,13 +76,20 @@ const createPosOrder = async ({ staffId, customer, items }) => {
         }
 
         serverTotal = parseFloat(serverTotal.toFixed(2));
+        
+        let discountPercent = parseFloat(discount) || 0;
+        let discountAmount = parseFloat((serverTotal * (discountPercent / 100)).toFixed(2));
+
+        let finalTotal = serverTotal - discountAmount;
+        if (finalTotal < 0) finalTotal = 0;
+        finalTotal = parseFloat(finalTotal.toFixed(2));
 
         // Insert order (POS orders are cash-only and completed immediately)
         const orderResult = await client.query(
-            `INSERT INTO orders (customer_id, pos_customer_id, staff_id, total_amount, status)
-             VALUES (NULL, $1, $2, $3, 'Delivered')
-             RETURNING order_id, total_amount, status, order_date`,
-            [posCustomerId, staffId, serverTotal]
+            `INSERT INTO orders (customer_id, pos_customer_id, staff_id, total_amount, discount, status)
+             VALUES (NULL, $1, $2, $3, $4, 'Delivered')
+             RETURNING order_id, total_amount, discount, status, order_date`,
+            [posCustomerId, staffId, finalTotal, discountAmount]
         );
 
         const orderId = orderResult.rows[0].order_id;
@@ -107,7 +114,7 @@ const createPosOrder = async ({ staffId, customer, items }) => {
         await client.query(
             `INSERT INTO payments (order_id, method, amount, status, transaction_reference, payment_date)
              VALUES ($1, 'Cash', $2, 'Completed', $3, NOW())`,
-            [orderId, serverTotal, txnRef]
+            [orderId, finalTotal, txnRef]
         );
 
         // Insert receipt
@@ -124,7 +131,9 @@ const createPosOrder = async ({ staffId, customer, items }) => {
             success: true,
             orderId,
             orderRef: fmtOrderId(orderId),
-            totalAmount: serverTotal,
+            subtotalAmount: serverTotal,
+            discountAmount: discountAmount,
+            totalAmount: finalTotal,
             receiptNumber,
         };
     } catch (err) {

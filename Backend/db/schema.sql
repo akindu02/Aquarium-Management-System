@@ -187,6 +187,7 @@ CREATE TABLE IF NOT EXISTS orders (
         order_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         status order_status DEFAULT 'Pending',
         total_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+        discount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

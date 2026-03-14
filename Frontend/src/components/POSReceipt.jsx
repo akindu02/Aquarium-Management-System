@@ -10,6 +10,8 @@ const POSReceipt = ({ orderData, onClose }) => {
         orderId = '',
         customer = {},
         cartItems = [],
+        subtotalAmount = 0,
+        discountAmount = 0,
         totalAmount = 0,
         cashGiven = 0,
         paymentDate = new Date(),
@@ -17,6 +19,8 @@ const POSReceipt = ({ orderData, onClose }) => {
 
     const receiptRef = useRef(null);
 
+    const subtotal = parseFloat(subtotalAmount) || parseFloat(totalAmount) || 0;
+    const discount = parseFloat(discountAmount) || 0;
     const total = parseFloat(totalAmount) || 0;
     const cash = parseFloat(cashGiven) || 0;
     const balance = cash - total;
@@ -126,7 +130,10 @@ const POSReceipt = ({ orderData, onClose }) => {
                     {/* Amount breakdown */}
                     <div style={S.totalsBox}>
                         <div style={S.totalSeparator} />
-                        <TotalRow label="Total" value={`Rs. ${total.toFixed(2)}`} />
+                        <TotalRow label="Subtotal" value={`Rs. ${subtotal.toFixed(2)}`} />
+                        {discount > 0 && (
+                            <TotalRow label="Discount" value={`- Rs. ${discount.toFixed(2)}`} />
+                        )}
                         <div style={S.totalSeparator} />
                         <TotalRow label="Cash Received" value={`Rs. ${cash.toFixed(2)}`} cash />
                         <TotalRow
