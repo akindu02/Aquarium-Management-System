@@ -4,17 +4,21 @@ import { getExpiringProductsAPI } from '../../utils/api';
 // Optionally you could add sweetalert if you want actions, but for now just display
 
 const getExpiryStyle = (expiryDate) => {
-    if (!expiryDate) return { color: '#6b7280', bg: 'rgba(107,114,128,0.1)', label: 'N/A' };
+    if (!expiryDate) return { color: '#6b7280', bg: 'rgba(107,114,128,0.1)', label: 'N/A', days: null };
     
+    // Normalize today to start of day for accurate full-day counting
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const exp = new Date(expiryDate);
+    exp.setHours(0, 0, 0, 0);
+    
     const diffTime = exp - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays < 0) return { color: '#ef4444', bg: 'rgba(239,68,68,0.12)', label: 'Expired' };
-    if (diffDays <= 7) return { color: '#ef4444', bg: 'rgba(239,68,68,0.12)', label: 'Critical' };
-    if (diffDays <= 30) return { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', label: 'Expiring Soon' };
-    return { color: '#10b981', bg: 'rgba(16,185,129,0.12)', label: 'Valid' };
+    if (diffDays < 0) return { color: '#ef4444', bg: 'rgba(239,68,68,0.12)', label: 'Expired', days: diffDays };
+    if (diffDays <= 7) return { color: '#ef4444', bg: 'rgba(239,68,68,0.12)', label: 'Critical', days: diffDays };
+    if (diffDays <= 30) return { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', label: 'Expiring Soon', days: diffDays };
+    return { color: '#10b981', bg: 'rgba(16,185,129,0.12)', label: 'Valid', days: diffDays };
 };
 
 const ProductExpire = () => {
@@ -181,6 +185,7 @@ const ProductExpire = () => {
                         <tr>
                             <th>Product</th>
                             <th>Expiry Date</th>
+                            <th>Days Remaining</th>
                             <th>Stock / Price</th>
                             <th>Status</th>
                         </tr>
@@ -188,11 +193,11 @@ const ProductExpire = () => {
                     <tbody>
                         {loading ? (
                             <tr>
-                                <td colSpan={4} className="empty-state">Loading...</td>
+                                <td colSpan={5} className="empty-state">Loading...</td>
                             </tr>
                         ) : filtered.length === 0 ? (
                             <tr>
-                                <td colSpan={4} className="empty-state">
+                                <td colSpan={5} className="empty-state">
                                     <AlertTriangle size={48} opacity={0.5} style={{ margin: '0 auto 1rem auto' }} />
                                     <p>No expiring products found.</p>
                                 </td>
@@ -223,6 +228,11 @@ const ProductExpire = () => {
                                             <div style={{ fontWeight: '500', color: style.color }}>{dateStr}</div>
                                             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                                                 Supplier: {p.supplier_name || 'N/A'}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style={{ fontWeight: '600', color: style.color }}>
+                                                {style.days !== null ? (style.days === 0 ? 'Today' : style.days > 0 ? `${style.days} days` : 'Expired') : 'N/A'}
                                             </div>
                                         </td>
                                         <td>
