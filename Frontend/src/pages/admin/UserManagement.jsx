@@ -418,7 +418,7 @@ const UserManagement = () => {
                                             </button>
                                         </td>
                                         <td>{new Date(user.date).toLocaleDateString()}</td>
-                                        <td style={{ textAlign: 'right' }}>
+                                        <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                                             <button className="action-btn edit" title="Edit" onClick={() => handleOpenEdit(user)}>
                                                 <Edit size={16} />
                                             </button>
@@ -803,7 +803,7 @@ const UserManagement = () => {
 
                 .um-table th {
                     text-align: left;
-                    padding: 1rem 1.5rem;
+                    padding: 0.75rem 1rem;
                     border-bottom: 1px solid rgba(255,255,255,0.08);
                     color: var(--text-muted);
                     font-weight: 600;
@@ -812,7 +812,7 @@ const UserManagement = () => {
                 }
 
                 .um-table td {
-                    padding: 1rem 1.5rem;
+                    padding: 0.75rem 1rem;
                     border-bottom: 1px solid rgba(255,255,255,0.05);
                     color: var(--text-main);
                 }
@@ -871,6 +871,9 @@ const UserManagement = () => {
                 .status-dot.deactive { background-color: #ef4444; }
 
                 .action-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
                     padding: 0.4rem;
                     border-radius: 0.4rem;
                     border: none;
