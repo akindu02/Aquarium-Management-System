@@ -10,6 +10,7 @@ import InventoryManagement from './admin/InventoryManagement';
 import OrderManagement from './admin/OrderManagement';
 import ReportsAnalytics from './admin/ReportsAnalytics';
 import ProductRestock from './staff/ProductRestock';
+import ProductExpire from './staff/ProductExpire';
 import '../index.css';
 
 const AdminDashboard = () => {
@@ -45,6 +46,7 @@ const AdminDashboard = () => {
     { id: 'products', label: 'Products / Inventory', icon: Package },
     { id: 'orders', label: 'Order Management', icon: ShoppingCart },
     { id: 'restock', label: 'Product Restock', icon: RefreshCw },
+    { id: 'expire', label: 'Product Expire', icon: Clock },
     { id: 'bookings', label: 'Service Bookings', icon: CalendarClock },
     { id: 'reports', label: 'Reports & Analytics', icon: BarChart3 },
   ];
@@ -63,6 +65,8 @@ const AdminDashboard = () => {
         return <OrderManagement />;
       case 'restock':
         return <ProductRestock />;
+      case 'expire':
+        return <ProductExpire />;
       case 'reports':
         return <ReportsAnalytics />;
       default:
