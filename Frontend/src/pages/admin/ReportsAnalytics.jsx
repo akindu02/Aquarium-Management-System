@@ -1069,10 +1069,11 @@ const ReportsAnalytics = () => {
     const [isGenerated, setIsGenerated]         = useState(false);
 
     /* chart canvas refs */
-    const revenueRef   = useRef(null);
-    const productsRef  = useRef(null);
-    const statusRef    = useRef(null);
-    const categoryRef  = useRef(null);
+    const revenueRef      = useRef(null);
+    const productsRef     = useRef(null);
+    const statusRef       = useRef(null);
+    const categoryRef     = useRef(null);
+    const salesChannelRef = useRef(null);
 
     /* chart instance refs (for destroy) */
     const charts = useRef({});
@@ -1267,6 +1268,49 @@ const ReportsAnalytics = () => {
                     plugins: {
                         legend: { labels: { color: '#94a3b8', padding: 14, font: { size: 11 } } },
                         tooltip: { callbacks: { label: ctx => ' LKR ' + ctx.parsed.toLocaleString() } },
+                    },
+                },
+            });
+        }
+
+        /* 5 – Online vs POS revenue grouped bar chart */
+        if (salesChannelRef.current && data.dailyChannelRevenue && data.dailyChannelRevenue.length) {
+            charts.current.salesChannel = new Chart(salesChannelRef.current.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: data.dailyChannelRevenue.map(d => {
+                        const dt = new Date(d.date);
+                        return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    }),
+                    datasets: [
+                        {
+                            label: 'Online Sale Revenue',
+                            data: data.dailyChannelRevenue.map(d => parseFloat(d.online_revenue)),
+                            backgroundColor: 'rgba(139,92,246,0.75)',
+                            borderColor: '#8b5cf6',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                        },
+                        {
+                            label: 'POS Sale Revenue',
+                            data: data.dailyChannelRevenue.map(d => parseFloat(d.pos_revenue)),
+                            backgroundColor: 'rgba(245,158,11,0.75)',
+                            borderColor: '#f59e0b',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8', font: { size: 12 } } },
+                        tooltip: { callbacks: { label: ctx => ' LKR ' + ctx.parsed.y.toLocaleString() } },
+                    },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8', maxTicksLimit: 14 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        y: { ticks: { color: '#94a3b8', callback: v => 'LKR ' + v.toLocaleString() }, grid: { color: 'rgba(255,255,255,0.05)' } },
                     },
                 },
             });
@@ -1766,28 +1810,25 @@ const ReportsAnalytics = () => {
                     </div>
                 )}
 
-                {/* ── Top products detail table ── */}
-                {reportData.topProducts.length > 0 && (
-                    <div className="table-section">
-                        <h3 className="section-label">TOP PRODUCTS DETAIL</h3>
-                        <table className="data-table">
-                            <thead>
-                                <tr><th>#</th><th>Product</th><th>Category</th><th>Units Sold</th><th>Revenue</th></tr>
-                            </thead>
-                            <tbody>
-                                {reportData.topProducts.map((p, i) => (
-                                    <tr key={i}>
-                                        <td style={{ color: '#64748b' }}>{i + 1}</td>
-                                        <td>{p.product_name}</td>
-                                        <td><span className="badge-cat">{p.category}</span></td>
-                                        <td>{p.total_quantity}</td>
-                                        <td className="td-primary">{fmt(p.total_revenue)}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                {/* ── Online vs POS revenue comparison chart ── */}
+                <div className="chart-section">
+                    <h3 className="section-label">ONLINE SALE REVENUE VS POS SALE REVENUE</h3>
+                    <div className="charts-2col" style={{ marginBottom: '1rem', gap: '1rem', alignItems: 'flex-start' }}>
+                        <div className="kpi-card" style={{ '--kc': '#8b5cf6', flex: 1 }}>
+                            <div className="kpi-label">ONLINE SALE REVENUE</div>
+                            <div className="kpi-val">{fmt(parseFloat(s.online_revenue) || 0)}</div>
+                        </div>
+                        <div className="kpi-card" style={{ '--kc': '#f59e0b', flex: 1 }}>
+                            <div className="kpi-label">POS SALE REVENUE</div>
+                            <div className="kpi-val">{fmt(parseFloat(s.pos_revenue) || 0)}</div>
+                        </div>
                     </div>
-                )}
+                    <div className="chart-box chart-box-tall">
+                        {reportData.dailyChannelRevenue && reportData.dailyChannelRevenue.length > 0
+                            ? <canvas ref={salesChannelRef} />
+                            : <div className="no-data">No channel data for this period</div>}
+                    </div>
+                </div>
 
                 {/* ── Empty state ── */}
                 {totalOrders === 0 && (

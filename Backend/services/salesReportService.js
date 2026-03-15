@@ -4,13 +4,15 @@ const getSalesReport = async (startDate, endDate) => {
     // Summary: total revenue, orders, avg order value, online vs POS split
     const summaryQuery = `
         SELECT
-            COUNT(DISTINCT o.order_id)                                                        AS total_orders,
-            COALESCE(SUM(o.total_amount), 0)                                                  AS total_revenue,
-            COALESCE(AVG(o.total_amount), 0)                                                  AS avg_order_value,
-            COUNT(CASE WHEN o.customer_id IS NOT NULL THEN 1 END)                             AS online_orders,
-            COUNT(CASE WHEN o.pos_customer_id IS NOT NULL THEN 1 END)                         AS pos_orders,
-            COUNT(DISTINCT CASE WHEN o.customer_id IS NOT NULL THEN o.customer_id END)        AS online_customers,
-            COUNT(DISTINCT CASE WHEN o.pos_customer_id IS NOT NULL THEN o.pos_customer_id END) AS pos_customers
+            COUNT(DISTINCT o.order_id)                                                                  AS total_orders,
+            COALESCE(SUM(o.total_amount), 0)                                                            AS total_revenue,
+            COALESCE(AVG(o.total_amount), 0)                                                            AS avg_order_value,
+            COUNT(CASE WHEN o.customer_id IS NOT NULL THEN 1 END)                                       AS online_orders,
+            COUNT(CASE WHEN o.pos_customer_id IS NOT NULL THEN 1 END)                                   AS pos_orders,
+            COUNT(DISTINCT CASE WHEN o.customer_id IS NOT NULL THEN o.customer_id END)                  AS online_customers,
+            COUNT(DISTINCT CASE WHEN o.pos_customer_id IS NOT NULL THEN o.pos_customer_id END)          AS pos_customers,
+            COALESCE(SUM(CASE WHEN o.customer_id IS NOT NULL THEN o.total_amount ELSE 0 END), 0)        AS online_revenue,
+            COALESCE(SUM(CASE WHEN o.pos_customer_id IS NOT NULL THEN o.total_amount ELSE 0 END), 0)    AS pos_revenue
         FROM orders o
         WHERE o.order_date >= $1
           AND o.order_date <= $2
@@ -77,6 +79,20 @@ const getSalesReport = async (startDate, endDate) => {
         ORDER BY count DESC
     `;
 
+    // Daily online vs POS revenue breakdown for comparison chart
+    const dailyChannelRevenueQuery = `
+        SELECT
+            DATE(order_date AT TIME ZONE 'UTC')                                                                 AS date,
+            COALESCE(SUM(CASE WHEN customer_id IS NOT NULL THEN total_amount ELSE 0 END), 0)                    AS online_revenue,
+            COALESCE(SUM(CASE WHEN pos_customer_id IS NOT NULL THEN total_amount ELSE 0 END), 0)                AS pos_revenue
+        FROM orders
+        WHERE order_date >= $1
+          AND order_date <= $2
+          AND status NOT IN ('Cancelled', 'Returned')
+        GROUP BY DATE(order_date AT TIME ZONE 'UTC')
+        ORDER BY DATE(order_date AT TIME ZONE 'UTC')
+    `;
+
     // Completed payment methods
     const paymentMethodQuery = `
         SELECT
@@ -92,23 +108,25 @@ const getSalesReport = async (startDate, endDate) => {
         ORDER BY total_amount DESC
     `;
 
-    const [summary, dailyRevenue, topProducts, categoryRevenue, orderStatus, paymentMethods] =
+    const [summary, dailyRevenue, topProducts, categoryRevenue, orderStatus, paymentMethods, dailyChannelRevenue] =
         await Promise.all([
-            pool.query(summaryQuery,        [startDate, endDate]),
-            pool.query(dailyRevenueQuery,   [startDate, endDate]),
-            pool.query(topProductsQuery,    [startDate, endDate]),
-            pool.query(categoryRevenueQuery,[startDate, endDate]),
-            pool.query(orderStatusQuery,    [startDate, endDate]),
-            pool.query(paymentMethodQuery,  [startDate, endDate]),
+            pool.query(summaryQuery,             [startDate, endDate]),
+            pool.query(dailyRevenueQuery,        [startDate, endDate]),
+            pool.query(topProductsQuery,         [startDate, endDate]),
+            pool.query(categoryRevenueQuery,     [startDate, endDate]),
+            pool.query(orderStatusQuery,         [startDate, endDate]),
+            pool.query(paymentMethodQuery,       [startDate, endDate]),
+            pool.query(dailyChannelRevenueQuery, [startDate, endDate]),
         ]);
 
     return {
-        summary:         summary.rows[0],
-        dailyRevenue:    dailyRevenue.rows,
-        topProducts:     topProducts.rows,
-        categoryRevenue: categoryRevenue.rows,
-        orderStatus:     orderStatus.rows,
-        paymentMethods:  paymentMethods.rows,
+        summary:              summary.rows[0],
+        dailyRevenue:         dailyRevenue.rows,
+        topProducts:          topProducts.rows,
+        categoryRevenue:      categoryRevenue.rows,
+        orderStatus:          orderStatus.rows,
+        paymentMethods:       paymentMethods.rows,
+        dailyChannelRevenue:  dailyChannelRevenue.rows,
     };
 };
 
