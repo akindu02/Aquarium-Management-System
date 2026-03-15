@@ -131,10 +131,6 @@ const SignIn = () => {
           </div>
 
           <div className="form-options">
-            <label className="remember-me">
-              <input type="checkbox" disabled={loading} />
-              <span>Remember me</span>
-            </label>
             <Link to="/forgot-password" className="forgot-password">Forgot Password?</Link>
           </div>
 
@@ -280,7 +276,7 @@ const SignIn = () => {
 
         .form-options {
           display: flex;
-          justify-content: space-between;
+          justify-content: flex-end;
           align-items: center;
           margin-bottom: 1.5rem;
           font-size: 0.85rem;
