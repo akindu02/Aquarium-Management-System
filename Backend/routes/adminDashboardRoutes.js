@@ -4,6 +4,7 @@ const adminDashboardController = require('../controllers/adminDashboardControlle
 const salesReportController = require('../controllers/salesReportController');
 const inventoryReportController = require('../controllers/inventoryReportController');
 const productPerformanceReportController = require('../controllers/productPerformanceReportController');
+const serviceBookingsReportController    = require('../controllers/serviceBookingsReportController');
 const { authenticate, adminOnly } = require('../middleware/authMiddleware');
 
 // GET /api/admin/dashboard-stats — Admin overview dashboard statistics
@@ -36,6 +37,14 @@ router.get(
     authenticate,
     adminOnly,
     productPerformanceReportController.getProductPerformanceReport
+);
+
+// GET /api/admin/service-bookings-report?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD
+router.get(
+    '/service-bookings-report',
+    authenticate,
+    adminOnly,
+    serviceBookingsReportController.getServiceBookingsReport
 );
 
 module.exports = router;
