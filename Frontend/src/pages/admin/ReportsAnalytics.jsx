@@ -2451,9 +2451,34 @@ const ReportsAnalytics = () => {
                                     { label: 'Last 30 days', action: () => applyPreset(30) },
                                     { label: 'Last 90 days', action: () => applyPreset(90) },
                                     { label: 'This Year',    action: () => applyPreset(0, true) },
-                                ].map(p => (
-                                    <button key={p.label} className="btn-preset" onClick={p.action}>{p.label}</button>
-                                ))}
+                                ].map(p => {
+                                    const t = todayStr();
+                                    const fmt = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+                                    let dtStart = new Date();
+                                    let dtYStart = new Date(dtStart.getFullYear(), 0, 1);
+                                    
+                                    const d7 = new Date(); d7.setDate(d7.getDate() - 7);
+                                    const d30 = new Date(); d30.setDate(d30.getDate() - 30);
+                                    const d90 = new Date(); d90.setDate(d90.getDate() - 90);
+                                    
+                                    let isSelected = false;
+                                    if (p.label === 'Today' && startDate === t && endDate === t) isSelected = true;
+                                    if (p.label === 'Last 7 days' && startDate === fmt(d7) && endDate === t) isSelected = true;
+                                    if (p.label === 'Last 30 days' && startDate === fmt(d30) && endDate === t) isSelected = true;
+                                    if (p.label === 'Last 90 days' && startDate === fmt(d90) && endDate === t) isSelected = true;
+                                    if (p.label === 'This Year' && startDate === fmt(dtYStart) && endDate === t) isSelected = true;
+
+                                    return (
+                                        <button 
+                                            key={p.label} 
+                                            className={`btn-preset ${isSelected ? 'active-preset' : ''}`} 
+                                            style={isSelected ? { border: '1px solid #3b82f6', color: '#60a5fa', backgroundColor: 'rgba(59, 130, 246, 0.1)' } : {}}
+                                            onClick={p.action}
+                                        >
+                                            {p.label}
+                                        </button>
+                                    );
+                                })}
                             </div>
 
                             <button className="btn-generate" onClick={generateReport} disabled={loading}>
