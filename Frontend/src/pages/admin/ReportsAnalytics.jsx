@@ -18,6 +18,276 @@ const daysAgoStr = (n) => {
     return d.toISOString().split('T')[0];
 };
 
+/* Group daily rows into monthly summary for the PDF breakdown table */
+const groupByMonth = (dailyRevenue) => {
+    const map = {};
+    dailyRevenue.forEach(d => {
+        const dt = new Date(d.date);
+        const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+        const label = dt.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        if (!map[key]) map[key] = { label, orders: 0, revenue: 0 };
+        map[key].orders  += parseInt(d.orders)  || 0;
+        map[key].revenue += parseFloat(d.revenue) || 0;
+    });
+    return Object.values(map);
+};
+
+/* ─── PDF template (hidden, white, captured by html2pdf) ── */
+const SalesReportPDF = ({ reportData, startDate, endDate, pdfRef }) => {
+    if (!reportData) return null;
+
+    const s          = reportData.summary;
+    const monthly    = groupByMonth(reportData.dailyRevenue);
+    const bestMonth  = monthly.length ? monthly.reduce((a, b) => b.revenue > a.revenue ? b : a) : null;
+    const worstMonth = monthly.length > 1 ? monthly.reduce((a, b) => b.revenue < a.revenue ? b : a) : null;
+
+    const totalRevenue = parseFloat(s.total_revenue) || 0;
+    const totalOrders  = parseInt(s.total_orders)    || 0;
+    const avgOrder     = parseFloat(s.avg_order_value) || 0;
+    const onlineOrders = parseInt(s.online_orders)   || 0;
+    const posOrders    = parseInt(s.pos_orders)      || 0;
+
+    const periodLabel = `${new Date(startDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} — ${new Date(endDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+    const generatedAt = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+    const P = {
+        wrap:    { position: 'fixed', left: '-9999px', top: 0, zIndex: -1, opacity: 0, pointerEvents: 'none' },
+        doc:     { width: '190mm', background: '#ffffff', fontFamily: "'Outfit', system-ui, -apple-system, sans-serif", color: '#111827' },
+        /* header */
+        header:  { padding: '20px 28px 14px', background: '#ffffff', borderBottom: '1px solid #f1f5f9', textAlign: 'center' },
+        logoRow: { display: 'flex', justifyContent: 'center', alignItems: 'baseline', gap: '1px', marginBottom: '5px' },
+        logoM:   { fontSize: '1.5rem', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.5px' },
+        logoA:   { fontSize: '1.5rem', fontWeight: '800', color: '#06b6d4', letterSpacing: '-0.5px' },
+        contact: { fontSize: '0.64rem', color: '#6b7280', marginBottom: '10px' },
+        divider: { height: '1.5px', background: 'linear-gradient(90deg, transparent, #06b6d4 40%, #06b6d4 60%, transparent)', margin: '0 0 10px' },
+        title:   { fontSize: '0.9rem', fontWeight: '700', color: '#0f172a', letterSpacing: '5px', margin: '0 0 5px' },
+        metaRow: { display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: '#6b7280', marginTop: '3px' },
+        /* section */
+        section: { padding: '14px 24px' },
+        secTitle:{ fontSize: '0.6rem', fontWeight: '700', letterSpacing: '2px', color: '#06b6d4', textTransform: 'uppercase', marginBottom: '10px', paddingBottom: '5px', borderBottom: '1px solid #e0f2fe' },
+        /* kpi row */
+        kpiRow:  { display: 'flex', gap: '8px', marginBottom: '0' },
+        kpiBox:  { flex: 1, border: '1px solid #e2e8f0', borderTop: '3px solid #06b6d4', borderRadius: '7px', padding: '8px 8px' },
+        kpiLbl:  { fontSize: '0.52rem', fontWeight: '700', letterSpacing: '0.8px', color: '#6b7280', textTransform: 'uppercase', marginBottom: '3px' },
+        kpiVal:  { fontSize: '0.88rem', fontWeight: '800', color: '#0f172a', lineHeight: '1.2' },
+        kpiSub:  { fontSize: '0.55rem', color: '#94a3b8', marginTop: '2px' },
+        /* table — tighter padding & smaller font to fit A4 width */
+        table:   { width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem', tableLayout: 'fixed' },
+        th:      { padding: '7px 10px', background: '#0f172a', color: '#f8fafc', fontWeight: '600', fontSize: '0.6rem', letterSpacing: '0.8px', textTransform: 'uppercase', textAlign: 'left', wordBreak: 'keep-all' },
+        thR:     { padding: '7px 10px', background: '#0f172a', color: '#f8fafc', fontWeight: '600', fontSize: '0.6rem', letterSpacing: '0.8px', textTransform: 'uppercase', textAlign: 'right', wordBreak: 'keep-all' },
+        thC:     { padding: '7px 10px', background: '#0f172a', color: '#f8fafc', fontWeight: '600', fontSize: '0.6rem', letterSpacing: '0.8px', textTransform: 'uppercase', textAlign: 'center', wordBreak: 'keep-all' },
+        tdE:     { padding: '7px 10px', color: '#374151', borderBottom: '1px solid #f1f5f9', background: '#ffffff', textAlign: 'left', verticalAlign: 'middle' },
+        tdO:     { padding: '7px 10px', color: '#374151', borderBottom: '1px solid #f1f5f9', background: '#f9fafb', textAlign: 'left', verticalAlign: 'middle' },
+        tdR:     { padding: '7px 10px', color: '#374151', borderBottom: '1px solid #f1f5f9', textAlign: 'right', verticalAlign: 'middle' },
+        tdC:     { padding: '7px 10px', color: '#374151', borderBottom: '1px solid #f1f5f9', textAlign: 'center', verticalAlign: 'middle' },
+        tdPri:   { padding: '7px 10px', color: '#06b6d4', fontWeight: '700', borderBottom: '1px solid #f1f5f9', textAlign: 'right', verticalAlign: 'middle' },
+        /* insights */
+        insightBox:  { background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '7px', padding: '11px 14px' },
+        insightLine: { fontSize: '0.72rem', color: '#374151', marginBottom: '4px', lineHeight: '1.5' },
+        insightKey:  { fontWeight: '700', color: '#0f172a' },
+        insightHi:   { color: '#06b6d4', fontWeight: '700' },
+        /* footer */
+        footer:  { padding: '10px 28px 14px', textAlign: 'center', background: '#f8fafc', borderTop: '1.5px solid #e0f2fe' },
+        footerTxt: { fontSize: '0.64rem', color: '#6b7280', margin: '0 0 2px' },
+        footerCopy:{ fontSize: '0.58rem', color: '#9ca3af', margin: 0 },
+    };
+
+    const kpiAccents = ['#06b6d4', '#3b82f6', '#10b981', '#8b5cf6', '#f59e0b'];
+
+    return (
+        <div style={P.wrap}>
+            <div ref={pdfRef} style={P.doc}>
+
+                {/* ── HEADER ── */}
+                <div style={P.header}>
+                    <div style={P.logoRow}>
+                        <span style={P.logoM}>Methu</span>
+                        <span style={P.logoA}>Aquarium</span>
+                    </div>
+                    <div style={P.contact}>No 50, Kumaradasa Mawatha, Matara &nbsp;&bull;&nbsp; 041-2236848 / 074-3143109 &nbsp;&bull;&nbsp; methuaquarium@gmail.com</div>
+                    <div style={P.divider} />
+                    <h2 style={P.title}>SALES &amp; REVENUE REPORT</h2>
+                    <div style={P.metaRow}>
+                        <span>Period: <strong style={{ color: '#0f172a' }}>{periodLabel}</strong></span>
+                        <span>Generated: {generatedAt}</span>
+                    </div>
+                </div>
+
+                {/* ── SUMMARY KPIs ── */}
+                <div style={P.section}>
+                    <p style={P.secTitle}>Summary</p>
+                    <div style={P.kpiRow}>
+                        {[
+                            { label: 'Total Revenue',    val: fmt(totalRevenue),          sub: 'Excl. cancelled/returned', accent: kpiAccents[0] },
+                            { label: 'Total Orders',     val: totalOrders.toLocaleString(), sub: 'Completed orders',         accent: kpiAccents[1] },
+                            { label: 'Avg Order Value',  val: fmt(avgOrder),              sub: 'Per order',                accent: kpiAccents[2] },
+                            { label: 'Online Orders',    val: onlineOrders.toLocaleString(), sub: 'Customer portal',         accent: kpiAccents[3] },
+                            { label: 'POS / Walk-in',    val: posOrders.toLocaleString(), sub: 'In-store sales',            accent: kpiAccents[4] },
+                        ].map((k, i) => (
+                            <div key={i} style={{ ...P.kpiBox, borderTopColor: k.accent }}>
+                                <div style={P.kpiLbl}>{k.label}</div>
+                                <div style={{ ...P.kpiVal, color: k.accent }}>{k.val}</div>
+                                <div style={P.kpiSub}>{k.sub}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* ── MONTHLY BREAKDOWN TABLE ── */}
+                {monthly.length > 0 && (
+                    <div style={{ ...P.section, paddingTop: 0 }}>
+                        <p style={P.secTitle}>Detailed Breakdown</p>
+                        <table style={P.table}>
+                            <colgroup>
+                                <col style={{ width: '28%' }} />
+                                <col style={{ width: '12%' }} />
+                                <col style={{ width: '24%' }} />
+                                <col style={{ width: '24%' }} />
+                                <col style={{ width: '12%' }} />
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th style={P.th}>Period</th>
+                                    <th style={P.thC}>Orders</th>
+                                    <th style={P.thR}>Revenue (LKR)</th>
+                                    <th style={P.thR}>Avg Order Value</th>
+                                    <th style={P.thR}>% of Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {monthly.map((m, i) => (
+                                    <tr key={i}>
+                                        <td style={i % 2 === 0 ? P.tdE : P.tdO}>{m.label}</td>
+                                        <td style={{ ...(i % 2 === 0 ? P.tdE : P.tdO), textAlign: 'center' }}>{m.orders}</td>
+                                        <td style={{ ...P.tdPri, background: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>{fmt(m.revenue)}</td>
+                                        <td style={{ ...P.tdR, background: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>{m.orders > 0 ? fmt(m.revenue / m.orders) : '—'}</td>
+                                        <td style={{ ...P.tdR, background: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
+                                            {totalRevenue > 0 ? ((m.revenue / totalRevenue) * 100).toFixed(1) + '%' : '—'}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── TOP PRODUCTS ── */}
+                {reportData.topProducts.length > 0 && (
+                    <div style={{ ...P.section, paddingTop: 0 }}>
+                        <p style={P.secTitle}>Top Products</p>
+                        <table style={P.table}>
+                            <colgroup>
+                                <col style={{ width: '6%' }} />
+                                <col style={{ width: '38%' }} />
+                                <col style={{ width: '20%' }} />
+                                <col style={{ width: '14%' }} />
+                                <col style={{ width: '22%' }} />
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th style={P.th}>#</th>
+                                    <th style={P.th}>Product</th>
+                                    <th style={P.th}>Category</th>
+                                    <th style={P.thC}>Units Sold</th>
+                                    <th style={P.thR}>Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {reportData.topProducts.map((p, i) => (
+                                    <tr key={i}>
+                                        <td style={{ ...(i % 2 === 0 ? P.tdE : P.tdO), color: '#9ca3af' }}>{i + 1}</td>
+                                        <td style={i % 2 === 0 ? P.tdE : P.tdO}><strong>{p.product_name}</strong></td>
+                                        <td style={i % 2 === 0 ? P.tdE : P.tdO}>{p.category}</td>
+                                        <td style={{ ...(i % 2 === 0 ? P.tdE : P.tdO), textAlign: 'center' }}>{p.total_quantity}</td>
+                                        <td style={{ ...P.tdPri, background: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>{fmt(p.total_revenue)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── PAYMENT METHODS ── */}
+                {reportData.paymentMethods.length > 0 && (
+                    <div style={{ ...P.section, paddingTop: 0 }}>
+                        <p style={P.secTitle}>Payment Methods</p>
+                        <table style={P.table}>
+                            <colgroup>
+                                <col style={{ width: '30%' }} />
+                                <col style={{ width: '20%' }} />
+                                <col style={{ width: '30%' }} />
+                                <col style={{ width: '20%' }} />
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th style={P.th}>Method</th>
+                                    <th style={P.thC}>Transactions</th>
+                                    <th style={P.thR}>Total Amount</th>
+                                    <th style={P.thR}>% of Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {reportData.paymentMethods.map((pm, i) => (
+                                    <tr key={i}>
+                                        <td style={i % 2 === 0 ? P.tdE : P.tdO}><strong>{pm.method}</strong></td>
+                                        <td style={{ ...(i % 2 === 0 ? P.tdE : P.tdO), textAlign: 'center' }}>{pm.count}</td>
+                                        <td style={{ ...P.tdPri, background: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>{fmt(pm.total_amount)}</td>
+                                        <td style={{ ...P.tdR, background: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
+                                            {totalRevenue > 0 ? ((parseFloat(pm.total_amount) / totalRevenue) * 100).toFixed(1) + '%' : '—'}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── INSIGHTS ── */}
+                <div style={{ ...P.section, paddingTop: 0 }}>
+                    <p style={P.secTitle}>Insights</p>
+                    <div style={P.insightBox}>
+                        <p style={P.insightLine}>
+                            <span style={P.insightKey}>Total Revenue: </span>
+                            <span style={P.insightHi}>{fmt(totalRevenue)}</span>
+                            &nbsp;&nbsp;|&nbsp;&nbsp;
+                            <span style={P.insightKey}>Total Orders: </span>{totalOrders}
+                            &nbsp;&nbsp;|&nbsp;&nbsp;
+                            <span style={P.insightKey}>Avg Order Value: </span>{fmt(avgOrder)}
+                        </p>
+                        {bestMonth && (
+                            <p style={P.insightLine}>
+                                <span style={P.insightKey}>Best Period: </span>
+                                {bestMonth.label} — <span style={P.insightHi}>{fmt(bestMonth.revenue)}</span> ({bestMonth.orders} orders)
+                            </p>
+                        )}
+                        {worstMonth && (
+                            <p style={P.insightLine}>
+                                <span style={P.insightKey}>Lowest Period: </span>
+                                {worstMonth.label} — {fmt(worstMonth.revenue)} ({worstMonth.orders} orders)
+                            </p>
+                        )}
+                        <p style={{ ...P.insightLine, marginBottom: 0 }}>
+                            <span style={P.insightKey}>Sales Channel: </span>
+                            Online {onlineOrders} orders &nbsp;|&nbsp; POS/Walk-in {posOrders} orders
+                            {totalOrders > 0 && (
+                                <> &nbsp;({((onlineOrders / totalOrders) * 100).toFixed(0)}% online)</>
+                            )}
+                        </p>
+                    </div>
+                </div>
+
+                {/* ── FOOTER ── */}
+                <div style={P.footer}>
+                    <p style={P.footerTxt}>Generated by Methu Aquarium Management System</p>
+                    <p style={{ ...P.footerTxt, marginBottom: '4px' }}>{generatedAt}</p>
+                    <p style={P.footerCopy}>&copy; 2026 Methu Aquarium. All Rights Reserved.</p>
+                </div>
+
+            </div>
+        </div>
+    );
+};
+
 const STATUS_COLORS = {
     Pending: '#f59e0b', Processing: '#3b82f6', Shipped: '#06b6d4',
     Delivered: '#10b981', Cancelled: '#ef4444', Returned: '#8b5cf6',
@@ -41,6 +311,9 @@ const ReportsAnalytics = () => {
 
     /* chart instance refs (for destroy) */
     const charts = useRef({});
+
+    /* ref for the hidden white PDF template */
+    const pdfRef = useRef(null);
 
     const reportCategories = [
         { id: 'sales',     title: 'Sales & Revenue',     description: 'Orders, revenue & payment breakdown over a custom date range.', icon: <BarChart3 size={22} color="#3b82f6" />, bg: 'rgba(59,130,246,0.12)',  border: '#3b82f6' },
@@ -214,19 +487,18 @@ const ReportsAnalytics = () => {
 
     /* ── Download PDF ───────────────────────────────────── */
     const downloadPDF = async () => {
-        const el = document.getElementById('sales-report-pdf-area');
-        if (!el) return;
+        if (!pdfRef.current) return;
         Swal.fire({ title: 'Generating PDF…', background: '#1a1f2e', color: '#fff', showConfirmButton: false, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         try {
             const html2pdf = (await import('html2pdf.js')).default;
             await html2pdf().set({
-                margin: [0.4, 0.4],
+                margin: [8, 10, 8, 10],
                 filename: `sales-report-${startDate}-to-${endDate}.pdf`,
-                image: { type: 'jpeg', quality: 0.97 },
-                html2canvas: { scale: 2, backgroundColor: '#0f1117', useCORS: true, logging: false },
-                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, letterRendering: true, backgroundColor: '#ffffff' },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-            }).from(el).save();
+            }).from(pdfRef.current).save();
             Swal.fire({ icon: 'success', title: 'Downloaded!', text: 'Your PDF report has been saved.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#06b6d4', timer: 2000, showConfirmButton: false });
         } catch {
             Swal.close();
@@ -475,6 +747,16 @@ const ReportsAnalytics = () => {
 
             {/* ── Report output ── */}
             {isGenerated && !loading && selectedReport === 'sales' && renderSalesReport()}
+
+            {/* ── Hidden white PDF template (off-screen, captured by html2pdf) ── */}
+            {isGenerated && selectedReport === 'sales' && (
+                <SalesReportPDF
+                    reportData={reportData}
+                    startDate={startDate}
+                    endDate={endDate}
+                    pdfRef={pdfRef}
+                />
+            )}
 
             {/* ─────────────────── STYLES ─────────────────── */}
             <style>{`
