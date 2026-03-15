@@ -1872,9 +1872,6 @@ const ReportsAnalytics = () => {
                         <div className="cat-body">
                             <h4>{cat.title}</h4>
                             <p>{cat.description}</p>
-                            {(cat.id === 'sales' || cat.id === 'inventory' || cat.id === 'product')
-                                ? <span className="badge-live">LIVE DATA</span>
-                                : <span className="badge-soon">COMING SOON</span>}
                         </div>
                     </div>
                 ))}
@@ -2006,17 +2003,6 @@ const ReportsAnalytics = () => {
                 }
                 .cat-body h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.3rem; color: var(--text-main); }
                 .cat-body p  { font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 0.5rem; }
-
-                .badge-live {
-                    font-size: 0.65rem; font-weight: 700; letter-spacing: 1px;
-                    background: rgba(16,185,129,0.15); color: #10b981;
-                    border: 1px solid rgba(16,185,129,0.3); border-radius: 4px; padding: 2px 7px;
-                }
-                .badge-soon {
-                    font-size: 0.65rem; font-weight: 700; letter-spacing: 1px;
-                    background: rgba(148,163,184,0.1); color: #64748b;
-                    border: 1px solid rgba(148,163,184,0.2); border-radius: 4px; padding: 2px 7px;
-                }
 
                 /* ── Date / filter section ── */
                 .filter-section { margin-top: 2rem; }
