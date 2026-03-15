@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     BarChart3, TrendingUp, Package, Calendar, Download,
-    FileText, Star, ShoppingCart, Users, Store, CreditCard
+    FileText, Star, ShoppingCart, Users, Store, CreditCard,
+    AlertTriangle, Archive
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import Chart from 'chart.js/auto';
@@ -288,6 +289,274 @@ const SalesReportPDF = ({ reportData, startDate, endDate, pdfRef }) => {
     );
 };
 
+/* ─── Inventory PDF template ───────────────────────────── */
+const InventoryReportPDF = ({ reportData, pdfRef }) => {
+    if (!reportData) return null;
+
+    const s             = reportData.summary;
+    const totalProducts = parseInt(s.total_products)      || 0;
+    const totalCats     = parseInt(s.total_categories)    || 0;
+    const totalUnits    = parseInt(s.total_stock_units)   || 0;
+    const totalValue    = parseFloat(s.total_stock_value)  || 0;
+    const outOfStock    = parseInt(s.out_of_stock)         || 0;
+    const lowStockCt    = parseInt(s.low_stock)            || 0;
+    const inStockCt     = parseInt(s.in_stock)             || 0;
+    const expiringSoon  = parseInt(s.expiring_soon)        || 0;
+
+    const generatedAt = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+    const P = {
+        wrap:    { position: 'fixed', left: '-9999px', top: 0, zIndex: -1, opacity: 0, pointerEvents: 'none' },
+        doc:     { width: '190mm', background: '#ffffff', fontFamily: "'Outfit', system-ui, -apple-system, sans-serif", color: '#111827' },
+        header:  { padding: '20px 28px 14px', background: '#ffffff', borderBottom: '1px solid #f1f5f9', textAlign: 'center' },
+        logoRow: { display: 'flex', justifyContent: 'center', alignItems: 'baseline', gap: '1px', marginBottom: '5px' },
+        logoM:   { fontSize: '1.5rem', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.5px' },
+        logoA:   { fontSize: '1.5rem', fontWeight: '800', color: '#06b6d4', letterSpacing: '-0.5px' },
+        contact: { fontSize: '0.64rem', color: '#6b7280', marginBottom: '10px' },
+        divider: { height: '1.5px', background: 'linear-gradient(90deg, transparent, #f59e0b 40%, #f59e0b 60%, transparent)', margin: '0 0 10px' },
+        title:   { fontSize: '0.9rem', fontWeight: '700', color: '#0f172a', letterSpacing: '5px', margin: '0 0 5px' },
+        metaRow: { display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: '#6b7280', marginTop: '3px' },
+        section: { padding: '14px 24px' },
+        secTitle:{ fontSize: '0.6rem', fontWeight: '700', letterSpacing: '2px', color: '#f59e0b', textTransform: 'uppercase', marginBottom: '10px', paddingBottom: '5px', borderBottom: '1px solid #fef3c7' },
+        kpiRow:  { display: 'flex', gap: '8px', marginBottom: '0' },
+        kpiBox:  { flex: 1, border: '1px solid #e2e8f0', borderTop: '3px solid #f59e0b', borderRadius: '7px', padding: '8px 8px' },
+        kpiLbl:  { fontSize: '0.52rem', fontWeight: '700', letterSpacing: '0.8px', color: '#6b7280', textTransform: 'uppercase', marginBottom: '3px' },
+        kpiVal:  { fontSize: '0.88rem', fontWeight: '800', color: '#0f172a', lineHeight: '1.2' },
+        kpiSub:  { fontSize: '0.55rem', color: '#94a3b8', marginTop: '2px' },
+        table:   { width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem', tableLayout: 'fixed' },
+        th:      { padding: '7px 10px', background: '#0f172a', color: '#f8fafc', fontWeight: '600', fontSize: '0.6rem', letterSpacing: '0.8px', textTransform: 'uppercase', textAlign: 'left', wordBreak: 'keep-all' },
+        thR:     { padding: '7px 10px', background: '#0f172a', color: '#f8fafc', fontWeight: '600', fontSize: '0.6rem', letterSpacing: '0.8px', textTransform: 'uppercase', textAlign: 'right', wordBreak: 'keep-all' },
+        thC:     { padding: '7px 10px', background: '#0f172a', color: '#f8fafc', fontWeight: '600', fontSize: '0.6rem', letterSpacing: '0.8px', textTransform: 'uppercase', textAlign: 'center', wordBreak: 'keep-all' },
+        tdE:     { padding: '7px 10px', color: '#374151', borderBottom: '1px solid #f1f5f9', background: '#ffffff', textAlign: 'left', verticalAlign: 'middle' },
+        tdO:     { padding: '7px 10px', color: '#374151', borderBottom: '1px solid #f1f5f9', background: '#f9fafb', textAlign: 'left', verticalAlign: 'middle' },
+        tdR:     { padding: '7px 10px', color: '#374151', borderBottom: '1px solid #f1f5f9', textAlign: 'right', verticalAlign: 'middle' },
+        tdC:     { padding: '7px 10px', color: '#374151', borderBottom: '1px solid #f1f5f9', textAlign: 'center', verticalAlign: 'middle' },
+        tdPri:   { padding: '7px 10px', color: '#f59e0b', fontWeight: '700', borderBottom: '1px solid #f1f5f9', textAlign: 'right', verticalAlign: 'middle' },
+        insightBox:  { background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '7px', padding: '11px 14px' },
+        insightLine: { fontSize: '0.72rem', color: '#374151', marginBottom: '4px', lineHeight: '1.5' },
+        insightKey:  { fontWeight: '700', color: '#0f172a' },
+        insightHi:   { color: '#f59e0b', fontWeight: '700' },
+        footer:      { padding: '10px 28px 14px', textAlign: 'center', background: '#f8fafc', borderTop: '1.5px solid #fef3c7' },
+        footerTxt:   { fontSize: '0.64rem', color: '#6b7280', margin: '0 0 2px' },
+        footerCopy:  { fontSize: '0.58rem', color: '#9ca3af', margin: 0 },
+    };
+
+    const kpiAccents = ['#f59e0b', '#06b6d4', '#3b82f6', '#10b981', '#ef4444'];
+
+    return (
+        <div style={P.wrap}>
+            <div ref={pdfRef} style={P.doc}>
+
+                {/* ── HEADER ── */}
+                <div style={P.header}>
+                    <div style={P.logoRow}>
+                        <span style={P.logoM}>Methu</span>
+                        <span style={P.logoA}>Aquarium</span>
+                    </div>
+                    <div style={P.contact}>No 50, Kumaradasa Mawatha, Matara &nbsp;&bull;&nbsp; 041-2236848 / 074-3143109 &nbsp;&bull;&nbsp; methuaquarium@gmail.com</div>
+                    <div style={P.divider} />
+                    <h2 style={P.title}>INVENTORY &amp; STOCK REPORT</h2>
+                    <div style={P.metaRow}>
+                        <span>As of: <strong style={{ color: '#0f172a' }}>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</strong></span>
+                        <span>Generated: {generatedAt}</span>
+                    </div>
+                </div>
+
+                {/* ── SUMMARY KPIs ── */}
+                <div style={P.section}>
+                    <p style={P.secTitle}>Summary</p>
+                    <div style={P.kpiRow}>
+                        {[
+                            { label: 'Total Products',   val: totalProducts.toLocaleString(), sub: 'In catalogue',           accent: kpiAccents[0] },
+                            { label: 'Categories',       val: totalCats.toLocaleString(),      sub: 'Product groups',         accent: kpiAccents[1] },
+                            { label: 'Total Units',      val: totalUnits.toLocaleString(),     sub: 'Across all products',    accent: kpiAccents[2] },
+                            { label: 'Stock Value',      val: fmt(totalValue),                 sub: 'At current prices',      accent: kpiAccents[3] },
+                            { label: 'Out of Stock',     val: outOfStock.toLocaleString(),     sub: 'Need restocking',        accent: kpiAccents[4] },
+                        ].map((k, i) => (
+                            <div key={i} style={{ ...P.kpiBox, borderTopColor: k.accent }}>
+                                <div style={P.kpiLbl}>{k.label}</div>
+                                <div style={{ ...P.kpiVal, color: k.accent }}>{k.val}</div>
+                                <div style={P.kpiSub}>{k.sub}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* ── STOCK BY CATEGORY ── */}
+                {reportData.categoryStock.length > 0 && (
+                    <div style={{ ...P.section, paddingTop: 0 }}>
+                        <p style={P.secTitle}>Stock by Category</p>
+                        <table style={P.table}>
+                            <colgroup>
+                                <col style={{ width: '22%' }} /><col style={{ width: '12%' }} />
+                                <col style={{ width: '12%' }} /><col style={{ width: '26%' }} />
+                                <col style={{ width: '14%' }} /><col style={{ width: '14%' }} />
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th style={P.th}>Category</th>
+                                    <th style={P.thC}>Products</th>
+                                    <th style={P.thC}>Units</th>
+                                    <th style={P.thR}>Stock Value (LKR)</th>
+                                    <th style={P.thC}>Out of Stock</th>
+                                    <th style={P.thC}>Low Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {reportData.categoryStock.map((c, i) => (
+                                    <tr key={i}>
+                                        <td style={i % 2 === 0 ? P.tdE : P.tdO}><strong>{c.category}</strong></td>
+                                        <td style={{ ...(i % 2 === 0 ? P.tdE : P.tdO), textAlign: 'center' }}>{c.product_count}</td>
+                                        <td style={{ ...(i % 2 === 0 ? P.tdE : P.tdO), textAlign: 'center' }}>{parseInt(c.total_units).toLocaleString()}</td>
+                                        <td style={{ ...P.tdPri, background: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>{fmt(c.total_value)}</td>
+                                        <td style={{ ...P.tdC, background: i % 2 === 0 ? '#ffffff' : '#f9fafb', color: parseInt(c.out_of_stock_count) > 0 ? '#ef4444' : '#374151', fontWeight: parseInt(c.out_of_stock_count) > 0 ? '700' : '400' }}>
+                                            {parseInt(c.out_of_stock_count) > 0 ? c.out_of_stock_count : '—'}
+                                        </td>
+                                        <td style={{ ...P.tdC, background: i % 2 === 0 ? '#ffffff' : '#f9fafb', color: parseInt(c.low_stock_count) > 0 ? '#f97316' : '#374151', fontWeight: parseInt(c.low_stock_count) > 0 ? '700' : '400' }}>
+                                            {parseInt(c.low_stock_count) > 0 ? c.low_stock_count : '—'}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── OUT OF STOCK ── */}
+                {reportData.outOfStock.length > 0 && (
+                    <div style={{ ...P.section, paddingTop: 0 }}>
+                        <p style={{ ...P.secTitle, color: '#ef4444', borderBottomColor: '#fee2e2' }}>Out of Stock ({reportData.outOfStock.length})</p>
+                        <table style={P.table}>
+                            <colgroup>
+                                <col style={{ width: '46%' }} /><col style={{ width: '28%' }} /><col style={{ width: '26%' }} />
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th style={P.th}>Product</th>
+                                    <th style={P.th}>Category</th>
+                                    <th style={P.thR}>Price (LKR)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {reportData.outOfStock.map((p, i) => (
+                                    <tr key={i}>
+                                        <td style={i % 2 === 0 ? P.tdE : P.tdO}>{p.name}</td>
+                                        <td style={i % 2 === 0 ? P.tdE : P.tdO}>{p.category}</td>
+                                        <td style={{ ...P.tdR, background: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>{fmt(p.price)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── LOW STOCK ── */}
+                {reportData.lowStock.length > 0 && (
+                    <div style={{ ...P.section, paddingTop: 0 }}>
+                        <p style={{ ...P.secTitle, color: '#f97316', borderBottomColor: '#ffedd5' }}>Low Stock — Units ≤ 10 ({reportData.lowStock.length})</p>
+                        <table style={P.table}>
+                            <colgroup>
+                                <col style={{ width: '44%' }} /><col style={{ width: '24%' }} />
+                                <col style={{ width: '14%' }} /><col style={{ width: '18%' }} />
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th style={P.th}>Product</th>
+                                    <th style={P.th}>Category</th>
+                                    <th style={P.thC}>Stock</th>
+                                    <th style={P.thR}>Price (LKR)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {reportData.lowStock.map((p, i) => (
+                                    <tr key={i}>
+                                        <td style={i % 2 === 0 ? P.tdE : P.tdO}>{p.name}</td>
+                                        <td style={i % 2 === 0 ? P.tdE : P.tdO}>{p.category}</td>
+                                        <td style={{ ...P.tdC, background: i % 2 === 0 ? '#ffffff' : '#f9fafb', color: '#f97316', fontWeight: '700' }}>{p.stock_quantity}</td>
+                                        <td style={{ ...P.tdR, background: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>{fmt(p.price)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── EXPIRING SOON ── */}
+                {reportData.expiringSoon.length > 0 && (
+                    <div style={{ ...P.section, paddingTop: 0 }}>
+                        <p style={{ ...P.secTitle, color: '#8b5cf6', borderBottomColor: '#ede9fe' }}>Expiring Within 30 Days ({reportData.expiringSoon.length})</p>
+                        <table style={P.table}>
+                            <colgroup>
+                                <col style={{ width: '44%' }} /><col style={{ width: '24%' }} />
+                                <col style={{ width: '14%' }} /><col style={{ width: '18%' }} />
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th style={P.th}>Product</th>
+                                    <th style={P.th}>Category</th>
+                                    <th style={P.thC}>Stock</th>
+                                    <th style={P.thR}>Expiry Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {reportData.expiringSoon.map((p, i) => (
+                                    <tr key={i}>
+                                        <td style={i % 2 === 0 ? P.tdE : P.tdO}>{p.name}</td>
+                                        <td style={i % 2 === 0 ? P.tdE : P.tdO}>{p.category}</td>
+                                        <td style={{ ...(i % 2 === 0 ? P.tdE : P.tdO), textAlign: 'center' }}>{p.stock_quantity}</td>
+                                        <td style={{ ...P.tdR, background: i % 2 === 0 ? '#ffffff' : '#f9fafb', color: '#8b5cf6', fontWeight: '700' }}>
+                                            {new Date(p.expiry_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── INSIGHTS ── */}
+                <div style={{ ...P.section, paddingTop: 0 }}>
+                    <p style={P.secTitle}>Insights</p>
+                    <div style={P.insightBox}>
+                        <p style={P.insightLine}>
+                            <span style={P.insightKey}>Total Products: </span>{totalProducts}
+                            &nbsp;&nbsp;|&nbsp;&nbsp;
+                            <span style={P.insightKey}>Categories: </span>{totalCats}
+                            &nbsp;&nbsp;|&nbsp;&nbsp;
+                            <span style={P.insightKey}>Total Stock Units: </span>{totalUnits.toLocaleString()}
+                        </p>
+                        <p style={P.insightLine}>
+                            <span style={P.insightKey}>Total Inventory Value: </span>
+                            <span style={P.insightHi}>{fmt(totalValue)}</span>
+                        </p>
+                        <p style={P.insightLine}>
+                            <span style={P.insightKey}>Stock Health: </span>
+                            In Stock <strong>{inStockCt}</strong>
+                            &nbsp;|&nbsp; Low Stock <strong style={{ color: '#f97316' }}>{lowStockCt}</strong>
+                            &nbsp;|&nbsp; Out of Stock <strong style={{ color: '#ef4444' }}>{outOfStock}</strong>
+                            {totalProducts > 0 && <> — {((inStockCt / totalProducts) * 100).toFixed(0)}% healthy stock</>}
+                        </p>
+                        {expiringSoon > 0 && (
+                            <p style={{ ...P.insightLine, marginBottom: 0 }}>
+                                <span style={P.insightKey}>Expiring Soon: </span>
+                                <strong style={{ color: '#8b5cf6' }}>{expiringSoon} product{expiringSoon > 1 ? 's' : ''}</strong> expiring within 30 days — review and action required.
+                            </p>
+                        )}
+                    </div>
+                </div>
+
+                {/* ── FOOTER ── */}
+                <div style={P.footer}>
+                    <p style={P.footerTxt}>Generated by Methu Aquarium Management System</p>
+                    <p style={{ ...P.footerTxt, marginBottom: '4px' }}>{generatedAt}</p>
+                    <p style={P.footerCopy}>&copy; 2026 Methu Aquarium. All Rights Reserved.</p>
+                </div>
+
+            </div>
+        </div>
+    );
+};
+
 const STATUS_COLORS = {
     Pending: '#f59e0b', Processing: '#3b82f6', Shipped: '#06b6d4',
     Delivered: '#10b981', Cancelled: '#ef4444', Returned: '#8b5cf6',
@@ -313,7 +582,12 @@ const ReportsAnalytics = () => {
     const charts = useRef({});
 
     /* ref for the hidden white PDF template */
-    const pdfRef = useRef(null);
+    const pdfRef    = useRef(null);
+    const invPdfRef = useRef(null);
+
+    /* inventory chart canvas refs */
+    const stockStatusRef   = useRef(null);
+    const stockCategoryRef = useRef(null);
 
     const reportCategories = [
         { id: 'sales',     title: 'Sales & Revenue',     description: 'Orders, revenue & payment breakdown over a custom date range.', icon: <BarChart3 size={22} color="#3b82f6" />, bg: 'rgba(59,130,246,0.12)',  border: '#3b82f6' },
@@ -336,6 +610,17 @@ const ReportsAnalytics = () => {
         if (!reportData || selectedReport !== 'sales') return;
         const t = setTimeout(() => buildCharts(reportData), 80);
         return () => { clearTimeout(t); destroyCharts(); };
+    }, [reportData]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    useEffect(() => {
+        if (!reportData || selectedReport !== 'inventory') return;
+        const t = setTimeout(() => buildInventoryCharts(reportData), 80);
+        return () => {
+            clearTimeout(t);
+            ['stockStatus', 'stockCategory'].forEach(k => {
+                if (charts.current[k]) { charts.current[k].destroy(); delete charts.current[k]; }
+            });
+        };
     }, [reportData]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const buildCharts = (data) => {
@@ -456,26 +741,91 @@ const ReportsAnalytics = () => {
         }
     };
 
+    const buildInventoryCharts = (data) => {
+        ['stockStatus', 'stockCategory'].forEach(k => {
+            if (charts.current[k]) { charts.current[k].destroy(); delete charts.current[k]; }
+        });
+
+        const s          = data.summary;
+        const inStockCt  = parseInt(s.in_stock)    || 0;
+        const lowStockCt = parseInt(s.low_stock)   || 0;
+        const outOfStock = parseInt(s.out_of_stock) || 0;
+
+        /* Stock status doughnut */
+        if (stockStatusRef.current) {
+            charts.current.stockStatus = new Chart(stockStatusRef.current.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['In Stock', 'Low Stock', 'Out of Stock'],
+                    datasets: [{
+                        data: [inStockCt, lowStockCt, outOfStock],
+                        backgroundColor: ['#10b981cc', '#f97316cc', '#ef4444cc'],
+                        borderColor: '#151b2d',
+                        borderWidth: 3,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: { legend: { labels: { color: '#94a3b8', padding: 14, font: { size: 11 } } } },
+                },
+            });
+        }
+
+        /* Stock value by category bar */
+        if (stockCategoryRef.current && data.categoryStock.length) {
+            charts.current.stockCategory = new Chart(stockCategoryRef.current.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: data.categoryStock.map(c => c.category),
+                    datasets: [{
+                        label: 'Stock Value (LKR)',
+                        data: data.categoryStock.map(c => parseFloat(c.total_value)),
+                        backgroundColor: PALETTE.slice(0, data.categoryStock.length).map(c => c + 'cc'),
+                        borderRadius: 6,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: ctx => ' LKR ' + ctx.parsed.y.toLocaleString() } },
+                    },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        y: { ticks: { color: '#94a3b8', callback: v => 'LKR ' + v.toLocaleString() }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    },
+                },
+            });
+        }
+    };
+
     /* ── Generate report ────────────────────────────────── */
     const generateReport = async () => {
-        if (selectedReport !== 'sales') {
+        if (selectedReport !== 'sales' && selectedReport !== 'inventory') {
             Swal.fire({ icon: 'info', title: 'Coming Soon', text: 'This report type is under development.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#06b6d4' });
             return;
         }
-        if (!startDate || !endDate) {
-            Swal.fire({ icon: 'warning', title: 'Select Dates', text: 'Please select both a start and end date.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#06b6d4' });
-            return;
-        }
-        if (new Date(startDate) > new Date(endDate)) {
-            Swal.fire({ icon: 'warning', title: 'Invalid Range', text: 'Start date must be before end date.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#06b6d4' });
-            return;
+        if (selectedReport === 'sales') {
+            if (!startDate || !endDate) {
+                Swal.fire({ icon: 'warning', title: 'Select Dates', text: 'Please select both a start and end date.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#06b6d4' });
+                return;
+            }
+            if (new Date(startDate) > new Date(endDate)) {
+                Swal.fire({ icon: 'warning', title: 'Invalid Range', text: 'Start date must be before end date.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#06b6d4' });
+                return;
+            }
         }
         setLoading(true);
         destroyCharts();
         setIsGenerated(false);
         setReportData(null);
         try {
-            const res = await apiRequest(`/admin/sales-report?start_date=${startDate}&end_date=${endDate}`);
+            const res = selectedReport === 'sales'
+                ? await apiRequest(`/admin/sales-report?start_date=${startDate}&end_date=${endDate}`)
+                : await apiRequest('/admin/inventory-report');
             setReportData(res.data);
             setIsGenerated(true);
         } catch {
@@ -499,6 +849,27 @@ const ReportsAnalytics = () => {
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
             }).from(pdfRef.current).save();
+            Swal.fire({ icon: 'success', title: 'Downloaded!', text: 'Your PDF report has been saved.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#06b6d4', timer: 2000, showConfirmButton: false });
+        } catch {
+            Swal.close();
+        }
+    };
+
+    /* ── Download inventory PDF ─────────────────────────── */
+    const downloadInventoryPDF = async () => {
+        if (!invPdfRef.current) return;
+        Swal.fire({ title: 'Generating PDF…', background: '#1a1f2e', color: '#fff', showConfirmButton: false, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        try {
+            const html2pdf = (await import('html2pdf.js')).default;
+            const today = new Date().toISOString().split('T')[0];
+            await html2pdf().set({
+                margin: [8, 10, 8, 10],
+                filename: `inventory-report-${today}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, letterRendering: true, backgroundColor: '#ffffff' },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+            }).from(invPdfRef.current).save();
             Swal.fire({ icon: 'success', title: 'Downloaded!', text: 'Your PDF report has been saved.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#06b6d4', timer: 2000, showConfirmButton: false });
         } catch {
             Swal.close();
@@ -671,6 +1042,195 @@ const ReportsAnalytics = () => {
         );
     };
 
+    /* ── Inventory report UI ────────────────────────────── */
+    const renderInventoryReport = () => {
+        if (!reportData) return null;
+        const s             = reportData.summary;
+        const totalProducts = parseInt(s.total_products)      || 0;
+        const totalCats     = parseInt(s.total_categories)    || 0;
+        const totalUnits    = parseInt(s.total_stock_units)   || 0;
+        const totalValue    = parseFloat(s.total_stock_value)  || 0;
+        const outOfStock    = parseInt(s.out_of_stock)         || 0;
+        const lowStockCt    = parseInt(s.low_stock)            || 0;
+        const expiringSoon  = parseInt(s.expiring_soon)        || 0;
+
+        return (
+            <div className="report-display-area">
+                {/* ── Header ── */}
+                <div className="report-header">
+                    <div className="rh-left">
+                        <h2 className="rh-title"><Package size={22} style={{ marginRight: 10 }} />Inventory &amp; Stock Report</h2>
+                        <p className="rh-sub">As of: <strong>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</strong></p>
+                        <p className="rh-sub" style={{ marginTop: 2 }}>Generated: {new Date().toLocaleString()}</p>
+                    </div>
+                    <button className="btn-download" onClick={downloadInventoryPDF}>
+                        <Download size={16} /> Download PDF
+                    </button>
+                </div>
+
+                {/* ── KPI cards ── */}
+                <div className="kpi-grid">
+                    <div className="kpi-card" style={{ '--kc': '#f59e0b' }}>
+                        <div className="kpi-icon-wrap"><Package size={18} /></div>
+                        <div className="kpi-label">TOTAL PRODUCTS</div>
+                        <div className="kpi-val">{totalProducts.toLocaleString()}</div>
+                    </div>
+                    <div className="kpi-card" style={{ '--kc': '#06b6d4' }}>
+                        <div className="kpi-icon-wrap"><Archive size={18} /></div>
+                        <div className="kpi-label">CATEGORIES</div>
+                        <div className="kpi-val">{totalCats}</div>
+                    </div>
+                    <div className="kpi-card" style={{ '--kc': '#3b82f6' }}>
+                        <div className="kpi-icon-wrap"><TrendingUp size={18} /></div>
+                        <div className="kpi-label">TOTAL UNITS</div>
+                        <div className="kpi-val">{totalUnits.toLocaleString()}</div>
+                    </div>
+                    <div className="kpi-card" style={{ '--kc': '#10b981' }}>
+                        <div className="kpi-icon-wrap"><TrendingUp size={18} /></div>
+                        <div className="kpi-label">STOCK VALUE</div>
+                        <div className="kpi-val">{fmt(totalValue)}</div>
+                    </div>
+                    <div className="kpi-card" style={{ '--kc': '#ef4444' }}>
+                        <div className="kpi-icon-wrap"><AlertTriangle size={18} /></div>
+                        <div className="kpi-label">OUT OF STOCK</div>
+                        <div className="kpi-val">{outOfStock}</div>
+                    </div>
+                </div>
+
+                {/* ── Charts ── */}
+                <div className="charts-2col">
+                    <div className="chart-col">
+                        <h3 className="section-label">STOCK STATUS</h3>
+                        <div className="chart-box chart-box-md">
+                            <canvas ref={stockStatusRef} />
+                        </div>
+                    </div>
+                    <div className="chart-col">
+                        <h3 className="section-label">STOCK VALUE BY CATEGORY</h3>
+                        <div className="chart-box chart-box-md">
+                            {reportData.categoryStock.length > 0
+                                ? <canvas ref={stockCategoryRef} />
+                                : <div className="no-data">No data</div>}
+                        </div>
+                    </div>
+                </div>
+
+                {/* ── Category breakdown table ── */}
+                {reportData.categoryStock.length > 0 && (
+                    <div className="table-section">
+                        <h3 className="section-label">STOCK BY CATEGORY</h3>
+                        <table className="data-table">
+                            <thead>
+                                <tr><th>Category</th><th>Products</th><th>Total Units</th><th>Stock Value</th><th>Out of Stock</th><th>Low Stock</th></tr>
+                            </thead>
+                            <tbody>
+                                {reportData.categoryStock.map((c, i) => (
+                                    <tr key={i}>
+                                        <td><strong>{c.category}</strong></td>
+                                        <td>{c.product_count}</td>
+                                        <td>{parseInt(c.total_units).toLocaleString()}</td>
+                                        <td className="td-primary">{fmt(c.total_value)}</td>
+                                        <td style={{ color: parseInt(c.out_of_stock_count) > 0 ? '#ef4444' : 'inherit', fontWeight: parseInt(c.out_of_stock_count) > 0 ? 600 : 400 }}>
+                                            {parseInt(c.out_of_stock_count) > 0 ? c.out_of_stock_count : '—'}
+                                        </td>
+                                        <td style={{ color: parseInt(c.low_stock_count) > 0 ? '#f97316' : 'inherit', fontWeight: parseInt(c.low_stock_count) > 0 ? 600 : 400 }}>
+                                            {parseInt(c.low_stock_count) > 0 ? c.low_stock_count : '—'}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── Out of stock ── */}
+                {reportData.outOfStock.length > 0 && (
+                    <div className="table-section">
+                        <h3 className="section-label" style={{ color: '#ef4444' }}>OUT OF STOCK ({reportData.outOfStock.length})</h3>
+                        <table className="data-table">
+                            <thead>
+                                <tr><th>Product</th><th>Category</th><th>Price</th></tr>
+                            </thead>
+                            <tbody>
+                                {reportData.outOfStock.map((p, i) => (
+                                    <tr key={i}>
+                                        <td>{p.name}</td>
+                                        <td><span className="badge-cat">{p.category}</span></td>
+                                        <td className="td-primary">{fmt(p.price)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── Low stock ── */}
+                {reportData.lowStock.length > 0 && (
+                    <div className="table-section">
+                        <h3 className="section-label" style={{ color: '#f97316' }}>LOW STOCK — UNITS ≤ 10 ({reportData.lowStock.length})</h3>
+                        <table className="data-table">
+                            <thead>
+                                <tr><th>Product</th><th>Category</th><th>Stock</th><th>Price</th></tr>
+                            </thead>
+                            <tbody>
+                                {reportData.lowStock.map((p, i) => (
+                                    <tr key={i}>
+                                        <td>{p.name}</td>
+                                        <td><span className="badge-cat">{p.category}</span></td>
+                                        <td><span className="badge-stock-low">{p.stock_quantity}</span></td>
+                                        <td className="td-primary">{fmt(p.price)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── Expiring soon ── */}
+                {reportData.expiringSoon.length > 0 && (
+                    <div className="table-section">
+                        <h3 className="section-label" style={{ color: '#8b5cf6' }}>EXPIRING WITHIN 30 DAYS ({reportData.expiringSoon.length})</h3>
+                        <table className="data-table">
+                            <thead>
+                                <tr><th>Product</th><th>Category</th><th>Stock</th><th>Expiry Date</th></tr>
+                            </thead>
+                            <tbody>
+                                {reportData.expiringSoon.map((p, i) => (
+                                    <tr key={i}>
+                                        <td>{p.name}</td>
+                                        <td><span className="badge-cat">{p.category}</span></td>
+                                        <td>{p.stock_quantity}</td>
+                                        <td style={{ color: '#8b5cf6', fontWeight: 600 }}>
+                                            {new Date(p.expiry_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── Low stock alert banner ── */}
+                {lowStockCt > 0 && (
+                    <div className="inv-alert-banner">
+                        <AlertTriangle size={16} />
+                        <span><strong>{lowStockCt} product{lowStockCt > 1 ? 's' : ''}</strong> with low stock (≤ 10 units).
+                        {expiringSoon > 0 && <> &nbsp;&bull;&nbsp; <strong>{expiringSoon} product{expiringSoon > 1 ? 's' : ''}</strong> expiring within 30 days.</>}
+                        </span>
+                    </div>
+                )}
+
+                {/* ── Empty state ── */}
+                {totalProducts === 0 && (
+                    <div className="empty-state">
+                        <Package size={48} color="#334155" />
+                        <p>No products found in inventory.</p>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     /* ═══════════════════════════════════════════════════ */
     return (
         <div className="ra-wrap">
@@ -694,7 +1254,7 @@ const ReportsAnalytics = () => {
                         <div className="cat-body">
                             <h4>{cat.title}</h4>
                             <p>{cat.description}</p>
-                            {cat.id === 'sales'
+                            {(cat.id === 'sales' || cat.id === 'inventory')
                                 ? <span className="badge-live">LIVE DATA</span>
                                 : <span className="badge-soon">COMING SOON</span>}
                         </div>
@@ -704,37 +1264,49 @@ const ReportsAnalytics = () => {
 
             {/* ── Date range + generate ── */}
             <div className="filter-section">
-                <p className="section-label">Select Date Range</p>
-                <div className="filter-row">
-                    <div className="date-group">
-                        <div className="date-field">
-                            <label>Start Date</label>
-                            <input type="date" className="date-input" value={startDate} max={endDate}
-                                onChange={e => { setStartDate(e.target.value); setIsGenerated(false); }} />
-                        </div>
-                        <div className="date-field">
-                            <label>End Date</label>
-                            <input type="date" className="date-input" value={endDate} min={startDate} max={todayStr()}
-                                onChange={e => { setEndDate(e.target.value); setIsGenerated(false); }} />
-                        </div>
-                    </div>
+                {selectedReport !== 'inventory' && (
+                    <>
+                        <p className="section-label">Select Date Range</p>
+                        <div className="filter-row">
+                            <div className="date-group">
+                                <div className="date-field">
+                                    <label>Start Date</label>
+                                    <input type="date" className="date-input" value={startDate} max={endDate}
+                                        onChange={e => { setStartDate(e.target.value); setIsGenerated(false); }} />
+                                </div>
+                                <div className="date-field">
+                                    <label>End Date</label>
+                                    <input type="date" className="date-input" value={endDate} min={startDate} max={todayStr()}
+                                        onChange={e => { setEndDate(e.target.value); setIsGenerated(false); }} />
+                                </div>
+                            </div>
 
-                    <div className="presets">
-                        {[
-                            { label: 'Today',        action: () => { const t = todayStr(); setStartDate(t); setEndDate(t); setIsGenerated(false); setReportData(null); } },
-                            { label: 'Last 7 days',  action: () => applyPreset(7) },
-                            { label: 'Last 30 days', action: () => applyPreset(30) },
-                            { label: 'Last 90 days', action: () => applyPreset(90) },
-                            { label: 'This Year',    action: () => applyPreset(0, true) },
-                        ].map(p => (
-                            <button key={p.label} className="btn-preset" onClick={p.action}>{p.label}</button>
-                        ))}
-                    </div>
+                            <div className="presets">
+                                {[
+                                    { label: 'Today',        action: () => { const t = todayStr(); setStartDate(t); setEndDate(t); setIsGenerated(false); setReportData(null); } },
+                                    { label: 'Last 7 days',  action: () => applyPreset(7) },
+                                    { label: 'Last 30 days', action: () => applyPreset(30) },
+                                    { label: 'Last 90 days', action: () => applyPreset(90) },
+                                    { label: 'This Year',    action: () => applyPreset(0, true) },
+                                ].map(p => (
+                                    <button key={p.label} className="btn-preset" onClick={p.action}>{p.label}</button>
+                                ))}
+                            </div>
 
-                    <button className="btn-generate" onClick={generateReport} disabled={loading}>
-                        <FileText size={15} /> {loading ? 'Generating…' : 'Generate Report'}
-                    </button>
-                </div>
+                            <button className="btn-generate" onClick={generateReport} disabled={loading}>
+                                <FileText size={15} /> {loading ? 'Generating…' : 'Generate Report'}
+                            </button>
+                        </div>
+                    </>
+                )}
+
+                {selectedReport === 'inventory' && (
+                    <div className="filter-row">
+                        <button className="btn-generate" onClick={generateReport} disabled={loading}>
+                            <FileText size={15} /> {loading ? 'Generating…' : 'Generate Report'}
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* ── Loading state ── */}
@@ -746,15 +1318,22 @@ const ReportsAnalytics = () => {
             )}
 
             {/* ── Report output ── */}
-            {isGenerated && !loading && selectedReport === 'sales' && renderSalesReport()}
+            {isGenerated && !loading && selectedReport === 'sales'     && renderSalesReport()}
+            {isGenerated && !loading && selectedReport === 'inventory' && renderInventoryReport()}
 
-            {/* ── Hidden white PDF template (off-screen, captured by html2pdf) ── */}
+            {/* ── Hidden white PDF templates (off-screen, captured by html2pdf) ── */}
             {isGenerated && selectedReport === 'sales' && (
                 <SalesReportPDF
                     reportData={reportData}
                     startDate={startDate}
                     endDate={endDate}
                     pdfRef={pdfRef}
+                />
+            )}
+            {isGenerated && selectedReport === 'inventory' && (
+                <InventoryReportPDF
+                    reportData={reportData}
+                    pdfRef={invPdfRef}
                 />
             )}
 
@@ -1048,6 +1627,23 @@ const ReportsAnalytics = () => {
                     padding: 3rem 0;
                     color: var(--text-muted);
                     font-size: 0.9rem;
+                }
+
+                /* ── Inventory extras ── */
+                .badge-stock-low {
+                    display: inline-block;
+                    background: rgba(249,115,22,0.12); color: #fb923c;
+                    border: 1px solid rgba(249,115,22,0.25);
+                    padding: 2px 9px; border-radius: 20px; font-size: 0.77rem; font-weight: 600;
+                }
+
+                .inv-alert-banner {
+                    display: flex; align-items: center; gap: 0.6rem;
+                    background: rgba(249,115,22,0.08);
+                    border: 1px solid rgba(249,115,22,0.25);
+                    border-radius: 8px; padding: 0.75rem 1rem;
+                    color: #fb923c; font-size: 0.85rem;
+                    margin-top: 1.5rem;
                 }
             `}</style>
         </div>
