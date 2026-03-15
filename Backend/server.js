@@ -12,6 +12,8 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const staffRoutes = require('./routes/staffRoutes');
 const adminDashboardRoutes = require('./routes/adminDashboardRoutes');
+const systemSettingsController = require('./controllers/systemSettingsController');
+const { authenticate } = require('./middleware/authMiddleware');
 const { pool } = require('./config/db');
 
 const app = express();
@@ -108,6 +110,9 @@ app.use('/api/admin', adminDashboardRoutes);
 
 // Booking/Time slot routes
 app.use('/api/bookings', bookingRoutes);
+
+// Online sales settings (any authenticated user — used by checkout)
+app.get('/api/settings/online-sales', authenticate, systemSettingsController.getOnlineSalesSettings);
 
 // Suppliers list (for dropdowns)
 app.get('/api/suppliers', async (req, res) => {

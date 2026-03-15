@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Bell, LogOut, CalendarClock, Clock, RefreshCw } from "lucide-react";
+import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Bell, LogOut, CalendarClock, Clock, RefreshCw, Settings } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { getUserData, clearAuthData, getRefreshToken } from '../utils/auth';
 import { logoutAPI } from '../utils/api';
@@ -10,6 +10,7 @@ import BookingManagement from './admin/BookingManagement';
 import InventoryManagement from './admin/InventoryManagement';
 import OrderManagement from './admin/OrderManagement';
 import ReportsAnalytics from './admin/ReportsAnalytics';
+import SystemSettings from './admin/SystemSettings';
 import ProductRestock from './staff/ProductRestock';
 import ProductExpire from './staff/ProductExpire';
 import NotificationPanel from '../components/NotificationPanel';
@@ -52,6 +53,7 @@ const AdminDashboard = () => {
     { id: 'expire', label: 'Product Expire', icon: Clock },
     { id: 'bookings', label: 'Service Bookings', icon: CalendarClock },
     { id: 'reports', label: 'Reports & Analytics', icon: BarChart3 },
+    { id: 'settings', label: 'System Settings', icon: Settings },
   ];
 
   const renderContent = () => {
@@ -72,6 +74,8 @@ const AdminDashboard = () => {
         return <ProductExpire />;
       case 'reports':
         return <ReportsAnalytics />;
+      case 'settings':
+        return <SystemSettings />;
       default:
         return <OverviewDashboard />;
     }
@@ -106,6 +110,7 @@ const AdminDashboard = () => {
               );
             })}
           </ul>
+
         </nav>
 
         {/* Logout Button */}

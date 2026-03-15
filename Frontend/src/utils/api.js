@@ -458,3 +458,32 @@ export const getAdminDashboardStatsAPI = async () => {
     return apiRequest('/admin/dashboard-stats', { method: 'GET' });
 };
 
+// =============================================
+// SYSTEM SETTINGS APIs
+// =============================================
+
+/**
+ * Admin - Get all system settings
+ */
+export const getAdminSettingsAPI = async () => {
+    return apiRequest('/admin/settings', { method: 'GET' });
+};
+
+/**
+ * Admin - Update system settings
+ * @param {{ shipping_fee?: string, online_discount_type?: string, online_discount_value?: string }} data
+ */
+export const updateAdminSettingsAPI = async (data) => {
+    return apiRequest('/admin/settings', {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    });
+};
+
+/**
+ * Any authenticated user - Get online sales settings (used by checkout)
+ */
+export const getOnlineSalesSettingsAPI = async () => {
+    return apiRequest('/settings/online-sales', { method: 'GET' });
+};
+

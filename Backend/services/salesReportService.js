@@ -1,7 +1,7 @@
 const pool = require('../config/db');
 
 const getSalesReport = async (startDate, endDate) => {
-    // Summary: total revenue, orders, avg order value, online vs POS split
+    // Summary: total revenue, orders, avg order value, online vs POS split, discounts
     const summaryQuery = `
         SELECT
             COUNT(DISTINCT o.order_id)                                                                  AS total_orders,
@@ -12,7 +12,10 @@ const getSalesReport = async (startDate, endDate) => {
             COUNT(DISTINCT CASE WHEN o.customer_id IS NOT NULL THEN o.customer_id END)                  AS online_customers,
             COUNT(DISTINCT CASE WHEN o.pos_customer_id IS NOT NULL THEN o.pos_customer_id END)          AS pos_customers,
             COALESCE(SUM(CASE WHEN o.customer_id IS NOT NULL THEN o.total_amount ELSE 0 END), 0)        AS online_revenue,
-            COALESCE(SUM(CASE WHEN o.pos_customer_id IS NOT NULL THEN o.total_amount ELSE 0 END), 0)    AS pos_revenue
+            COALESCE(SUM(CASE WHEN o.pos_customer_id IS NOT NULL THEN o.total_amount ELSE 0 END), 0)    AS pos_revenue,
+            COALESCE(SUM(o.discount), 0)                                                                AS total_discounts,
+            COALESCE(SUM(CASE WHEN o.customer_id IS NOT NULL THEN o.discount ELSE 0 END), 0)            AS online_discounts,
+            COALESCE(SUM(CASE WHEN o.pos_customer_id IS NOT NULL THEN o.discount ELSE 0 END), 0)        AS pos_discounts
         FROM orders o
         WHERE o.order_date >= $1
           AND o.order_date <= $2

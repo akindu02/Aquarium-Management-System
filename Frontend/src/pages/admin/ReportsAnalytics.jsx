@@ -42,11 +42,14 @@ const SalesReportPDF = ({ reportData, startDate, endDate, pdfRef }) => {
     const bestMonth  = monthly.length ? monthly.reduce((a, b) => b.revenue > a.revenue ? b : a) : null;
     const worstMonth = monthly.length > 1 ? monthly.reduce((a, b) => b.revenue < a.revenue ? b : a) : null;
 
-    const totalRevenue = parseFloat(s.total_revenue) || 0;
-    const totalOrders  = parseInt(s.total_orders)    || 0;
-    const avgOrder     = parseFloat(s.avg_order_value) || 0;
-    const onlineOrders = parseInt(s.online_orders)   || 0;
-    const posOrders    = parseInt(s.pos_orders)      || 0;
+    const totalRevenue    = parseFloat(s.total_revenue)    || 0;
+    const totalOrders     = parseInt(s.total_orders)       || 0;
+    const avgOrder        = parseFloat(s.avg_order_value)  || 0;
+    const onlineOrders    = parseInt(s.online_orders)      || 0;
+    const posOrders       = parseInt(s.pos_orders)         || 0;
+    const totalDiscounts  = parseFloat(s.total_discounts)  || 0;
+    const onlineDiscounts = parseFloat(s.online_discounts) || 0;
+    const posDiscounts    = parseFloat(s.pos_discounts)    || 0;
 
     const periodLabel = `${new Date(startDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} — ${new Date(endDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
     const generatedAt = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -126,6 +129,20 @@ const SalesReportPDF = ({ reportData, startDate, endDate, pdfRef }) => {
                             { label: 'POS / Walk-in',    val: posOrders.toLocaleString(), sub: 'In-store sales',            accent: kpiAccents[4] },
                         ].map((k, i) => (
                             <div key={i} style={{ ...P.kpiBox, borderTopColor: k.accent }}>
+                                <div style={P.kpiLbl}>{k.label}</div>
+                                <div style={{ ...P.kpiVal, color: k.accent }}>{k.val}</div>
+                                <div style={P.kpiSub}>{k.sub}</div>
+                            </div>
+                        ))}
+                    </div>
+                    {/* Discount row */}
+                    <div style={{ ...P.kpiRow, marginTop: '8px' }}>
+                        {[
+                            { label: 'Total Discounts Given', val: fmt(totalDiscounts),  sub: 'All channels',     accent: '#ef4444' },
+                            { label: 'Online Discounts',      val: fmt(onlineDiscounts), sub: 'Product discounts on online orders', accent: '#f97316' },
+                            { label: 'POS Discounts',         val: fmt(posDiscounts),    sub: 'Discounts applied at POS',          accent: '#eab308' },
+                        ].map((k, i) => (
+                            <div key={i} style={{ ...P.kpiBox, borderTopColor: k.accent, flex: i === 0 ? 1.4 : 1 }}>
                                 <div style={P.kpiLbl}>{k.label}</div>
                                 <div style={{ ...P.kpiVal, color: k.accent }}>{k.val}</div>
                                 <div style={P.kpiSub}>{k.sub}</div>
@@ -1697,11 +1714,14 @@ const ReportsAnalytics = () => {
     const renderSalesReport = () => {
         if (!reportData) return null;
         const s = reportData.summary;
-        const totalOrders   = parseInt(s.total_orders)   || 0;
-        const onlineOrders  = parseInt(s.online_orders)  || 0;
-        const posOrders     = parseInt(s.pos_orders)     || 0;
-        const totalRevenue  = parseFloat(s.total_revenue) || 0;
-        const avgOrder      = parseFloat(s.avg_order_value) || 0;
+        const totalOrders     = parseInt(s.total_orders)       || 0;
+        const onlineOrders    = parseInt(s.online_orders)      || 0;
+        const posOrders       = parseInt(s.pos_orders)         || 0;
+        const totalRevenue    = parseFloat(s.total_revenue)    || 0;
+        const avgOrder        = parseFloat(s.avg_order_value)  || 0;
+        const totalDiscounts  = parseFloat(s.total_discounts)  || 0;
+        const onlineDiscounts = parseFloat(s.online_discounts) || 0;
+        const posDiscounts    = parseFloat(s.pos_discounts)    || 0;
 
         const startLabel = new Date(startDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
         const endLabel   = new Date(endDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
@@ -1821,6 +1841,21 @@ const ReportsAnalytics = () => {
                         <div className="kpi-card" style={{ '--kc': '#f59e0b', flex: 1 }}>
                             <div className="kpi-label">POS SALE REVENUE</div>
                             <div className="kpi-val">{fmt(parseFloat(s.pos_revenue) || 0)}</div>
+                        </div>
+                    </div>
+                    {/* Discount breakdown */}
+                    <div className="charts-2col" style={{ marginBottom: '1rem', gap: '1rem', alignItems: 'flex-start' }}>
+                        <div className="kpi-card" style={{ '--kc': '#ef4444', flex: 1 }}>
+                            <div className="kpi-label">TOTAL DISCOUNTS GIVEN</div>
+                            <div className="kpi-val">{fmt(totalDiscounts)}</div>
+                        </div>
+                        <div className="kpi-card" style={{ '--kc': '#f97316', flex: 1 }}>
+                            <div className="kpi-label">ONLINE DISCOUNTS</div>
+                            <div className="kpi-val">{fmt(onlineDiscounts)}</div>
+                        </div>
+                        <div className="kpi-card" style={{ '--kc': '#eab308', flex: 1 }}>
+                            <div className="kpi-label">POS DISCOUNTS</div>
+                            <div className="kpi-val">{fmt(posDiscounts)}</div>
                         </div>
                     </div>
                     <div className="chart-box chart-box-tall">

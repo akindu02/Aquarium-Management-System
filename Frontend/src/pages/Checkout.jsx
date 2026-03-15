@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Truck, CheckCircle, Loader2 } from 'lucide-react';
 import Swal from 'sweetalert2';
-import { createOrderAPI } from '../utils/api';
+import { createOrderAPI, getOnlineSalesSettingsAPI } from '../utils/api';
 import '../index.css';
 
 const CART_KEY = 'aquarium_cart';
-const SHIPPING_FEE = 250;
 const loadCart = () => {
     try { return JSON.parse(localStorage.getItem(CART_KEY) || '[]'); }
     catch { return []; }
@@ -30,17 +29,35 @@ const Checkout = () => {
     });
 
     const [isProcessing, setIsProcessing] = useState(false);
+    const [shippingFee, setShippingFee] = useState(0);
+    const [discountType, setDiscountType] = useState('percentage');
+    const [discountValue, setDiscountValue] = useState(0);
+
+    useEffect(() => {
+        getOnlineSalesSettingsAPI()
+            .then((res) => {
+                const d = res.data || {};
+                setShippingFee(parseFloat(d.shipping_fee) || 0);
+                setDiscountType(d.online_discount_type || 'percentage');
+                setDiscountValue(parseFloat(d.online_discount_value) || 0);
+            })
+            .catch(() => {
+                // If fetch fails, fall back to 0 (free shipping, no discount)
+            });
+    }, []);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const calculateTotal = () => {
-        return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-    };
+    const subtotal = cartTotal || cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
 
-    const currentTotal = cartTotal || calculateTotal();
+    const discountAmount = discountType === 'percentage'
+        ? subtotal * (discountValue / 100)
+        : discountValue;
+
+    const grandTotal = subtotal - discountAmount + shippingFee;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -61,7 +78,7 @@ const Checkout = () => {
                 items,
                 shippingAddress,
                 phone: formData.phone,
-                totalAmount: currentTotal + SHIPPING_FEE,
+                totalAmount: grandTotal,
             });
 
             if (result.success) {
@@ -72,8 +89,9 @@ const Checkout = () => {
                         orderId: result.orderId,
                         orderRef: result.orderRef,
                         totalAmount: result.totalAmount,
-                        subtotal: currentTotal,
-                        shippingFee: SHIPPING_FEE,
+                        subtotal,
+                        shippingFee: result.shippingFee,
+                        discountAmount: result.discountAmount,
                         shippingData: { ...formData, shippingAddress },
                         cartItems,
                     }
@@ -225,15 +243,23 @@ const Checkout = () => {
                             <div className="order-totals">
                                 <div className="total-row">
                                     <span>Subtotal</span>
-                                    <span>LKR {currentTotal.toLocaleString()}</span>
+                                    <span>LKR {subtotal.toLocaleString()}</span>
                                 </div>
+                                {discountAmount > 0 && (
+                                    <div className="total-row" style={{ color: '#4ECDC4' }}>
+                                        <span>
+                                            Discount{discountType === 'percentage' ? ` (${discountValue}%)` : ''}
+                                        </span>
+                                        <span>- LKR {discountAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                    </div>
+                                )}
                                 <div className="total-row">
                                     <span>Shipping</span>
-                                    <span>LKR {SHIPPING_FEE.toLocaleString()}</span>
+                                    <span>{shippingFee === 0 ? 'Free' : `LKR ${shippingFee.toLocaleString()}`}</span>
                                 </div>
                                 <div className="total-row final-total">
                                     <span>Total</span>
-                                    <span>LKR {(currentTotal + SHIPPING_FEE).toLocaleString()}</span>
+                                    <span>LKR {grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                 </div>
                             </div>
 

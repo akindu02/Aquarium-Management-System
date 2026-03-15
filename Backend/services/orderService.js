@@ -5,6 +5,20 @@ const { pool, getClient } = require('../config/db');
  */
 const fmtOrderId = (id) => `ORD-${String(id).padStart(5, '0')}`;
 
+/** Fetch online-sales settings (shipping fee + discount) from system_settings table */
+const getOnlineSalesConfig = async (client) => {
+    const { rows } = await client.query(
+        `SELECT key, value FROM system_settings
+         WHERE key IN ('shipping_fee', 'online_discount_type', 'online_discount_value')`
+    );
+    const map = rows.reduce((acc, r) => { acc[r.key] = r.value; return acc; }, {});
+    return {
+        shippingFee: parseFloat(map.shipping_fee) || 0,
+        discountType: map.online_discount_type || 'percentage',
+        discountValue: parseFloat(map.online_discount_value) || 0,
+    };
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // CREATE ORDER  (transactional)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -18,7 +32,7 @@ const fmtOrderId = (id) => `ORD-${String(id).padStart(5, '0')}`;
  * @param {string}   params.shippingAddress
  * @param {string}   params.phone
  * @param {number}   params.totalAmount    - pre-calculated total (server re-validates)
- * @returns {{ success, orderId, orderRef, totalAmount }}
+ * @returns {{ success, orderId, orderRef, totalAmount, discountAmount, shippingFee }}
  */
 const createOrder = async ({ customerId, items, shippingAddress, phone, totalAmount }) => {
     const client = await getClient();
@@ -33,8 +47,9 @@ const createOrder = async ({ customerId, items, shippingAddress, phone, totalAmo
             [customerId, phone, shippingAddress]
         );
 
-        // Calculate server-side total and validate stock
-        let serverTotal = 0;
+        // Calculate server-side total, discount, and validate stock
+        let itemsSubtotal = 0;  // original price × qty (before product discounts)
+        let discountedTotal = 0; // discounted price × qty
         const enrichedItems = [];
 
         for (const item of items) {
@@ -54,22 +69,33 @@ const createOrder = async ({ customerId, items, shippingAddress, phone, totalAmo
                 throw new Error(`Insufficient stock for "${p.name}" (available: ${p.stock_quantity})`);
             }
 
+            const originalPrice = parseFloat(p.price);
             const unitPrice = parseFloat(
                 (p.price - (p.price * p.discount_percent) / 100).toFixed(2)
             );
 
-            serverTotal += unitPrice * item.quantity;
+            itemsSubtotal   += originalPrice * item.quantity;
+            discountedTotal += unitPrice * item.quantity;
             enrichedItems.push({ ...item, unitPrice, name: p.name });
         }
 
-        serverTotal = parseFloat(serverTotal.toFixed(2));
+        // Fetch shipping fee and online discount from system settings
+        const { shippingFee: onlineShippingFee, discountType, discountValue } = await getOnlineSalesConfig(client);
 
-        // Insert order
+        // Apply system-wide online discount on top of product-level discounts
+        const sysDiscountAmount = discountType === 'percentage'
+            ? parseFloat((discountedTotal * discountValue / 100).toFixed(2))
+            : parseFloat(Math.min(discountValue, discountedTotal).toFixed(2));
+
+        const discountAmount = parseFloat((itemsSubtotal - discountedTotal + sysDiscountAmount).toFixed(2));
+        const serverTotal    = parseFloat((discountedTotal - sysDiscountAmount + onlineShippingFee).toFixed(2));
+
+        // Insert order (total_amount includes shipping; discount stores product discount savings)
         const orderResult = await client.query(
-            `INSERT INTO orders (customer_id, total_amount, status)
-             VALUES ($1, $2, 'Pending')
-             RETURNING order_id, total_amount, status, order_date`,
-            [customerId, serverTotal]
+            `INSERT INTO orders (customer_id, total_amount, discount, status)
+             VALUES ($1, $2, $3, 'Pending')
+             RETURNING order_id, total_amount, discount, status, order_date`,
+            [customerId, serverTotal, discountAmount]
         );
 
         const orderId = orderResult.rows[0].order_id;
@@ -89,7 +115,7 @@ const createOrder = async ({ customerId, items, shippingAddress, phone, totalAmo
             );
         }
 
-        // Insert pending payment record
+        // Insert pending payment record (includes shipping fee)
         await client.query(
             `INSERT INTO payments (order_id, method, amount, status)
              VALUES ($1, 'Card', $2, 'Pending')`,
@@ -103,6 +129,8 @@ const createOrder = async ({ customerId, items, shippingAddress, phone, totalAmo
             orderId,
             orderRef: fmtOrderId(orderId),
             totalAmount: serverTotal,
+            discountAmount,
+            shippingFee: onlineShippingFee,
         };
     } catch (err) {
         await client.query('ROLLBACK');

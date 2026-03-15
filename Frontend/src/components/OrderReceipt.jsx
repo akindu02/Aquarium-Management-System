@@ -7,6 +7,7 @@ const OrderReceipt = ({ orderData, onClose }) => {
         shippingData = {},
         cartItems = [],
         currentTotal = 0,
+        shippingFee: passedShippingFee = 0,
         cardType = 'Visa Card',
         paymentDate = new Date(),
         discountAmount = 0,
@@ -16,7 +17,7 @@ const OrderReceipt = ({ orderData, onClose }) => {
 
     const subtotal = cartItems.reduce((s, i) => s + (i.price * i.quantity), 0);
     const tax = 0;
-    const shippingFee = 250;
+    const shippingFee = passedShippingFee;
     
     // In case discount isn't explicitly passed but currentTotal < subtotal + shippingFee
     const calculatedDiscount = (subtotal + shippingFee) - parseFloat(currentTotal || (subtotal + shippingFee));

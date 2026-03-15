@@ -4,6 +4,7 @@ import { ShoppingCart, Eye, Search, X, Plus, Minus, ArrowLeft, Loader2, Trash2 }
 import { Link, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { isAuthenticated } from '../utils/auth';
+import { getOnlineSalesSettingsAPI } from '../utils/api';
 import './Store.css';
 
 const BACKEND_URL = 'http://localhost:5001';
@@ -37,12 +38,20 @@ const Store = () => {
     const [showToast, setShowToast] = useState(false);
     const [quickViewProduct, setQuickViewProduct] = useState(null);
     const [showFloatingCart, setShowFloatingCart] = useState(false);
+    const [shippingFee, setShippingFee] = useState(0);
 
     // Show floating cart button when user scrolls past the toolbar
     useEffect(() => {
         const handleScroll = () => setShowFloatingCart(window.scrollY > 200);
         window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    // Fetch online sales settings (shipping fee) on mount
+    useEffect(() => {
+        getOnlineSalesSettingsAPI()
+            .then((res) => setShippingFee(parseFloat(res.data?.shipping_fee) || 0))
+            .catch(() => {});
     }, []);
 
     // Fetch real products from backend on mount
@@ -403,11 +412,11 @@ const Store = () => {
                             </div>
                             <div className="summary-row">
                                 <span>Shipping:</span>
-                                <span>LKR 250</span>
+                                <span>{shippingFee === 0 ? 'Free' : `LKR ${shippingFee.toLocaleString()}`}</span>
                             </div>
                             <div className="summary-row total">
                                 <span>Total:</span>
-                                <span>LKR {(getCartTotal() + 250).toLocaleString()}</span>
+                                <span>LKR {(getCartTotal() + shippingFee).toLocaleString()}</span>
                             </div>
                             <button className="checkout-btn" onClick={handleCheckout}>
                                 Proceed to Checkout

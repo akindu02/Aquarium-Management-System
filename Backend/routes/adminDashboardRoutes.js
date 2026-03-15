@@ -5,6 +5,7 @@ const salesReportController = require('../controllers/salesReportController');
 const inventoryReportController = require('../controllers/inventoryReportController');
 const productPerformanceReportController = require('../controllers/productPerformanceReportController');
 const serviceBookingsReportController    = require('../controllers/serviceBookingsReportController');
+const systemSettingsController = require('../controllers/systemSettingsController');
 const { authenticate, adminOnly } = require('../middleware/authMiddleware');
 
 // GET /api/admin/dashboard-stats — Admin overview dashboard statistics
@@ -45,6 +46,22 @@ router.get(
     authenticate,
     adminOnly,
     serviceBookingsReportController.getServiceBookingsReport
+);
+
+// GET /api/admin/settings — Get all system settings
+router.get(
+    '/settings',
+    authenticate,
+    adminOnly,
+    systemSettingsController.getSettings
+);
+
+// PUT /api/admin/settings — Update system settings
+router.put(
+    '/settings',
+    authenticate,
+    adminOnly,
+    systemSettingsController.updateSettings
 );
 
 module.exports = router;

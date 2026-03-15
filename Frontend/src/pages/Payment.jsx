@@ -20,8 +20,8 @@ const Payment = () => {
         shippingData = {}
     } = location.state || {};
 
-    const SHIPPING_FEE = locationShippingFee || 250;
-    const subtotal = locationSubtotal || (locationTotal ? locationTotal - SHIPPING_FEE : cartTotal || cartItems.reduce((s, i) => s + i.price * i.quantity, 0));
+    const SHIPPING_FEE = locationShippingFee || 0;
+    const subtotal = locationSubtotal || cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
     const currentTotal = locationTotal || subtotal + SHIPPING_FEE;
 
     const [cardData, setCardData] = useState({
@@ -129,6 +129,7 @@ const Payment = () => {
                                 shippingData,
                                 cartItems,
                                 currentTotal,
+                                shippingFee: SHIPPING_FEE,
                                 cardType: cardData.cardType === 'visa' ? 'Visa Card' : 'Mastercard',
                                 paymentDate: new Date(),
                             }}
