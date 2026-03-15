@@ -1091,9 +1091,10 @@ const ReportsAnalytics = () => {
     const prodCategoryRef = useRef(null);
 
     /* service bookings chart canvas refs */
-    const svcTrendRef  = useRef(null);
-    const svcPopRef    = useRef(null);
-    const svcStatusRef = useRef(null);
+    const svcTrendRef   = useRef(null);
+    const svcPopRef     = useRef(null);
+    const svcStatusRef  = useRef(null);
+    const svcChannelRef = useRef(null);
 
     /* ref for the hidden service bookings PDF template */
     const svcPdfRef = useRef(null);
@@ -1148,7 +1149,7 @@ const ReportsAnalytics = () => {
         const t = setTimeout(() => buildServiceCharts(reportData), 80);
         return () => {
             clearTimeout(t);
-            ['svcTrend', 'svcPop', 'svcStatus'].forEach(k => {
+            ['svcTrend', 'svcPop', 'svcStatus', 'svcChannel'].forEach(k => {
                 if (charts.current[k]) { charts.current[k].destroy(); delete charts.current[k]; }
             });
         };
@@ -1395,7 +1396,7 @@ const ReportsAnalytics = () => {
     };
 
     const buildServiceCharts = (data) => {
-        ['svcTrend', 'svcPop', 'svcStatus'].forEach(k => {
+        ['svcTrend', 'svcPop', 'svcStatus', 'svcChannel'].forEach(k => {
             if (charts.current[k]) { charts.current[k].destroy(); delete charts.current[k]; }
         });
 
@@ -1404,48 +1405,29 @@ const ReportsAnalytics = () => {
             'In Progress': '#06b6d4cc', Completed: '#10b981cc', Cancelled: '#ef4444cc',
         };
 
-        /* 1 – Daily bookings trend line */
+        /* 1 – Daily bookings bar chart (simple, clean) */
         if (svcTrendRef.current && data.dailyBookings.length) {
             charts.current.svcTrend = new Chart(svcTrendRef.current.getContext('2d'), {
-                type: 'line',
+                type: 'bar',
                 data: {
                     labels: data.dailyBookings.map(d => {
                         const dt = new Date(d.date);
                         return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                     }),
-                    datasets: [
-                        {
-                            label: 'Total Bookings',
-                            data: data.dailyBookings.map(d => parseInt(d.total)),
-                            borderColor: '#8b5cf6',
-                            backgroundColor: 'rgba(139,92,246,0.10)',
-                            borderWidth: 2,
-                            pointBackgroundColor: '#8b5cf6',
-                            pointRadius: 3,
-                            pointHoverRadius: 5,
-                            tension: 0.4,
-                            fill: true,
-                        },
-                        {
-                            label: 'Active (excl. Cancelled)',
-                            data: data.dailyBookings.map(d => parseInt(d.active)),
-                            borderColor: '#10b981',
-                            backgroundColor: 'transparent',
-                            borderWidth: 2,
-                            borderDash: [4, 3],
-                            pointBackgroundColor: '#10b981',
-                            pointRadius: 3,
-                            pointHoverRadius: 5,
-                            tension: 0.4,
-                            fill: false,
-                        },
-                    ],
+                    datasets: [{
+                        label: 'Bookings',
+                        data: data.dailyBookings.map(d => parseInt(d.total)),
+                        backgroundColor: 'rgba(139,92,246,0.75)',
+                        borderRadius: 6,
+                        borderSkipped: false,
+                    }],
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { labels: { color: '#94a3b8', font: { size: 12 } } },
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: ctx => ' ' + ctx.parsed.y + ' booking' + (ctx.parsed.y !== 1 ? 's' : '') } },
                     },
                     scales: {
                         x: { ticks: { color: '#94a3b8', maxTicksLimit: 14 }, grid: { color: 'rgba(255,255,255,0.05)' } },
@@ -1455,46 +1437,25 @@ const ReportsAnalytics = () => {
             });
         }
 
-        /* 2 – Popular services horizontal bar */
+        /* 2 – Popular services horizontal stacked bar */
         if (svcPopRef.current && data.servicePopularity.length) {
             charts.current.svcPop = new Chart(svcPopRef.current.getContext('2d'), {
                 type: 'bar',
                 data: {
                     labels: data.servicePopularity.map(s => s.service_type),
                     datasets: [
-                        {
-                            label: 'Completed',
-                            data: data.servicePopularity.map(s => parseInt(s.completed_bookings)),
-                            backgroundColor: '#10b981cc',
-                            borderRadius: 4,
-                        },
-                        {
-                            label: 'Confirmed',
-                            data: data.servicePopularity.map(s => parseInt(s.confirmed_bookings)),
-                            backgroundColor: '#3b82f6cc',
-                            borderRadius: 4,
-                        },
-                        {
-                            label: 'Pending',
-                            data: data.servicePopularity.map(s => parseInt(s.pending_bookings)),
-                            backgroundColor: '#f59e0bcc',
-                            borderRadius: 4,
-                        },
-                        {
-                            label: 'Cancelled',
-                            data: data.servicePopularity.map(s => parseInt(s.cancelled_bookings)),
-                            backgroundColor: '#ef4444cc',
-                            borderRadius: 4,
-                        },
+                        { label: 'Completed',   data: data.servicePopularity.map(s => parseInt(s.completed_bookings)),   backgroundColor: '#10b981cc', borderRadius: 4 },
+                        { label: 'Confirmed',   data: data.servicePopularity.map(s => parseInt(s.confirmed_bookings)),   backgroundColor: '#3b82f6cc', borderRadius: 4 },
+                        { label: 'In Progress', data: data.servicePopularity.map(s => parseInt(s.in_progress_bookings)), backgroundColor: '#06b6d4cc', borderRadius: 4 },
+                        { label: 'Pending',     data: data.servicePopularity.map(s => parseInt(s.pending_bookings)),     backgroundColor: '#f59e0bcc', borderRadius: 4 },
+                        { label: 'Cancelled',   data: data.servicePopularity.map(s => parseInt(s.cancelled_bookings)),   backgroundColor: '#ef4444cc', borderRadius: 4 },
                     ],
                 },
                 options: {
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { labels: { color: '#94a3b8', font: { size: 11 } } },
-                    },
+                    plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 12 } } },
                     scales: {
                         x: { stacked: true, ticks: { color: '#94a3b8', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true },
                         y: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
@@ -1520,9 +1481,35 @@ const ReportsAnalytics = () => {
                     responsive: true,
                     maintainAspectRatio: false,
                     cutout: '65%',
-                    plugins: { legend: { labels: { color: '#94a3b8', padding: 14, font: { size: 11 } } } },
+                    plugins: { legend: { labels: { color: '#94a3b8', padding: 12, font: { size: 11 } } } },
                 },
             });
+        }
+
+        /* 4 – Booking channel doughnut (Online vs Walk-in) */
+        if (svcChannelRef.current) {
+            const onlineCt = parseInt(data.summary.online_bookings) || 0;
+            const walkinCt = parseInt(data.summary.walkin_bookings) || 0;
+            if (onlineCt + walkinCt > 0) {
+                charts.current.svcChannel = new Chart(svcChannelRef.current.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Online', 'Walk-in'],
+                        datasets: [{
+                            data: [onlineCt, walkinCt],
+                            backgroundColor: ['#8b5cf6cc', '#06b6d4cc'],
+                            borderColor: '#151b2d',
+                            borderWidth: 3,
+                        }],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '65%',
+                        plugins: { legend: { labels: { color: '#94a3b8', padding: 14, font: { size: 11 } } } },
+                    },
+                });
+            }
         }
     };
 
@@ -2295,9 +2282,9 @@ const ReportsAnalytics = () => {
                     </div>
                 </div>
 
-                {/* ── Daily trend line ── */}
+                {/* ── Daily bookings bar ── */}
                 <div className="chart-section">
-                    <h3 className="section-label">DAILY BOOKING TREND</h3>
+                    <h3 className="section-label">DAILY BOOKING COUNT</h3>
                     <div className="chart-box chart-box-tall">
                         {reportData.dailyBookings.length > 0
                             ? <canvas ref={svcTrendRef} />
@@ -2305,8 +2292,8 @@ const ReportsAnalytics = () => {
                     </div>
                 </div>
 
-                {/* ── Popular services bar + Status doughnut ── */}
-                <div className="charts-2col">
+                {/* ── 3-col: Popular services | Status | Channel ── */}
+                <div className="charts-3col">
                     <div className="chart-col" style={{ flex: 2 }}>
                         <h3 className="section-label">POPULAR SERVICES</h3>
                         <div className="chart-box chart-box-tall">
@@ -2320,6 +2307,14 @@ const ReportsAnalytics = () => {
                         <div className="chart-box chart-box-tall">
                             {reportData.bookingStatus.length > 0
                                 ? <canvas ref={svcStatusRef} />
+                                : <div className="no-data">No data</div>}
+                        </div>
+                    </div>
+                    <div className="chart-col" style={{ flex: 1 }}>
+                        <h3 className="section-label">BOOKING CHANNEL</h3>
+                        <div className="chart-box chart-box-tall">
+                            {(parseInt(reportData.summary.online_bookings) + parseInt(reportData.summary.walkin_bookings)) > 0
+                                ? <canvas ref={svcChannelRef} />
                                 : <div className="no-data">No data</div>}
                         </div>
                     </div>
@@ -2744,6 +2739,15 @@ const ReportsAnalytics = () => {
                     margin-bottom: 2rem;
                 }
                 @media (max-width: 700px) { .charts-2col { grid-template-columns: 1fr; } }
+
+                .charts-3col {
+                    display: flex;
+                    gap: 1.5rem;
+                    margin-bottom: 2rem;
+                    flex-wrap: wrap;
+                }
+                .charts-3col .chart-col { min-width: 180px; }
+                @media (max-width: 900px) { .charts-3col { flex-direction: column; } }
                 .chart-col {}
 
                 .no-data {
