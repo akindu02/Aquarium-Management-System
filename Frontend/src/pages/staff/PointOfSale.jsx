@@ -556,6 +556,8 @@ const PointOfSale = () => {
                         cartItems: receiptData.items.map(i => ({
                             name: i.name, price: i.price, quantity: i.qty,
                         })),
+                        subtotalAmount: receiptData.subtotalAmount,
+                        discountAmount: receiptData.discountAmount,
                         totalAmount: receiptData.totalAmount,
                         cashGiven: receiptData.cashGiven,
                         paymentDate: receiptData.saleDate,

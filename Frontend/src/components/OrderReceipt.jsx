@@ -9,15 +9,20 @@ const OrderReceipt = ({ orderData, onClose }) => {
         currentTotal = 0,
         cardType = 'Visa Card',
         paymentDate = new Date(),
+        discountAmount = 0,
     } = orderData || {};
 
     const receiptRef = useRef(null);
 
     const subtotal = cartItems.reduce((s, i) => s + (i.price * i.quantity), 0);
     const tax = 0;
-    const discount = 0;
     const shippingFee = 250;
-    const grandTotal = parseFloat(currentTotal || (subtotal + shippingFee));
+    
+    // In case discount isn't explicitly passed but currentTotal < subtotal + shippingFee
+    const calculatedDiscount = (subtotal + shippingFee) - parseFloat(currentTotal || (subtotal + shippingFee));
+    const discount = parseFloat(discountAmount) || (calculatedDiscount > 0 ? calculatedDiscount : 0);
+    
+    const grandTotal = parseFloat(currentTotal || (subtotal + shippingFee - discount));
 
     const receiptNumber = `RCP-${Date.now().toString().slice(-8)}`;
     const transactionId = `TXN-${String(orderId || '00000').padStart(5, '0')}-${Date.now().toString().slice(-6)}`;
