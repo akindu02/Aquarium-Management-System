@@ -289,6 +289,289 @@ const SalesReportPDF = ({ reportData, startDate, endDate, pdfRef }) => {
     );
 };
 
+/* ─── Product Performance PDF template ─────────────────── */
+const ProductPerformanceReportPDF = ({ reportData, startDate, endDate, pdfRef }) => {
+    if (!reportData) return null;
+
+    const s              = reportData.summary;
+    const rs             = reportData.returnsSummary;
+    const productsSold   = parseInt(s.products_sold)     || 0;
+    const totalUnits     = parseInt(s.total_units_sold)  || 0;
+    const totalRevenue   = parseFloat(s.total_revenue)   || 0;
+    const totalOrders    = parseInt(s.total_orders)      || 0;
+    const totalReturns   = parseInt(rs.total_returns)    || 0;
+    const totalRefund    = parseFloat(rs.total_refund_amount) || 0;
+
+    const periodLabel  = `${new Date(startDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} — ${new Date(endDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+    const generatedAt  = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+    const P = {
+        wrap:    { position: 'fixed', left: '-9999px', top: 0, zIndex: -1, opacity: 0, pointerEvents: 'none' },
+        doc:     { width: '190mm', background: '#ffffff', fontFamily: "'Outfit', system-ui, -apple-system, sans-serif", color: '#111827' },
+        header:  { padding: '20px 28px 14px', background: '#ffffff', borderBottom: '1px solid #f1f5f9', textAlign: 'center' },
+        logoRow: { display: 'flex', justifyContent: 'center', alignItems: 'baseline', gap: '1px', marginBottom: '5px' },
+        logoM:   { fontSize: '1.5rem', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.5px' },
+        logoA:   { fontSize: '1.5rem', fontWeight: '800', color: '#10b981', letterSpacing: '-0.5px' },
+        contact: { fontSize: '0.64rem', color: '#6b7280', marginBottom: '10px' },
+        divider: { height: '1.5px', background: 'linear-gradient(90deg, transparent, #10b981 40%, #10b981 60%, transparent)', margin: '0 0 10px' },
+        title:   { fontSize: '0.9rem', fontWeight: '700', color: '#0f172a', letterSpacing: '5px', margin: '0 0 5px' },
+        metaRow: { display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: '#6b7280', marginTop: '3px' },
+        section: { padding: '14px 24px' },
+        secTitle:{ fontSize: '0.6rem', fontWeight: '700', letterSpacing: '2px', color: '#10b981', textTransform: 'uppercase', marginBottom: '10px', paddingBottom: '5px', borderBottom: '1px solid #d1fae5' },
+        kpiRow:  { display: 'flex', gap: '8px', marginBottom: '0' },
+        kpiBox:  { flex: 1, border: '1px solid #e2e8f0', borderTop: '3px solid #10b981', borderRadius: '7px', padding: '8px 8px' },
+        kpiLbl:  { fontSize: '0.52rem', fontWeight: '700', letterSpacing: '0.8px', color: '#6b7280', textTransform: 'uppercase', marginBottom: '3px' },
+        kpiVal:  { fontSize: '0.88rem', fontWeight: '800', color: '#0f172a', lineHeight: '1.2' },
+        kpiSub:  { fontSize: '0.55rem', color: '#94a3b8', marginTop: '2px' },
+        table:   { width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem', tableLayout: 'fixed' },
+        th:      { padding: '7px 10px', background: '#0f172a', color: '#f8fafc', fontWeight: '600', fontSize: '0.6rem', letterSpacing: '0.8px', textTransform: 'uppercase', textAlign: 'left', wordBreak: 'keep-all' },
+        thR:     { padding: '7px 10px', background: '#0f172a', color: '#f8fafc', fontWeight: '600', fontSize: '0.6rem', letterSpacing: '0.8px', textTransform: 'uppercase', textAlign: 'right', wordBreak: 'keep-all' },
+        thC:     { padding: '7px 10px', background: '#0f172a', color: '#f8fafc', fontWeight: '600', fontSize: '0.6rem', letterSpacing: '0.8px', textTransform: 'uppercase', textAlign: 'center', wordBreak: 'keep-all' },
+        tdE:     { padding: '7px 10px', color: '#374151', borderBottom: '1px solid #f1f5f9', background: '#ffffff', textAlign: 'left', verticalAlign: 'middle' },
+        tdO:     { padding: '7px 10px', color: '#374151', borderBottom: '1px solid #f1f5f9', background: '#f9fafb', textAlign: 'left', verticalAlign: 'middle' },
+        tdR:     { padding: '7px 10px', color: '#374151', borderBottom: '1px solid #f1f5f9', textAlign: 'right', verticalAlign: 'middle' },
+        tdC:     { padding: '7px 10px', color: '#374151', borderBottom: '1px solid #f1f5f9', textAlign: 'center', verticalAlign: 'middle' },
+        tdPri:   { padding: '7px 10px', color: '#10b981', fontWeight: '700', borderBottom: '1px solid #f1f5f9', textAlign: 'right', verticalAlign: 'middle' },
+        insightBox:  { background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '7px', padding: '11px 14px' },
+        insightLine: { fontSize: '0.72rem', color: '#374151', marginBottom: '4px', lineHeight: '1.5' },
+        insightKey:  { fontWeight: '700', color: '#0f172a' },
+        insightHi:   { color: '#10b981', fontWeight: '700' },
+        footer:      { padding: '10px 28px 14px', textAlign: 'center', background: '#f8fafc', borderTop: '1.5px solid #d1fae5' },
+        footerTxt:   { fontSize: '0.64rem', color: '#6b7280', margin: '0 0 2px' },
+        footerCopy:  { fontSize: '0.58rem', color: '#9ca3af', margin: 0 },
+    };
+
+    const kpiAccents = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444'];
+    const topProduct  = reportData.topProducts[0];
+    const topCategory = reportData.categoryPerformance[0];
+
+    return (
+        <div style={P.wrap}>
+            <div ref={pdfRef} style={P.doc}>
+
+                {/* ── HEADER ── */}
+                <div style={P.header}>
+                    <div style={P.logoRow}>
+                        <span style={P.logoM}>Methu</span>
+                        <span style={P.logoA}>Aquarium</span>
+                    </div>
+                    <div style={P.contact}>No 50, Kumaradasa Mawatha, Matara &nbsp;&bull;&nbsp; 041-2236848 / 074-3143109 &nbsp;&bull;&nbsp; methuaquarium@gmail.com</div>
+                    <div style={P.divider} />
+                    <h2 style={P.title}>PRODUCT PERFORMANCE REPORT</h2>
+                    <div style={P.metaRow}>
+                        <span>Period: <strong style={{ color: '#0f172a' }}>{periodLabel}</strong></span>
+                        <span>Generated: {generatedAt}</span>
+                    </div>
+                </div>
+
+                {/* ── SUMMARY KPIs ── */}
+                <div style={P.section}>
+                    <p style={P.secTitle}>Summary</p>
+                    <div style={P.kpiRow}>
+                        {[
+                            { label: 'Products Sold',  val: productsSold.toLocaleString(),  sub: 'Unique products',     accent: kpiAccents[0] },
+                            { label: 'Units Sold',     val: totalUnits.toLocaleString(),     sub: 'Total qty sold',     accent: kpiAccents[1] },
+                            { label: 'Total Revenue',  val: fmt(totalRevenue),               sub: 'Excl. cancelled',    accent: kpiAccents[2] },
+                            { label: 'Total Orders',   val: totalOrders.toLocaleString(),    sub: 'Orders placed',      accent: kpiAccents[3] },
+                            { label: 'Returns',        val: totalReturns.toLocaleString(),   sub: fmt(totalRefund) + ' refunded', accent: kpiAccents[4] },
+                        ].map((k, i) => (
+                            <div key={i} style={{ ...P.kpiBox, borderTopColor: k.accent }}>
+                                <div style={P.kpiLbl}>{k.label}</div>
+                                <div style={{ ...P.kpiVal, color: k.accent }}>{k.val}</div>
+                                <div style={P.kpiSub}>{k.sub}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* ── TOP PRODUCTS ── */}
+                {reportData.topProducts.length > 0 && (
+                    <div style={{ ...P.section, paddingTop: 0 }}>
+                        <p style={P.secTitle}>Top Products by Revenue</p>
+                        <table style={P.table}>
+                            <colgroup>
+                                <col style={{ width: '6%' }} />
+                                <col style={{ width: '36%' }} />
+                                <col style={{ width: '18%' }} />
+                                <col style={{ width: '12%' }} />
+                                <col style={{ width: '14%' }} />
+                                <col style={{ width: '14%' }} />
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th style={P.th}>#</th>
+                                    <th style={P.th}>Product</th>
+                                    <th style={P.th}>Category</th>
+                                    <th style={P.thC}>Units Sold</th>
+                                    <th style={P.thR}>Revenue</th>
+                                    <th style={P.thR}>% of Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {reportData.topProducts.map((p, i) => (
+                                    <tr key={i}>
+                                        <td style={{ ...(i % 2 === 0 ? P.tdE : P.tdO), color: '#9ca3af' }}>{i + 1}</td>
+                                        <td style={i % 2 === 0 ? P.tdE : P.tdO}><strong>{p.product_name}</strong></td>
+                                        <td style={i % 2 === 0 ? P.tdE : P.tdO}>{p.category}</td>
+                                        <td style={{ ...(i % 2 === 0 ? P.tdE : P.tdO), textAlign: 'center' }}>{parseInt(p.units_sold).toLocaleString()}</td>
+                                        <td style={{ ...P.tdPri, background: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>{fmt(p.revenue)}</td>
+                                        <td style={{ ...P.tdR, background: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
+                                            {totalRevenue > 0 ? ((parseFloat(p.revenue) / totalRevenue) * 100).toFixed(1) + '%' : '—'}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── CATEGORY PERFORMANCE ── */}
+                {reportData.categoryPerformance.length > 0 && (
+                    <div style={{ ...P.section, paddingTop: 0 }}>
+                        <p style={P.secTitle}>Category Performance</p>
+                        <table style={P.table}>
+                            <colgroup>
+                                <col style={{ width: '26%' }} />
+                                <col style={{ width: '16%' }} />
+                                <col style={{ width: '16%' }} />
+                                <col style={{ width: '24%' }} />
+                                <col style={{ width: '18%' }} />
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th style={P.th}>Category</th>
+                                    <th style={P.thC}>Products</th>
+                                    <th style={P.thC}>Units Sold</th>
+                                    <th style={P.thR}>Revenue (LKR)</th>
+                                    <th style={P.thR}>% of Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {reportData.categoryPerformance.map((c, i) => (
+                                    <tr key={i}>
+                                        <td style={i % 2 === 0 ? P.tdE : P.tdO}><strong>{c.category}</strong></td>
+                                        <td style={{ ...(i % 2 === 0 ? P.tdE : P.tdO), textAlign: 'center' }}>{c.products_count}</td>
+                                        <td style={{ ...(i % 2 === 0 ? P.tdE : P.tdO), textAlign: 'center' }}>{parseInt(c.units_sold).toLocaleString()}</td>
+                                        <td style={{ ...P.tdPri, background: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>{fmt(c.revenue)}</td>
+                                        <td style={{ ...P.tdR, background: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
+                                            {totalRevenue > 0 ? ((parseFloat(c.revenue) / totalRevenue) * 100).toFixed(1) + '%' : '—'}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── RETURNS & REFUNDS ── */}
+                {reportData.returnsByReason.length > 0 && (
+                    <div style={{ ...P.section, paddingTop: 0 }}>
+                        <p style={{ ...P.secTitle, color: '#ef4444', borderBottomColor: '#fee2e2' }}>Returns &amp; Refunds by Reason</p>
+                        <table style={P.table}>
+                            <colgroup>
+                                <col style={{ width: '46%' }} />
+                                <col style={{ width: '24%' }} />
+                                <col style={{ width: '30%' }} />
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th style={P.th}>Reason</th>
+                                    <th style={P.thC}>Returns</th>
+                                    <th style={P.thR}>Total Refund (LKR)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {reportData.returnsByReason.map((r, i) => (
+                                    <tr key={i}>
+                                        <td style={i % 2 === 0 ? P.tdE : P.tdO}>{r.reason}</td>
+                                        <td style={{ ...(i % 2 === 0 ? P.tdE : P.tdO), textAlign: 'center', color: '#ef4444', fontWeight: '700' }}>{r.return_count}</td>
+                                        <td style={{ ...P.tdR, background: i % 2 === 0 ? '#ffffff' : '#f9fafb', color: '#ef4444', fontWeight: '700' }}>{fmt(r.total_refund)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── SLOW MOVERS ── */}
+                {reportData.slowMovers.length > 0 && (
+                    <div style={{ ...P.section, paddingTop: 0 }}>
+                        <p style={{ ...P.secTitle, color: '#f97316', borderBottomColor: '#ffedd5' }}>Slow Movers — No Sales in Period ({reportData.slowMovers.length})</p>
+                        <table style={P.table}>
+                            <colgroup>
+                                <col style={{ width: '42%' }} />
+                                <col style={{ width: '24%' }} />
+                                <col style={{ width: '16%' }} />
+                                <col style={{ width: '18%' }} />
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th style={P.th}>Product</th>
+                                    <th style={P.th}>Category</th>
+                                    <th style={P.thC}>Stock</th>
+                                    <th style={P.thR}>Price (LKR)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {reportData.slowMovers.map((p, i) => (
+                                    <tr key={i}>
+                                        <td style={i % 2 === 0 ? P.tdE : P.tdO}>{p.name}</td>
+                                        <td style={i % 2 === 0 ? P.tdE : P.tdO}>{p.category}</td>
+                                        <td style={{ ...(i % 2 === 0 ? P.tdE : P.tdO), textAlign: 'center', color: '#f97316', fontWeight: '700' }}>{p.stock_quantity}</td>
+                                        <td style={{ ...P.tdR, background: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>{fmt(p.price)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── INSIGHTS ── */}
+                <div style={{ ...P.section, paddingTop: 0 }}>
+                    <p style={P.secTitle}>Insights</p>
+                    <div style={P.insightBox}>
+                        <p style={P.insightLine}>
+                            <span style={P.insightKey}>Products Sold: </span>{productsSold}
+                            &nbsp;&nbsp;|&nbsp;&nbsp;
+                            <span style={P.insightKey}>Total Units: </span>{totalUnits.toLocaleString()}
+                            &nbsp;&nbsp;|&nbsp;&nbsp;
+                            <span style={P.insightKey}>Revenue: </span><span style={P.insightHi}>{fmt(totalRevenue)}</span>
+                        </p>
+                        {topProduct && (
+                            <p style={P.insightLine}>
+                                <span style={P.insightKey}>Best Product: </span>
+                                {topProduct.product_name} — <span style={P.insightHi}>{fmt(topProduct.revenue)}</span> ({parseInt(topProduct.units_sold)} units)
+                            </p>
+                        )}
+                        {topCategory && (
+                            <p style={P.insightLine}>
+                                <span style={P.insightKey}>Top Category: </span>
+                                {topCategory.category} — <span style={P.insightHi}>{fmt(topCategory.revenue)}</span> ({parseInt(topCategory.units_sold)} units)
+                            </p>
+                        )}
+                        <p style={{ ...P.insightLine, marginBottom: 0 }}>
+                            <span style={P.insightKey}>Returns: </span>
+                            <strong style={{ color: '#ef4444' }}>{totalReturns}</strong> returns
+                            &nbsp;|&nbsp; Refunded: <strong style={{ color: '#ef4444' }}>{fmt(totalRefund)}</strong>
+                            {totalOrders > 0 && totalReturns > 0 && (
+                                <> &nbsp;({((totalReturns / totalOrders) * 100).toFixed(1)}% return rate)</>
+                            )}
+                        </p>
+                    </div>
+                </div>
+
+                {/* ── FOOTER ── */}
+                <div style={P.footer}>
+                    <p style={P.footerTxt}>Generated by Methu Aquarium Management System</p>
+                    <p style={{ ...P.footerTxt, marginBottom: '4px' }}>{generatedAt}</p>
+                    <p style={P.footerCopy}>&copy; 2026 Methu Aquarium. All Rights Reserved.</p>
+                </div>
+
+            </div>
+        </div>
+    );
+};
+
 /* ─── Inventory PDF template ───────────────────────────── */
 const InventoryReportPDF = ({ reportData, pdfRef }) => {
     if (!reportData) return null;
@@ -582,17 +865,22 @@ const ReportsAnalytics = () => {
     const charts = useRef({});
 
     /* ref for the hidden white PDF template */
-    const pdfRef    = useRef(null);
-    const invPdfRef = useRef(null);
+    const pdfRef     = useRef(null);
+    const invPdfRef  = useRef(null);
+    const prodPdfRef = useRef(null);
 
     /* inventory chart canvas refs */
     const stockStatusRef   = useRef(null);
     const stockCategoryRef = useRef(null);
 
+    /* product performance chart canvas refs */
+    const prodTopRef      = useRef(null);
+    const prodCategoryRef = useRef(null);
+
     const reportCategories = [
         { id: 'sales',     title: 'Sales & Revenue',     description: 'Orders, revenue & payment breakdown over a custom date range.', icon: <BarChart3 size={22} color="#3b82f6" />, bg: 'rgba(59,130,246,0.12)',  border: '#3b82f6' },
         { id: 'inventory', title: 'Inventory & Stock',   description: 'Current stock levels, low stock alerts and out-of-stock items.', icon: <Package  size={22} color="#f59e0b" />, bg: 'rgba(245,158,11,0.12)',  border: '#f59e0b' },
-        { id: 'product',   title: 'Product Performance', description: 'Best selling products, fast-movers and category insights.',       icon: <Star     size={22} color="#10b981" />, bg: 'rgba(16,185,129,0.12)',  border: '#10b981' },
+        { id: 'product',   title: 'Product Performance', description: 'Best sellers, category insights, returns & refunds breakdown.',  icon: <Star     size={22} color="#10b981" />, bg: 'rgba(16,185,129,0.12)',  border: '#10b981' },
         { id: 'service',   title: 'Service Bookings',    description: 'Most ordered services and booking statistics.',                  icon: <Calendar size={22} color="#8b5cf6" />, bg: 'rgba(139,92,246,0.12)', border: '#8b5cf6' },
     ];
 
@@ -618,6 +906,17 @@ const ReportsAnalytics = () => {
         return () => {
             clearTimeout(t);
             ['stockStatus', 'stockCategory'].forEach(k => {
+                if (charts.current[k]) { charts.current[k].destroy(); delete charts.current[k]; }
+            });
+        };
+    }, [reportData]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    useEffect(() => {
+        if (!reportData || selectedReport !== 'product') return;
+        const t = setTimeout(() => buildProductCharts(reportData), 80);
+        return () => {
+            clearTimeout(t);
+            ['prodTop', 'prodCategory'].forEach(k => {
                 if (charts.current[k]) { charts.current[k].destroy(); delete charts.current[k]; }
             });
         };
@@ -802,13 +1101,74 @@ const ReportsAnalytics = () => {
         }
     };
 
+    const buildProductCharts = (data) => {
+        ['prodTop', 'prodCategory'].forEach(k => {
+            if (charts.current[k]) { charts.current[k].destroy(); delete charts.current[k]; }
+        });
+
+        /* Top products horizontal bar by revenue */
+        if (prodTopRef.current && data.topProducts.length) {
+            const top8 = data.topProducts.slice(0, 8);
+            charts.current.prodTop = new Chart(prodTopRef.current.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: top8.map(p => p.product_name.length > 22 ? p.product_name.slice(0, 22) + '…' : p.product_name),
+                    datasets: [{
+                        label: 'Revenue (LKR)',
+                        data: top8.map(p => parseFloat(p.revenue)),
+                        backgroundColor: PALETTE.slice(0, top8.length).map(c => c + 'cc'),
+                        borderRadius: 6,
+                    }],
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: ctx => ' LKR ' + ctx.parsed.x.toLocaleString() } },
+                    },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8', callback: v => 'LKR ' + v.toLocaleString() }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    },
+                },
+            });
+        }
+
+        /* Category performance doughnut */
+        if (prodCategoryRef.current && data.categoryPerformance.length) {
+            charts.current.prodCategory = new Chart(prodCategoryRef.current.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: data.categoryPerformance.map(c => c.category),
+                    datasets: [{
+                        data: data.categoryPerformance.map(c => parseFloat(c.revenue)),
+                        backgroundColor: PALETTE.slice(0, data.categoryPerformance.length).map(c => c + 'cc'),
+                        borderColor: '#151b2d',
+                        borderWidth: 3,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8', padding: 14, font: { size: 11 } } },
+                        tooltip: { callbacks: { label: ctx => ' LKR ' + ctx.parsed.toLocaleString() } },
+                    },
+                },
+            });
+        }
+    };
+
     /* ── Generate report ────────────────────────────────── */
     const generateReport = async () => {
-        if (selectedReport !== 'sales' && selectedReport !== 'inventory') {
+        if (selectedReport !== 'sales' && selectedReport !== 'inventory' && selectedReport !== 'product') {
             Swal.fire({ icon: 'info', title: 'Coming Soon', text: 'This report type is under development.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#06b6d4' });
             return;
         }
-        if (selectedReport === 'sales') {
+        if (selectedReport === 'sales' || selectedReport === 'product') {
             if (!startDate || !endDate) {
                 Swal.fire({ icon: 'warning', title: 'Select Dates', text: 'Please select both a start and end date.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#06b6d4' });
                 return;
@@ -823,9 +1183,14 @@ const ReportsAnalytics = () => {
         setIsGenerated(false);
         setReportData(null);
         try {
-            const res = selectedReport === 'sales'
-                ? await apiRequest(`/admin/sales-report?start_date=${startDate}&end_date=${endDate}`)
-                : await apiRequest('/admin/inventory-report');
+            let res;
+            if (selectedReport === 'sales') {
+                res = await apiRequest(`/admin/sales-report?start_date=${startDate}&end_date=${endDate}`);
+            } else if (selectedReport === 'inventory') {
+                res = await apiRequest('/admin/inventory-report');
+            } else {
+                res = await apiRequest(`/admin/product-performance-report?start_date=${startDate}&end_date=${endDate}`);
+            }
             setReportData(res.data);
             setIsGenerated(true);
         } catch {
@@ -870,6 +1235,26 @@ const ReportsAnalytics = () => {
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
             }).from(invPdfRef.current).save();
+            Swal.fire({ icon: 'success', title: 'Downloaded!', text: 'Your PDF report has been saved.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#06b6d4', timer: 2000, showConfirmButton: false });
+        } catch {
+            Swal.close();
+        }
+    };
+
+    /* ── Download product performance PDF ──────────────── */
+    const downloadProductPDF = async () => {
+        if (!prodPdfRef.current) return;
+        Swal.fire({ title: 'Generating PDF…', background: '#1a1f2e', color: '#fff', showConfirmButton: false, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        try {
+            const html2pdf = (await import('html2pdf.js')).default;
+            await html2pdf().set({
+                margin: [8, 10, 8, 10],
+                filename: `product-performance-report-${startDate}-to-${endDate}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, letterRendering: true, backgroundColor: '#ffffff' },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+            }).from(prodPdfRef.current).save();
             Swal.fire({ icon: 'success', title: 'Downloaded!', text: 'Your PDF report has been saved.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#06b6d4', timer: 2000, showConfirmButton: false });
         } catch {
             Swal.close();
@@ -1231,6 +1616,239 @@ const ReportsAnalytics = () => {
         );
     };
 
+    /* ── Product Performance report UI ─────────────────── */
+    const renderProductReport = () => {
+        if (!reportData) return null;
+        const s            = reportData.summary;
+        const rs           = reportData.returnsSummary;
+        const productsSold = parseInt(s.products_sold)      || 0;
+        const totalUnits   = parseInt(s.total_units_sold)   || 0;
+        const totalRevenue = parseFloat(s.total_revenue)    || 0;
+        const totalOrders  = parseInt(s.total_orders)       || 0;
+        const totalReturns = parseInt(rs.total_returns)     || 0;
+        const totalRefund  = parseFloat(rs.total_refund_amount) || 0;
+
+        const startLabel = new Date(startDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        const endLabel   = new Date(endDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+        return (
+            <div className="report-display-area">
+                {/* ── Header ── */}
+                <div className="report-header">
+                    <div className="rh-left">
+                        <h2 className="rh-title"><Star size={22} style={{ marginRight: 10 }} />Product Performance Report</h2>
+                        <p className="rh-sub">Period: <strong>{startLabel}</strong> — <strong>{endLabel}</strong></p>
+                        <p className="rh-sub" style={{ marginTop: 2 }}>Generated: {new Date().toLocaleString()}</p>
+                    </div>
+                    <button className="btn-download" onClick={downloadProductPDF}>
+                        <Download size={16} /> Download PDF
+                    </button>
+                </div>
+
+                {/* ── KPI cards ── */}
+                <div className="kpi-grid">
+                    <div className="kpi-card" style={{ '--kc': '#10b981' }}>
+                        <div className="kpi-icon-wrap"><Star size={18} /></div>
+                        <div className="kpi-label">PRODUCTS SOLD</div>
+                        <div className="kpi-val">{productsSold.toLocaleString()}</div>
+                    </div>
+                    <div className="kpi-card" style={{ '--kc': '#3b82f6' }}>
+                        <div className="kpi-icon-wrap"><Package size={18} /></div>
+                        <div className="kpi-label">UNITS SOLD</div>
+                        <div className="kpi-val">{totalUnits.toLocaleString()}</div>
+                    </div>
+                    <div className="kpi-card" style={{ '--kc': '#f59e0b' }}>
+                        <div className="kpi-icon-wrap"><TrendingUp size={18} /></div>
+                        <div className="kpi-label">TOTAL REVENUE</div>
+                        <div className="kpi-val">{fmt(totalRevenue)}</div>
+                    </div>
+                    <div className="kpi-card" style={{ '--kc': '#8b5cf6' }}>
+                        <div className="kpi-icon-wrap"><ShoppingCart size={18} /></div>
+                        <div className="kpi-label">TOTAL ORDERS</div>
+                        <div className="kpi-val">{totalOrders.toLocaleString()}</div>
+                    </div>
+                    <div className="kpi-card" style={{ '--kc': '#ef4444' }}>
+                        <div className="kpi-icon-wrap"><AlertTriangle size={18} /></div>
+                        <div className="kpi-label">RETURNS</div>
+                        <div className="kpi-val">{totalReturns.toLocaleString()}</div>
+                    </div>
+                </div>
+
+                {/* ── Charts ── */}
+                <div className="charts-2col">
+                    <div className="chart-col" style={{ flex: 2 }}>
+                        <h3 className="section-label">TOP PRODUCTS BY REVENUE</h3>
+                        <div className="chart-box chart-box-tall">
+                            {reportData.topProducts.length > 0
+                                ? <canvas ref={prodTopRef} />
+                                : <div className="no-data">No sales data for this period</div>}
+                        </div>
+                    </div>
+                    <div className="chart-col" style={{ flex: 1 }}>
+                        <h3 className="section-label">REVENUE BY CATEGORY</h3>
+                        <div className="chart-box chart-box-tall">
+                            {reportData.categoryPerformance.length > 0
+                                ? <canvas ref={prodCategoryRef} />
+                                : <div className="no-data">No data</div>}
+                        </div>
+                    </div>
+                </div>
+
+                {/* ── Top products table ── */}
+                {reportData.topProducts.length > 0 && (
+                    <div className="table-section">
+                        <h3 className="section-label">TOP PRODUCTS DETAIL</h3>
+                        <table className="data-table">
+                            <thead>
+                                <tr><th>#</th><th>Product</th><th>Category</th><th>Units Sold</th><th>Revenue</th><th>% of Total</th></tr>
+                            </thead>
+                            <tbody>
+                                {reportData.topProducts.map((p, i) => (
+                                    <tr key={i}>
+                                        <td style={{ color: '#64748b' }}>{i + 1}</td>
+                                        <td><strong>{p.product_name}</strong></td>
+                                        <td><span className="badge-cat">{p.category}</span></td>
+                                        <td>{parseInt(p.units_sold).toLocaleString()}</td>
+                                        <td className="td-primary">{fmt(p.revenue)}</td>
+                                        <td style={{ color: '#94a3b8' }}>
+                                            {totalRevenue > 0 ? ((parseFloat(p.revenue) / totalRevenue) * 100).toFixed(1) + '%' : '—'}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── Category performance table ── */}
+                {reportData.categoryPerformance.length > 0 && (
+                    <div className="table-section">
+                        <h3 className="section-label">CATEGORY PERFORMANCE</h3>
+                        <table className="data-table">
+                            <thead>
+                                <tr><th>Category</th><th>Products</th><th>Units Sold</th><th>Revenue</th><th>% of Total</th></tr>
+                            </thead>
+                            <tbody>
+                                {reportData.categoryPerformance.map((c, i) => (
+                                    <tr key={i}>
+                                        <td><strong>{c.category}</strong></td>
+                                        <td>{c.products_count}</td>
+                                        <td>{parseInt(c.units_sold).toLocaleString()}</td>
+                                        <td className="td-primary">{fmt(c.revenue)}</td>
+                                        <td style={{ color: '#94a3b8' }}>
+                                            {totalRevenue > 0 ? ((parseFloat(c.revenue) / totalRevenue) * 100).toFixed(1) + '%' : '—'}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── Returns & Refunds ── */}
+                {(totalReturns > 0 || reportData.returnsByReason.length > 0) && (
+                    <div className="table-section">
+                        <h3 className="section-label" style={{ color: '#ef4444' }}>
+                            RETURNS &amp; REFUNDS — {totalReturns} Return{totalReturns !== 1 ? 's' : ''} &nbsp;|&nbsp; {fmt(totalRefund)} Refunded
+                        </h3>
+                        {reportData.returnsByReason.length > 0 ? (
+                            <table className="data-table">
+                                <thead>
+                                    <tr><th>Reason</th><th>Returns</th><th>Total Refund</th></tr>
+                                </thead>
+                                <tbody>
+                                    {reportData.returnsByReason.map((r, i) => (
+                                        <tr key={i}>
+                                            <td>{r.reason}</td>
+                                            <td><span className="badge-stock-low">{r.return_count}</span></td>
+                                            <td style={{ color: '#ef4444', fontWeight: 600 }}>{fmt(r.total_refund)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        ) : (
+                            <p style={{ color: '#64748b', fontSize: '0.85rem' }}>No approved returns in this period.</p>
+                        )}
+                    </div>
+                )}
+
+                {/* ── Recent returns detail ── */}
+                {reportData.recentReturns.length > 0 && (
+                    <div className="table-section">
+                        <h3 className="section-label">RECENT RETURN REQUESTS</h3>
+                        <table className="data-table">
+                            <thead>
+                                <tr><th>Return #</th><th>Order #</th><th>Reason</th><th>Status</th><th>Refund Amount</th><th>Date</th></tr>
+                            </thead>
+                            <tbody>
+                                {reportData.recentReturns.map((r, i) => (
+                                    <tr key={i}>
+                                        <td style={{ color: '#64748b' }}>#{r.return_id}</td>
+                                        <td>#{r.order_id}</td>
+                                        <td>{r.reason}</td>
+                                        <td>
+                                            <span style={{
+                                                fontSize: '0.72rem', fontWeight: 700, padding: '2px 8px', borderRadius: 4,
+                                                background: r.status === 'Approved' || r.status === 'Refunded' ? 'rgba(16,185,129,0.15)' : r.status === 'Pending' ? 'rgba(245,158,11,0.15)' : 'rgba(239,68,68,0.15)',
+                                                color: r.status === 'Approved' || r.status === 'Refunded' ? '#10b981' : r.status === 'Pending' ? '#f59e0b' : '#ef4444',
+                                            }}>{r.status}</span>
+                                        </td>
+                                        <td className="td-primary">{fmt(r.refund_amount)}</td>
+                                        <td style={{ color: '#94a3b8' }}>{new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── Slow movers ── */}
+                {reportData.slowMovers.length > 0 && (
+                    <div className="table-section">
+                        <h3 className="section-label" style={{ color: '#f97316' }}>
+                            SLOW MOVERS — NO SALES IN PERIOD ({reportData.slowMovers.length})
+                        </h3>
+                        <table className="data-table">
+                            <thead>
+                                <tr><th>Product</th><th>Category</th><th>Stock</th><th>Price</th></tr>
+                            </thead>
+                            <tbody>
+                                {reportData.slowMovers.map((p, i) => (
+                                    <tr key={i}>
+                                        <td>{p.name}</td>
+                                        <td><span className="badge-cat">{p.category}</span></td>
+                                        <td><span className="badge-stock-low">{p.stock_quantity}</span></td>
+                                        <td className="td-primary">{fmt(p.price)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── Refund summary banner ── */}
+                {totalRefund > 0 && (
+                    <div className="inv-alert-banner" style={{ borderColor: 'rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)' }}>
+                        <AlertTriangle size={16} color="#ef4444" />
+                        <span style={{ color: '#ef4444' }}>
+                            <strong>{totalReturns} return{totalReturns !== 1 ? 's' : ''}</strong> processed this period.
+                            Total refunded: <strong>{fmt(totalRefund)}</strong>
+                            {totalOrders > 0 && totalReturns > 0 && <> — {((totalReturns / totalOrders) * 100).toFixed(1)}% return rate.</>}
+                        </span>
+                    </div>
+                )}
+
+                {/* ── Empty state ── */}
+                {productsSold === 0 && (
+                    <div className="empty-state">
+                        <Star size={48} color="#334155" />
+                        <p>No sales data found for the selected period.</p>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     /* ═══════════════════════════════════════════════════ */
     return (
         <div className="ra-wrap">
@@ -1254,7 +1872,7 @@ const ReportsAnalytics = () => {
                         <div className="cat-body">
                             <h4>{cat.title}</h4>
                             <p>{cat.description}</p>
-                            {(cat.id === 'sales' || cat.id === 'inventory')
+                            {(cat.id === 'sales' || cat.id === 'inventory' || cat.id === 'product')
                                 ? <span className="badge-live">LIVE DATA</span>
                                 : <span className="badge-soon">COMING SOON</span>}
                         </div>
@@ -1320,6 +1938,7 @@ const ReportsAnalytics = () => {
             {/* ── Report output ── */}
             {isGenerated && !loading && selectedReport === 'sales'     && renderSalesReport()}
             {isGenerated && !loading && selectedReport === 'inventory' && renderInventoryReport()}
+            {isGenerated && !loading && selectedReport === 'product'   && renderProductReport()}
 
             {/* ── Hidden white PDF templates (off-screen, captured by html2pdf) ── */}
             {isGenerated && selectedReport === 'sales' && (
@@ -1334,6 +1953,14 @@ const ReportsAnalytics = () => {
                 <InventoryReportPDF
                     reportData={reportData}
                     pdfRef={invPdfRef}
+                />
+            )}
+            {isGenerated && selectedReport === 'product' && (
+                <ProductPerformanceReportPDF
+                    reportData={reportData}
+                    startDate={startDate}
+                    endDate={endDate}
+                    pdfRef={prodPdfRef}
                 />
             )}
 

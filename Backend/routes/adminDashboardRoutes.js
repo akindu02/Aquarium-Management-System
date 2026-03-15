@@ -3,6 +3,7 @@ const router = express.Router();
 const adminDashboardController = require('../controllers/adminDashboardController');
 const salesReportController = require('../controllers/salesReportController');
 const inventoryReportController = require('../controllers/inventoryReportController');
+const productPerformanceReportController = require('../controllers/productPerformanceReportController');
 const { authenticate, adminOnly } = require('../middleware/authMiddleware');
 
 // GET /api/admin/dashboard-stats — Admin overview dashboard statistics
@@ -27,6 +28,14 @@ router.get(
     authenticate,
     adminOnly,
     inventoryReportController.getInventoryReport
+);
+
+// GET /api/admin/product-performance-report?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD
+router.get(
+    '/product-performance-report',
+    authenticate,
+    adminOnly,
+    productPerformanceReportController.getProductPerformanceReport
 );
 
 module.exports = router;
