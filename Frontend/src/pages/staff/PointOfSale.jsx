@@ -31,6 +31,7 @@ const PointOfSale = () => {
     // ── Payment ───────────────────────────────────────────────────────────────
     const [cashGiven, setCashGiven] = useState('');
     const [discount, setDiscount] = useState('');
+    const [discountType, setDiscountType] = useState('percent'); // 'percent' | 'fixed'
     const [isProcessing, setIsProcessing] = useState(false);
     const [receiptData, setReceiptData] = useState(null);
     const [showReceiptModal, setShowReceiptModal] = useState(false);
@@ -76,8 +77,10 @@ const PointOfSale = () => {
     });
 
     const subtotal = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
-    const discountPercent = parseFloat(discount) || 0;
-    const discountAmount = subtotal * (discountPercent / 100);
+    const discountValue = parseFloat(discount) || 0;
+    const discountAmount = discountType === 'fixed'
+        ? Math.min(discountValue, subtotal)
+        : subtotal * (Math.min(discountValue, 100) / 100);
     const total = Math.max(0, subtotal - discountAmount);
     const cashAmount = parseFloat(cashGiven) || 0;
     const balance = cashAmount - total;
@@ -156,7 +159,8 @@ const PointOfSale = () => {
                     address: customer.address.trim() || null,
                 },
                 items: cart.map(i => ({ productId: i.id, quantity: i.qty })),
-                discount: discountPercent,
+                discount: discountValue,
+                discountType,
             });
             if (result.success) {
                 setReceiptData({
@@ -191,6 +195,7 @@ const PointOfSale = () => {
         setReceiptData(null);
         setCashGiven('');
         setDiscount('');
+        setDiscountType('percent');
         setSaleCount(c => c + 1);
         setActiveTab('products');
     };
@@ -481,21 +486,57 @@ const PointOfSale = () => {
                             {/* Totals */}
                             <div className="qpos-scard">
                                 <div className="qpos-totals-row"><span>Subtotal</span><span>LKR {subtotal.toLocaleString()}</span></div>
-                                <div className="qpos-totals-row-discount" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-                                    <span>Discount (%)</span>
-                                    <input
-                                        type="number"
-                                        style={{ width: '100px', padding: '4px 8px', borderRadius: '4px', border: '1px solid rgba(255, 255, 255, 0.2)', background: 'transparent', color: '#f1f5f9', textAlign: 'right', outline: 'none' }}
-                                        min="0"
-                                        max="100"
-                                        step="0.01"
-                                        value={discount}
-                                        onChange={e => setDiscount(e.target.value)}
-                                        placeholder="0"
-                                    />
+
+                                {/* Discount row */}
+                                <div className="qpos-discount-row">
+                                    <span className="qpos-discount-label">Discount</span>
+                                    <div className="qpos-discount-control">
+                                        {/* Type toggle */}
+                                        <div className="qpos-disc-type-toggle">
+                                            <button
+                                                className={`qpos-disc-type-btn ${discountType === 'percent' ? 'active' : ''}`}
+                                                onClick={() => { setDiscountType('percent'); setDiscount(''); }}
+                                                title="Percentage discount"
+                                            >%</button>
+                                            <button
+                                                className={`qpos-disc-type-btn ${discountType === 'fixed' ? 'active' : ''}`}
+                                                onClick={() => { setDiscountType('fixed'); setDiscount(''); }}
+                                                title="Fixed amount discount"
+                                            >LKR</button>
+                                        </div>
+                                        {/* Value input */}
+                                        <div className="qpos-disc-input-wrap">
+                                            <span className="qpos-disc-prefix">
+                                                {discountType === 'percent' ? '%' : 'Rs.'}
+                                            </span>
+                                            <input
+                                                type="number"
+                                                className="qpos-disc-input"
+                                                min="0"
+                                                max={discountType === 'percent' ? 100 : subtotal}
+                                                step="0.01"
+                                                value={discount}
+                                                onChange={e => setDiscount(e.target.value)}
+                                                placeholder="0"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
+
+                                {/* Discount applied summary */}
+                                {discountAmount > 0 && (
+                                    <div className="qpos-disc-applied">
+                                        <span>
+                                            {discountType === 'percent'
+                                                ? `${Math.min(discountValue, 100)}% off`
+                                                : 'Fixed discount'}
+                                        </span>
+                                        <span className="qpos-disc-saving">− LKR {discountAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                    </div>
+                                )}
+
                                 <div className="qpos-totals-sep" />
-                                <div className="qpos-totals-row grand"><span>Total Balance</span><span>LKR {total.toLocaleString()}</span></div>
+                                <div className="qpos-totals-row grand"><span>Total Balance</span><span>LKR {total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
                             </div>
 
                             {/* Cash input */}
@@ -865,14 +906,89 @@ const PointOfSale = () => {
                 .qpos-totals-row.grand { font-size: 1.05rem; font-weight: 700; color: #f1f5f9; margin-top: 1px; }
                 .qpos-totals-sep { height: 1px; background: rgba(255,255,255,0.07); margin: 0.5rem 0; }
                 
-                /* Hide number arrows for discount */
-                .qpos-totals-row-discount input[type=number]::-webkit-inner-spin-button,
-                .qpos-totals-row-discount input[type=number]::-webkit-outer-spin-button {
-                    -webkit-appearance: none;
-                    margin: 0;
+                /* ── Discount row ── */
+                .qpos-discount-row {
+                    display: flex; justify-content: space-between; align-items: center;
+                    margin-top: 0.6rem; gap: 0.5rem;
                 }
-                .qpos-totals-row-discount input[type=number] {
-                    -moz-appearance: textfield;
+                .qpos-discount-label {
+                    font-size: 0.85rem; color: #94a3b8; flex-shrink: 0;
+                }
+                .qpos-discount-control {
+                    display: flex; align-items: center; gap: 0.45rem;
+                }
+                .qpos-disc-type-toggle {
+                    display: flex;
+                    background: rgba(255,255,255,0.06);
+                    border: 1px solid rgba(255,255,255,0.1);
+                    border-radius: 0.4rem;
+                    padding: 2px;
+                    gap: 2px;
+                }
+                .qpos-disc-type-btn {
+                    padding: 3px 9px;
+                    border-radius: 0.3rem;
+                    border: none;
+                    background: transparent;
+                    color: #64748b;
+                    font-size: 0.72rem;
+                    font-weight: 700;
+                    cursor: pointer;
+                    transition: all 0.15s;
+                    white-space: nowrap;
+                }
+                .qpos-disc-type-btn.active {
+                    background: #06b6d4;
+                    color: #fff;
+                }
+                .qpos-disc-input-wrap {
+                    display: flex; align-items: center; gap: 0;
+                    background: rgba(255,255,255,0.05);
+                    border: 1.5px solid rgba(255,255,255,0.1);
+                    border-radius: 0.4rem;
+                    overflow: hidden;
+                    transition: border-color 0.14s;
+                }
+                .qpos-disc-input-wrap:focus-within { border-color: #06b6d4; }
+                .qpos-disc-prefix {
+                    padding: 4px 7px;
+                    font-size: 0.72rem;
+                    font-weight: 700;
+                    color: #06b6d4;
+                    background: rgba(6,182,212,0.08);
+                    border-right: 1px solid rgba(255,255,255,0.08);
+                    white-space: nowrap;
+                    line-height: 1.6;
+                }
+                .qpos-disc-input {
+                    width: 72px;
+                    padding: 4px 8px;
+                    background: transparent;
+                    border: none;
+                    outline: none;
+                    color: #f1f5f9;
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                    text-align: right;
+                }
+                .qpos-disc-input[type=number]::-webkit-inner-spin-button,
+                .qpos-disc-input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+                .qpos-disc-input[type=number] { -moz-appearance: textfield; }
+
+                /* Discount applied badge */
+                .qpos-disc-applied {
+                    display: flex; justify-content: space-between; align-items: center;
+                    margin-top: 0.35rem;
+                    padding: 0.35rem 0.6rem;
+                    background: rgba(16,185,129,0.08);
+                    border: 1px solid rgba(16,185,129,0.2);
+                    border-radius: 0.4rem;
+                    font-size: 0.75rem;
+                    color: #94a3b8;
+                }
+                .qpos-disc-saving {
+                    color: #10b981;
+                    font-weight: 700;
                 }
 
                 .qpos-cash-label { display: block; font-size: 0.75rem; font-weight: 600; color: #94a3b8; margin-bottom: 0.4rem; }

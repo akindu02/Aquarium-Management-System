@@ -21,7 +21,7 @@ const fmtReceiptNumber = (orderId) => {
  * - inserts payments (method Cash, status Completed)
  * - inserts receipts (1 per order)
  */
-const createPosOrder = async ({ staffId, customer, items, discount = 0 }) => {
+const createPosOrder = async ({ staffId, customer, items, discount = 0, discountType = 'percent' }) => {
     const client = await getClient();
 
     try {
@@ -77,8 +77,14 @@ const createPosOrder = async ({ staffId, customer, items, discount = 0 }) => {
 
         serverTotal = parseFloat(serverTotal.toFixed(2));
         
-        let discountPercent = parseFloat(discount) || 0;
-        let discountAmount = parseFloat((serverTotal * (discountPercent / 100)).toFixed(2));
+        const discountValue = parseFloat(discount) || 0;
+        let discountAmount;
+        if (discountType === 'fixed') {
+            discountAmount = parseFloat(Math.min(discountValue, serverTotal).toFixed(2));
+        } else {
+            const discountPercent = Math.min(discountValue, 100);
+            discountAmount = parseFloat((serverTotal * (discountPercent / 100)).toFixed(2));
+        }
 
         let finalTotal = serverTotal - discountAmount;
         if (finalTotal < 0) finalTotal = 0;
