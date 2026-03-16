@@ -315,30 +315,113 @@ const StaffOrderManagement = () => {
                                 </div>
                             )}
 
-                            <div className="action-section">
-                                <h4>Update Status</h4>
-                                <div className="status-buttons">
-                                    {selectedOrder.type === 'customer' ? (
-                                        <>
-                                            <button className="st-btn" onClick={() => updateCustomerStatus(selectedOrder.id, 'Processing')}>Processing</button>
-                                            <button className="st-btn" onClick={() => updateCustomerStatus(selectedOrder.id, 'Shipped')}>Shipped</button>
-                                            <button className="st-btn success" onClick={() => updateCustomerStatus(selectedOrder.id, 'Delivered')}>Delivered</button>
-                                        </>
-                                    ) : (() => {
-                                        const { status } = selectedOrder;
-                                        if (status === 'Pending') return (
-                                            <button className="st-btn danger" onClick={() => updateSupplierStatus(selectedOrder.id, 'Cancelled')}>Cancel Request</button>
-                                        );
-                                        if (status === 'Approved') return (
-                                            <button className="st-btn" onClick={() => updateSupplierStatus(selectedOrder.id, 'Ordered')}>Mark as Ordered</button>
-                                        );
-                                        if (status === 'Ordered') return (
-                                            <button className="st-btn success" onClick={() => updateSupplierStatus(selectedOrder.id, 'Received')}>Mark as Received</button>
-                                        );
-                                        return <p style={{ color: 'rgba(255,255,255,0.4)', margin: 0, fontSize: '0.9rem' }}>No further actions available for this status.</p>;
-                                    })()}
-                                </div>
-                            </div>
+                            {/* Status Update Section */}
+                            {(() => {
+                                const customerSteps = [
+                                    { key: 'Pending',    label: 'Pending',    icon: Clock,   color: '#9ca3af' },
+                                    { key: 'Processing', label: 'Processing', icon: Package, color: '#f59e0b' },
+                                    { key: 'Shipped',    label: 'Shipped',    icon: Truck,   color: '#3b82f6' },
+                                    { key: 'Delivered',  label: 'Delivered',  icon: Check,   color: '#10b981' },
+                                ];
+                                const supplierSteps = [
+                                    { key: 'Pending',   label: 'Pending',  icon: Clock,   color: '#9ca3af' },
+                                    { key: 'Approved',  label: 'Approved', icon: Check,   color: '#6366f1' },
+                                    { key: 'Ordered',   label: 'Ordered',  icon: Package, color: '#f59e0b' },
+                                    { key: 'Received',  label: 'Received', icon: Check,   color: '#10b981' },
+                                ];
+
+                                const steps = selectedOrder.type === 'customer' ? customerSteps : supplierSteps;
+                                const currentStatus = selectedOrder.status;
+                                const isCancelled = currentStatus === 'Cancelled';
+                                const currentIdx = steps.findIndex(s => s.key === currentStatus);
+
+                                // Determine next action
+                                const customerNextMap = { 'Pending': 'Processing', 'Processing': 'Shipped', 'Shipped': 'Delivered' };
+                                const supplierNextMap = { 'Approved': 'Ordered', 'Ordered': 'Received' };
+                                const nextStatus = selectedOrder.type === 'customer'
+                                    ? customerNextMap[currentStatus]
+                                    : supplierNextMap[currentStatus];
+
+                                const nextStep = steps.find(s => s.key === nextStatus);
+
+                                return (
+                                    <div className="status-update-section">
+                                        <div className="sus-label">Order Progress</div>
+
+                                        {/* Progress Stepper */}
+                                        {isCancelled ? (
+                                            <div className="cancelled-banner">
+                                                <X size={16} />
+                                                <span>This order has been cancelled</span>
+                                            </div>
+                                        ) : (
+                                            <div className="stepper">
+                                                {steps.map((step, idx) => {
+                                                    const StepIcon = step.icon;
+                                                    const isDone = idx < currentIdx;
+                                                    const isCurrent = idx === currentIdx;
+                                                    return (
+                                                        <React.Fragment key={step.key}>
+                                                            <div className={`step-item ${isDone ? 'done' : ''} ${isCurrent ? 'current' : ''}`}>
+                                                                <div
+                                                                    className="step-circle"
+                                                                    style={isDone || isCurrent ? { background: step.color, borderColor: step.color } : {}}
+                                                                >
+                                                                    <StepIcon size={13} />
+                                                                </div>
+                                                                <span className="step-label" style={isCurrent ? { color: step.color, fontWeight: 600 } : {}}>
+                                                                    {step.label}
+                                                                </span>
+                                                            </div>
+                                                            {idx < steps.length - 1 && (
+                                                                <div className={`step-connector ${idx < currentIdx ? 'done' : ''}`} />
+                                                            )}
+                                                        </React.Fragment>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+
+                                        {/* Action Buttons */}
+                                        <div className="sus-actions">
+                                            {nextStep && (() => {
+                                                const NextIcon = nextStep.icon;
+                                                const handleNext = selectedOrder.type === 'customer'
+                                                    ? () => updateCustomerStatus(selectedOrder.id, nextStatus)
+                                                    : () => updateSupplierStatus(selectedOrder.id, nextStatus);
+                                                return (
+                                                    <button
+                                                        className="sus-next-btn"
+                                                        style={{ '--next-color': nextStep.color }}
+                                                        onClick={handleNext}
+                                                    >
+                                                        <NextIcon size={16} />
+                                                        Mark as {nextStep.label}
+                                                        <span className="sus-arrow">→</span>
+                                                    </button>
+                                                );
+                                            })()}
+
+                                            {selectedOrder.type === 'supplier' && currentStatus === 'Pending' && (
+                                                <button
+                                                    className="sus-cancel-btn"
+                                                    onClick={() => updateSupplierStatus(selectedOrder.id, 'Cancelled')}
+                                                >
+                                                    <X size={15} />
+                                                    Cancel Request
+                                                </button>
+                                            )}
+
+                                            {!nextStep && !isCancelled && (
+                                                <div className="sus-complete">
+                                                    <Check size={16} />
+                                                    <span>Order complete — no further actions</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                         </div>
                     </div>
                 </div>
@@ -535,16 +618,140 @@ const StaffOrderManagement = () => {
                 .detail-grid p { margin: 0; font-size: 0.9rem; color: white; }
                 .highlight-price { font-size: 1.05rem; font-weight: 700; color: var(--color-primary); }
                 
-                .action-section h4 { color: rgba(255,255,255,0.5); font-size: 0.78rem; text-transform: uppercase; margin-bottom: 0.75rem; }
-                .status-buttons { display: flex; gap: 0.75rem; }
-                .st-btn {
-                    flex: 1; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.1);
-                    background: transparent; color: white; cursor: pointer; transition: all 0.2s;
+                /* ── Status Update Section ── */
+                .status-update-section {
+                    margin-top: 1.5rem;
+                    padding: 1.25rem;
+                    background: rgba(255,255,255,0.03);
+                    border: 1px solid rgba(255,255,255,0.08);
+                    border-radius: 0.875rem;
                 }
-                .st-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
-                .st-btn.success:hover { border-color: #10b981; color: #10b981; }
-                .st-btn.danger { color: #ef4444; border-color: rgba(239,68,68,0.3); }
-                .st-btn.danger:hover { background: rgba(239,68,68,0.1); border-color: #ef4444; }
+                .sus-label {
+                    font-size: 0.7rem;
+                    font-weight: 700;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    color: rgba(255,255,255,0.35);
+                    margin-bottom: 1.25rem;
+                }
+
+                /* Stepper */
+                .stepper {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    margin-bottom: 1.5rem;
+                    overflow-x: auto;
+                    padding-bottom: 0.25rem;
+                }
+                .step-item {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 0.45rem;
+                    flex-shrink: 0;
+                    opacity: 0.35;
+                    transition: opacity 0.2s;
+                }
+                .step-item.done, .step-item.current { opacity: 1; }
+                .step-circle {
+                    width: 30px; height: 30px;
+                    border-radius: 50%;
+                    border: 2px solid rgba(255,255,255,0.2);
+                    background: rgba(255,255,255,0.05);
+                    display: flex; align-items: center; justify-content: center;
+                    color: white;
+                    transition: all 0.25s;
+                }
+                .step-item.current .step-circle {
+                    box-shadow: 0 0 0 4px rgba(255,255,255,0.08);
+                }
+                .step-label {
+                    font-size: 0.72rem;
+                    color: rgba(255,255,255,0.55);
+                    white-space: nowrap;
+                    transition: color 0.2s;
+                }
+                .step-connector {
+                    flex: 1;
+                    height: 2px;
+                    min-width: 18px;
+                    background: rgba(255,255,255,0.1);
+                    border-radius: 1px;
+                    margin-bottom: 20px;
+                    transition: background 0.25s;
+                }
+                .step-connector.done { background: rgba(255,255,255,0.35); }
+
+                /* Cancelled state */
+                .cancelled-banner {
+                    display: flex; align-items: center; gap: 0.6rem;
+                    padding: 0.75rem 1rem;
+                    background: rgba(239,68,68,0.1);
+                    border: 1px solid rgba(239,68,68,0.25);
+                    border-radius: 0.625rem;
+                    color: #ef4444;
+                    font-size: 0.875rem;
+                    font-weight: 500;
+                    margin-bottom: 1rem;
+                }
+
+                /* Action buttons */
+                .sus-actions {
+                    display: flex;
+                    gap: 0.75rem;
+                    align-items: center;
+                    flex-wrap: wrap;
+                }
+                .sus-next-btn {
+                    flex: 1;
+                    min-width: 160px;
+                    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+                    padding: 0.8rem 1.25rem;
+                    border-radius: 0.625rem;
+                    border: 1px solid var(--next-color, var(--color-primary));
+                    background: color-mix(in srgb, var(--next-color, var(--color-primary)) 15%, transparent);
+                    color: var(--next-color, var(--color-primary));
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    letter-spacing: 0.01em;
+                }
+                .sus-next-btn:hover {
+                    background: color-mix(in srgb, var(--next-color, var(--color-primary)) 28%, transparent);
+                    box-shadow: 0 0 14px color-mix(in srgb, var(--next-color, var(--color-primary)) 30%, transparent);
+                    transform: translateY(-1px);
+                }
+                .sus-arrow {
+                    margin-left: auto;
+                    opacity: 0.6;
+                    font-size: 1rem;
+                }
+                .sus-cancel-btn {
+                    display: flex; align-items: center; gap: 0.45rem;
+                    padding: 0.8rem 1.1rem;
+                    border-radius: 0.625rem;
+                    border: 1px solid rgba(239,68,68,0.3);
+                    background: transparent;
+                    color: #ef4444;
+                    font-size: 0.875rem;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    white-space: nowrap;
+                }
+                .sus-cancel-btn:hover {
+                    background: rgba(239,68,68,0.1);
+                    border-color: #ef4444;
+                }
+                .sus-complete {
+                    display: flex; align-items: center; gap: 0.5rem;
+                    color: #10b981;
+                    font-size: 0.875rem;
+                    font-weight: 500;
+                    padding: 0.5rem 0;
+                }
 
                 /* Form Styles */
                 .form-group { margin-bottom: 1.25rem; }
