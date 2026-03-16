@@ -68,12 +68,14 @@ const getCustomerInsightsReport = async (startDate, endDate) => {
         ORDER BY SUM(oi.quantity) DESC
     `;
 
-    // Service type popularity
+    // Service type popularity with online vs walk-in channel breakdown
     const serviceTypeQuery = `
         SELECT
             s.service_type,
-            COUNT(sb.booking_id)                                    AS total_bookings,
-            COUNT(*) FILTER (WHERE sb.status = 'Completed')        AS completed_bookings
+            COUNT(sb.booking_id)                                              AS total_bookings,
+            COUNT(*) FILTER (WHERE sb.status = 'Completed')                  AS completed_bookings,
+            COUNT(*) FILTER (WHERE sb.customer_id IS NOT NULL)               AS online_bookings,
+            COUNT(*) FILTER (WHERE sb.pos_customer_id IS NOT NULL)           AS walkin_bookings
         FROM service_bookings sb
         JOIN service_time_slots sts ON sb.slot_id     = sts.slot_id
         JOIN services           s   ON sts.service_id = s.service_id

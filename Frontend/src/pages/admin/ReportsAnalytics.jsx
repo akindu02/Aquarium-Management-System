@@ -1290,8 +1290,8 @@ const CustomerInsightsReportPDF = ({ reportData, startDate, endDate, pdfRef }) =
                                 <tr>
                                     <th style={P.th}>Service Type</th>
                                     <th style={P.thC}>Total Bookings</th>
-                                    <th style={P.thC}>Completed</th>
-                                    <th style={P.thR}>% Share</th>
+                                    <th style={P.thC}>Online</th>
+                                    <th style={P.thC}>Walk-in</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1299,10 +1299,8 @@ const CustomerInsightsReportPDF = ({ reportData, startDate, endDate, pdfRef }) =
                                     <tr key={i}>
                                         <td style={i % 2 === 0 ? P.tdE : P.tdO}><strong>{sv.service_type}</strong></td>
                                         <td style={{ ...P.tdPri, background: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>{sv.total_bookings}</td>
-                                        <td style={{ ...P.tdC, background: i % 2 === 0 ? '#ffffff' : '#f9fafb', color: '#10b981', fontWeight: '700' }}>{sv.completed_bookings}</td>
-                                        <td style={{ ...P.tdR, background: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
-                                            {totalSvcBookings > 0 ? ((parseInt(sv.total_bookings) / totalSvcBookings) * 100).toFixed(1) + '%' : '—'}
-                                        </td>
+                                        <td style={{ ...P.tdC, background: i % 2 === 0 ? '#ffffff' : '#f9fafb', color: '#3b82f6', fontWeight: '700' }}>{parseInt(sv.online_bookings) || 0}</td>
+                                        <td style={{ ...P.tdC, background: i % 2 === 0 ? '#ffffff' : '#f9fafb', color: '#06b6d4', fontWeight: '700' }}>{parseInt(sv.walkin_bookings) || 0}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -3031,30 +3029,6 @@ const ReportsAnalytics = () => {
                     </div>
                 )}
 
-                {/* Category distribution table */}
-                {reportData.categoryDistribution.length > 0 && (
-                    <div className="table-section">
-                        <h3 className="section-label">CATEGORY BREAKDOWN</h3>
-                        <table className="data-table">
-                            <thead>
-                                <tr><th>Category</th><th>Units Sold</th><th>Orders</th><th>% Share</th></tr>
-                            </thead>
-                            <tbody>
-                                {reportData.categoryDistribution.map((c, i) => (
-                                    <tr key={i}>
-                                        <td><span className="badge-cat">{c.category}</span></td>
-                                        <td className="td-primary">{parseInt(c.total_quantity).toLocaleString()}</td>
-                                        <td>{parseInt(c.total_orders).toLocaleString()}</td>
-                                        <td style={{ color: '#94a3b8' }}>
-                                            {totalUnits > 0 ? ((parseInt(c.total_quantity) / totalUnits) * 100).toFixed(1) + '%' : '—'}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-
                 {/* Channel preference table */}
                 {reportData.channelCategoryPreference.length > 0 && (
                     <div className="table-section">
@@ -3099,17 +3073,15 @@ const ReportsAnalytics = () => {
                             <h3 className="section-label">SERVICE DETAILS</h3>
                             <table className="data-table">
                                 <thead>
-                                    <tr><th>Service</th><th>Bookings</th><th>Completed</th><th>% Share</th></tr>
+                                    <tr><th>Service</th><th>Total</th><th>Online</th><th>Walk-in</th></tr>
                                 </thead>
                                 <tbody>
                                     {reportData.serviceTypeBreakdown.map((sv, i) => (
                                         <tr key={i}>
                                             <td style={{ color: '#a855f7', fontWeight: 600 }}>{sv.service_type}</td>
-                                            <td>{sv.total_bookings}</td>
-                                            <td style={{ color: '#10b981', fontWeight: 600 }}>{sv.completed_bookings}</td>
-                                            <td style={{ color: '#94a3b8' }}>
-                                                {totalSvcBk > 0 ? ((parseInt(sv.total_bookings) / totalSvcBk) * 100).toFixed(1) + '%' : '—'}
-                                            </td>
+                                            <td style={{ fontWeight: 600 }}>{sv.total_bookings}</td>
+                                            <td style={{ color: '#3b82f6', fontWeight: 600 }}>{parseInt(sv.online_bookings) || 0}</td>
+                                            <td style={{ color: '#06b6d4', fontWeight: 600 }}>{parseInt(sv.walkin_bookings) || 0}</td>
                                         </tr>
                                     ))}
                                 </tbody>
