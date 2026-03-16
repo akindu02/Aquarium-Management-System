@@ -1070,6 +1070,291 @@ const ServiceBookingsReportPDF = ({ reportData, startDate, endDate, pdfRef }) =>
     );
 };
 
+/* ─── Customer Insights PDF template ───────────────────── */
+const CustomerInsightsReportPDF = ({ reportData, startDate, endDate, pdfRef }) => {
+    if (!reportData) return null;
+
+    const s                  = reportData.summary;
+    const onlineCustomers    = parseInt(s.total_online_customers)  || 0;
+    const walkinCustomers    = parseInt(s.total_walkin_customers)  || 0;
+    const onlineOrders       = parseInt(s.total_online_orders)     || 0;
+    const walkinOrders       = parseInt(s.total_walkin_orders)     || 0;
+    const serviceBookings    = parseInt(s.total_service_bookings)  || 0;
+
+    const topProduct         = reportData.topProducts[0];
+    const topCategory        = reportData.categoryDistribution[0];
+    const topService         = reportData.serviceTypeBreakdown[0];
+    const totalUnits         = reportData.categoryDistribution.reduce((acc, c) => acc + (parseInt(c.total_quantity) || 0), 0);
+    const totalSvcBookings   = reportData.serviceTypeBreakdown.reduce((acc, sv) => acc + (parseInt(sv.total_bookings) || 0), 0);
+
+    const periodLabel  = `${new Date(startDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} — ${new Date(endDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+    const generatedAt  = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+    const ACCENT = '#a855f7';
+
+    const P = {
+        wrap:    { position: 'fixed', left: '-9999px', top: 0, zIndex: -1, opacity: 0, pointerEvents: 'none' },
+        doc:     { width: '190mm', background: '#ffffff', fontFamily: "'Outfit', system-ui, -apple-system, sans-serif", color: '#111827' },
+        header:  { padding: '20px 28px 14px', background: '#ffffff', borderBottom: '1px solid #f1f5f9', textAlign: 'center' },
+        logoRow: { display: 'flex', justifyContent: 'center', alignItems: 'baseline', gap: '1px', marginBottom: '5px' },
+        logoM:   { fontSize: '1.5rem', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.5px' },
+        logoA:   { fontSize: '1.5rem', fontWeight: '800', color: ACCENT, letterSpacing: '-0.5px' },
+        contact: { fontSize: '0.64rem', color: '#6b7280', marginBottom: '10px' },
+        divider: { height: '1.5px', background: `linear-gradient(90deg, transparent, ${ACCENT} 40%, ${ACCENT} 60%, transparent)`, margin: '0 0 10px' },
+        title:   { fontSize: '0.9rem', fontWeight: '700', color: '#0f172a', letterSpacing: '5px', margin: '0 0 5px' },
+        metaRow: { display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: '#6b7280', marginTop: '3px' },
+        section: { padding: '14px 24px' },
+        secTitle:{ fontSize: '0.6rem', fontWeight: '700', letterSpacing: '2px', color: ACCENT, textTransform: 'uppercase', marginBottom: '10px', paddingBottom: '5px', borderBottom: `1px solid #f3e8ff` },
+        kpiRow:  { display: 'flex', gap: '8px', marginBottom: '0' },
+        kpiBox:  { flex: 1, border: '1px solid #e2e8f0', borderTop: `3px solid ${ACCENT}`, borderRadius: '7px', padding: '8px 8px' },
+        kpiLbl:  { fontSize: '0.52rem', fontWeight: '700', letterSpacing: '0.8px', color: '#6b7280', textTransform: 'uppercase', marginBottom: '3px' },
+        kpiVal:  { fontSize: '0.88rem', fontWeight: '800', color: '#0f172a', lineHeight: '1.2' },
+        kpiSub:  { fontSize: '0.55rem', color: '#94a3b8', marginTop: '2px' },
+        table:   { width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem', tableLayout: 'fixed' },
+        th:      { padding: '7px 10px', background: '#0f172a', color: '#f8fafc', fontWeight: '600', fontSize: '0.6rem', letterSpacing: '0.8px', textTransform: 'uppercase', textAlign: 'left', wordBreak: 'keep-all' },
+        thR:     { padding: '7px 10px', background: '#0f172a', color: '#f8fafc', fontWeight: '600', fontSize: '0.6rem', letterSpacing: '0.8px', textTransform: 'uppercase', textAlign: 'right', wordBreak: 'keep-all' },
+        thC:     { padding: '7px 10px', background: '#0f172a', color: '#f8fafc', fontWeight: '600', fontSize: '0.6rem', letterSpacing: '0.8px', textTransform: 'uppercase', textAlign: 'center', wordBreak: 'keep-all' },
+        tdE:     { padding: '7px 10px', color: '#374151', borderBottom: '1px solid #f1f5f9', background: '#ffffff', textAlign: 'left', verticalAlign: 'middle' },
+        tdO:     { padding: '7px 10px', color: '#374151', borderBottom: '1px solid #f1f5f9', background: '#f9fafb', textAlign: 'left', verticalAlign: 'middle' },
+        tdR:     { padding: '7px 10px', color: '#374151', borderBottom: '1px solid #f1f5f9', textAlign: 'right', verticalAlign: 'middle' },
+        tdC:     { padding: '7px 10px', color: '#374151', borderBottom: '1px solid #f1f5f9', textAlign: 'center', verticalAlign: 'middle' },
+        tdPri:   { padding: '7px 10px', color: ACCENT, fontWeight: '700', borderBottom: '1px solid #f1f5f9', textAlign: 'center', verticalAlign: 'middle' },
+        insightBox:  { background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '7px', padding: '11px 14px' },
+        insightLine: { fontSize: '0.72rem', color: '#374151', marginBottom: '4px', lineHeight: '1.5' },
+        insightKey:  { fontWeight: '700', color: '#0f172a' },
+        insightHi:   { color: ACCENT, fontWeight: '700' },
+        footer:      { padding: '10px 28px 14px', textAlign: 'center', background: '#f8fafc', borderTop: '1.5px solid #f3e8ff' },
+        footerTxt:   { fontSize: '0.64rem', color: '#6b7280', margin: '0 0 2px' },
+        footerCopy:  { fontSize: '0.58rem', color: '#9ca3af', margin: 0 },
+    };
+
+    const kpiAccents = [ACCENT, '#3b82f6', '#06b6d4', '#10b981', '#f59e0b'];
+
+    return (
+        <div style={P.wrap}>
+            <div ref={pdfRef} style={P.doc}>
+
+                {/* ── HEADER ── */}
+                <div style={P.header}>
+                    <div style={P.logoRow}>
+                        <span style={P.logoM}>Methu</span>
+                        <span style={P.logoA}>Aquarium</span>
+                    </div>
+                    <div style={P.contact}>No 50, Kumaradasa Mawatha, Matara &nbsp;&bull;&nbsp; 041-2236848 / 074-3143109 &nbsp;&bull;&nbsp; methuaquarium@gmail.com</div>
+                    <div style={P.divider} />
+                    <h2 style={P.title}>CUSTOMER INSIGHTS &amp; BEHAVIOR REPORT</h2>
+                    <div style={P.metaRow}>
+                        <span>Period: <strong style={{ color: '#0f172a' }}>{periodLabel}</strong></span>
+                        <span>Generated: {generatedAt}</span>
+                    </div>
+                </div>
+
+                {/* ── SUMMARY KPIs ── */}
+                <div style={P.section}>
+                    <p style={P.secTitle}>Summary</p>
+                    <div style={P.kpiRow}>
+                        {[
+                            { label: 'Online Customers',  val: onlineCustomers.toLocaleString(),  sub: 'Unique buyers',       accent: kpiAccents[0] },
+                            { label: 'Walk-in Customers', val: walkinCustomers.toLocaleString(),  sub: 'Unique walk-ins',     accent: kpiAccents[1] },
+                            { label: 'Online Orders',     val: onlineOrders.toLocaleString(),     sub: 'E-commerce',          accent: kpiAccents[2] },
+                            { label: 'Walk-in Orders',    val: walkinOrders.toLocaleString(),     sub: 'Point of sale',       accent: kpiAccents[3] },
+                            { label: 'Service Bookings',  val: serviceBookings.toLocaleString(),  sub: 'Period bookings',     accent: kpiAccents[4] },
+                        ].map((k, i) => (
+                            <div key={i} style={{ ...P.kpiBox, borderTopColor: k.accent }}>
+                                <div style={P.kpiLbl}>{k.label}</div>
+                                <div style={{ ...P.kpiVal, color: k.accent }}>{k.val}</div>
+                                <div style={P.kpiSub}>{k.sub}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* ── SECTION 1: WHAT THEY BUY ── */}
+                {reportData.topProducts.length > 0 && (
+                    <div style={{ ...P.section, paddingTop: 0 }}>
+                        <p style={P.secTitle}>What They Buy — Top 5 Best-Selling Products</p>
+                        <table style={P.table}>
+                            <colgroup>
+                                <col style={{ width: '6%' }} />
+                                <col style={{ width: '44%' }} />
+                                <col style={{ width: '28%' }} />
+                                <col style={{ width: '22%' }} />
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th style={P.th}>#</th>
+                                    <th style={P.th}>Product</th>
+                                    <th style={P.th}>Category</th>
+                                    <th style={P.thR}>Units Sold</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {reportData.topProducts.map((p, i) => (
+                                    <tr key={i}>
+                                        <td style={{ ...(i % 2 === 0 ? P.tdE : P.tdO), color: '#9ca3af' }}>{i + 1}</td>
+                                        <td style={i % 2 === 0 ? P.tdE : P.tdO}><strong>{p.product_name}</strong></td>
+                                        <td style={i % 2 === 0 ? P.tdE : P.tdO}>{p.category}</td>
+                                        <td style={{ ...P.tdPri, background: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>{parseInt(p.total_quantity).toLocaleString()}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── CATEGORY POPULARITY ── */}
+                {reportData.categoryDistribution.length > 0 && (
+                    <div style={{ ...P.section, paddingTop: 0 }}>
+                        <p style={P.secTitle}>Category Popularity</p>
+                        <table style={P.table}>
+                            <colgroup>
+                                <col style={{ width: '40%' }} />
+                                <col style={{ width: '20%' }} />
+                                <col style={{ width: '20%' }} />
+                                <col style={{ width: '20%' }} />
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th style={P.th}>Category</th>
+                                    <th style={P.thC}>Units Sold</th>
+                                    <th style={P.thC}>Orders</th>
+                                    <th style={P.thR}>% Share</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {reportData.categoryDistribution.map((c, i) => (
+                                    <tr key={i}>
+                                        <td style={i % 2 === 0 ? P.tdE : P.tdO}><strong>{c.category}</strong></td>
+                                        <td style={{ ...P.tdPri, background: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>{parseInt(c.total_quantity).toLocaleString()}</td>
+                                        <td style={{ ...P.tdC, background: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>{parseInt(c.total_orders).toLocaleString()}</td>
+                                        <td style={{ ...P.tdR, background: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
+                                            {totalUnits > 0 ? ((parseInt(c.total_quantity) / totalUnits) * 100).toFixed(1) + '%' : '—'}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── ONLINE VS WALK-IN CHANNEL PREFERENCES ── */}
+                {reportData.channelCategoryPreference.length > 0 && (
+                    <div style={{ ...P.section, paddingTop: 0 }}>
+                        <p style={P.secTitle}>Online vs Walk-in Preferences (by Category)</p>
+                        <table style={P.table}>
+                            <colgroup>
+                                <col style={{ width: '40%' }} />
+                                <col style={{ width: '20%' }} />
+                                <col style={{ width: '20%' }} />
+                                <col style={{ width: '20%' }} />
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th style={P.th}>Category</th>
+                                    <th style={P.thC}>Online Units</th>
+                                    <th style={P.thC}>Walk-in Units</th>
+                                    <th style={P.thR}>Dominant Channel</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {reportData.channelCategoryPreference.map((c, i) => {
+                                    const online = parseInt(c.online_quantity) || 0;
+                                    const walkin = parseInt(c.walkin_quantity) || 0;
+                                    const dominant = online >= walkin ? 'Online' : 'Walk-in';
+                                    return (
+                                        <tr key={i}>
+                                            <td style={i % 2 === 0 ? P.tdE : P.tdO}><strong>{c.category}</strong></td>
+                                            <td style={{ ...P.tdC, background: i % 2 === 0 ? '#ffffff' : '#f9fafb', color: '#3b82f6', fontWeight: '700' }}>{online.toLocaleString()}</td>
+                                            <td style={{ ...P.tdC, background: i % 2 === 0 ? '#ffffff' : '#f9fafb', color: '#06b6d4', fontWeight: '700' }}>{walkin.toLocaleString()}</td>
+                                            <td style={{ ...P.tdR, background: i % 2 === 0 ? '#ffffff' : '#f9fafb', color: dominant === 'Online' ? '#3b82f6' : '#06b6d4', fontWeight: '600' }}>{dominant}</td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── SECTION 2: WHAT THEY BOOK ── */}
+                {reportData.serviceTypeBreakdown.length > 0 && (
+                    <div style={{ ...P.section, paddingTop: 0 }}>
+                        <p style={P.secTitle}>What They Book — Service Type Breakdown</p>
+                        <table style={P.table}>
+                            <colgroup>
+                                <col style={{ width: '40%' }} />
+                                <col style={{ width: '20%' }} />
+                                <col style={{ width: '20%' }} />
+                                <col style={{ width: '20%' }} />
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th style={P.th}>Service Type</th>
+                                    <th style={P.thC}>Total Bookings</th>
+                                    <th style={P.thC}>Completed</th>
+                                    <th style={P.thR}>% Share</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {reportData.serviceTypeBreakdown.map((sv, i) => (
+                                    <tr key={i}>
+                                        <td style={i % 2 === 0 ? P.tdE : P.tdO}><strong>{sv.service_type}</strong></td>
+                                        <td style={{ ...P.tdPri, background: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>{sv.total_bookings}</td>
+                                        <td style={{ ...P.tdC, background: i % 2 === 0 ? '#ffffff' : '#f9fafb', color: '#10b981', fontWeight: '700' }}>{sv.completed_bookings}</td>
+                                        <td style={{ ...P.tdR, background: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
+                                            {totalSvcBookings > 0 ? ((parseInt(sv.total_bookings) / totalSvcBookings) * 100).toFixed(1) + '%' : '—'}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── INSIGHTS ── */}
+                <div style={{ ...P.section, paddingTop: 0 }}>
+                    <p style={P.secTitle}>Insights</p>
+                    <div style={P.insightBox}>
+                        <p style={P.insightLine}>
+                            <span style={P.insightKey}>Customers: </span>
+                            <span style={P.insightHi}>{onlineCustomers}</span> online &nbsp;|&nbsp; <span style={P.insightHi}>{walkinCustomers}</span> walk-in
+                            &nbsp;&nbsp;·&nbsp;&nbsp;
+                            <span style={P.insightKey}>Orders: </span>{onlineOrders} online &nbsp;|&nbsp; {walkinOrders} walk-in
+                        </p>
+                        {topProduct && (
+                            <p style={P.insightLine}>
+                                <span style={P.insightKey}>Best-Selling Product: </span>
+                                <span style={P.insightHi}>{topProduct.product_name}</span> ({topProduct.category}) — {parseInt(topProduct.total_quantity).toLocaleString()} units sold
+                            </p>
+                        )}
+                        {topCategory && (
+                            <p style={P.insightLine}>
+                                <span style={P.insightKey}>Most Popular Category: </span>
+                                <span style={P.insightHi}>{topCategory.category}</span> — {parseInt(topCategory.total_quantity).toLocaleString()} units
+                                {totalUnits > 0 ? ` (${((parseInt(topCategory.total_quantity) / totalUnits) * 100).toFixed(1)}% of all units)` : ''}
+                            </p>
+                        )}
+                        {topService && (
+                            <p style={{ ...P.insightLine, marginBottom: 0 }}>
+                                <span style={P.insightKey}>Most Booked Service: </span>
+                                <span style={P.insightHi}>{topService.service_type}</span> — {topService.total_bookings} bookings
+                                {totalSvcBookings > 0 ? ` (${((parseInt(topService.total_bookings) / totalSvcBookings) * 100).toFixed(1)}% of total)` : ''}
+                            </p>
+                        )}
+                    </div>
+                </div>
+
+                {/* ── FOOTER ── */}
+                <div style={P.footer}>
+                    <p style={P.footerTxt}>Generated by Methu Aquarium Management System</p>
+                    <p style={{ ...P.footerTxt, marginBottom: '4px' }}>{generatedAt}</p>
+                    <p style={P.footerCopy}>&copy; 2026 Methu Aquarium. All Rights Reserved.</p>
+                </div>
+
+            </div>
+        </div>
+    );
+};
+
 const STATUS_COLORS = {
     Pending: '#f59e0b', Processing: '#3b82f6', Shipped: '#06b6d4',
     Delivered: '#10b981', Cancelled: '#ef4444', Returned: '#8b5cf6',
@@ -1117,11 +1402,21 @@ const ReportsAnalytics = () => {
     /* ref for the hidden service bookings PDF template */
     const svcPdfRef = useRef(null);
 
+    /* customer insights chart canvas refs */
+    const custTopProductsRef = useRef(null);
+    const custCategoryRef    = useRef(null);
+    const custChannelRef     = useRef(null);
+    const custServicesRef    = useRef(null);
+
+    /* ref for the hidden customer insights PDF template */
+    const custPdfRef = useRef(null);
+
     const reportCategories = [
-        { id: 'sales',     title: 'Sales & Revenue',     description: 'Orders, revenue & payment breakdown over a custom date range.', icon: <BarChart3 size={22} color="#3b82f6" />, bg: 'rgba(59,130,246,0.12)',  border: '#3b82f6' },
-        { id: 'inventory', title: 'Inventory & Stock',   description: 'Current stock levels, low stock alerts and out-of-stock items.', icon: <Package  size={22} color="#f59e0b" />, bg: 'rgba(245,158,11,0.12)',  border: '#f59e0b' },
-        { id: 'product',   title: 'Product Performance', description: 'Best sellers, category insights, returns & refunds breakdown.',  icon: <Star     size={22} color="#10b981" />, bg: 'rgba(16,185,129,0.12)',  border: '#10b981' },
-        { id: 'service',   title: 'Service Bookings',    description: 'Most ordered services and booking statistics.',                  icon: <Calendar size={22} color="#8b5cf6" />, bg: 'rgba(139,92,246,0.12)', border: '#8b5cf6' },
+        { id: 'sales',     title: 'Sales & Revenue',              description: 'Orders, revenue & payment breakdown over a custom date range.', icon: <BarChart3 size={22} color="#3b82f6" />, bg: 'rgba(59,130,246,0.12)',   border: '#3b82f6' },
+        { id: 'inventory', title: 'Inventory & Stock',            description: 'Current stock levels, low stock alerts and out-of-stock items.', icon: <Package  size={22} color="#f59e0b" />, bg: 'rgba(245,158,11,0.12)',   border: '#f59e0b' },
+        { id: 'product',   title: 'Product Performance',          description: 'Best sellers, category insights, returns & refunds breakdown.',  icon: <Star     size={22} color="#10b981" />, bg: 'rgba(16,185,129,0.12)',   border: '#10b981' },
+        { id: 'service',   title: 'Service Bookings',             description: 'Most ordered services and booking statistics.',                  icon: <Calendar size={22} color="#8b5cf6" />, bg: 'rgba(139,92,246,0.12)',  border: '#8b5cf6' },
+        { id: 'customer',  title: 'Customer Insights & Behavior', description: 'What customers buy, prefer by channel, and most book.',          icon: <Users    size={22} color="#a855f7" />, bg: 'rgba(168,85,247,0.12)',  border: '#a855f7' },
     ];
 
     /* destroy all chart instances */
@@ -1168,6 +1463,17 @@ const ReportsAnalytics = () => {
         return () => {
             clearTimeout(t);
             ['svcTrend', 'svcPop', 'svcStatus', 'svcChannel'].forEach(k => {
+                if (charts.current[k]) { charts.current[k].destroy(); delete charts.current[k]; }
+            });
+        };
+    }, [reportData]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    useEffect(() => {
+        if (!reportData || selectedReport !== 'customer') return;
+        const t = setTimeout(() => buildCustomerInsightsCharts(reportData), 80);
+        return () => {
+            clearTimeout(t);
+            ['custTopProducts', 'custCategory', 'custChannel', 'custServices'].forEach(k => {
                 if (charts.current[k]) { charts.current[k].destroy(); delete charts.current[k]; }
             });
         };
@@ -1574,13 +1880,128 @@ const ReportsAnalytics = () => {
         }
     };
 
+    const buildCustomerInsightsCharts = (data) => {
+        ['custTopProducts', 'custCategory', 'custChannel', 'custServices'].forEach(k => {
+            if (charts.current[k]) { charts.current[k].destroy(); delete charts.current[k]; }
+        });
+
+        /* 1 – Top 5 products horizontal bar */
+        if (custTopProductsRef.current && data.topProducts.length) {
+            charts.current.custTopProducts = new Chart(custTopProductsRef.current.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: data.topProducts.map(p => p.product_name.length > 24 ? p.product_name.slice(0, 24) + '…' : p.product_name),
+                    datasets: [{
+                        label: 'Units Sold',
+                        data: data.topProducts.map(p => parseInt(p.total_quantity)),
+                        backgroundColor: PALETTE.slice(0, data.topProducts.length).map(c => c + 'cc'),
+                        borderRadius: 6,
+                    }],
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: ctx => ' ' + ctx.parsed.x.toLocaleString() + ' units' } },
+                    },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    },
+                },
+            });
+        }
+
+        /* 2 – Category distribution doughnut */
+        if (custCategoryRef.current && data.categoryDistribution.length) {
+            charts.current.custCategory = new Chart(custCategoryRef.current.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: data.categoryDistribution.map(c => c.category),
+                    datasets: [{
+                        data: data.categoryDistribution.map(c => parseInt(c.total_quantity)),
+                        backgroundColor: PALETTE.slice(0, data.categoryDistribution.length).map(c => c + 'cc'),
+                        borderColor: '#151b2d',
+                        borderWidth: 3,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: { legend: { labels: { color: '#94a3b8', padding: 14, font: { size: 11 } } } },
+                },
+            });
+        }
+
+        /* 3 – Online vs Walk-in stacked bar by category */
+        if (custChannelRef.current && data.channelCategoryPreference.length) {
+            charts.current.custChannel = new Chart(custChannelRef.current.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: data.channelCategoryPreference.map(c => c.category),
+                    datasets: [
+                        {
+                            label: 'Online',
+                            data: data.channelCategoryPreference.map(c => parseInt(c.online_quantity) || 0),
+                            backgroundColor: '#3b82f6cc',
+                            borderRadius: 4,
+                        },
+                        {
+                            label: 'Walk-in',
+                            data: data.channelCategoryPreference.map(c => parseInt(c.walkin_quantity) || 0),
+                            backgroundColor: '#06b6d4cc',
+                            borderRadius: 4,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8', font: { size: 11 } } },
+                        tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} units` } },
+                    },
+                    scales: {
+                        x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        y: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    },
+                },
+            });
+        }
+
+        /* 4 – Service type breakdown doughnut */
+        if (custServicesRef.current && data.serviceTypeBreakdown.length) {
+            charts.current.custServices = new Chart(custServicesRef.current.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: data.serviceTypeBreakdown.map(sv => sv.service_type),
+                    datasets: [{
+                        data: data.serviceTypeBreakdown.map(sv => parseInt(sv.total_bookings)),
+                        backgroundColor: ['#a855f7cc', '#10b981cc', '#f59e0bcc', '#3b82f6cc'],
+                        borderColor: '#151b2d',
+                        borderWidth: 3,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: { legend: { labels: { color: '#94a3b8', padding: 14, font: { size: 11 } } } },
+                },
+            });
+        }
+    };
+
     /* ── Generate report ────────────────────────────────── */
     const generateReport = async () => {
-        if (!['sales', 'inventory', 'product', 'service'].includes(selectedReport)) {
+        if (!['sales', 'inventory', 'product', 'service', 'customer'].includes(selectedReport)) {
             Swal.fire({ icon: 'info', title: 'Coming Soon', text: 'This report type is under development.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#06b6d4' });
             return;
         }
-        if (selectedReport === 'sales' || selectedReport === 'product' || selectedReport === 'service') {
+        if (selectedReport === 'sales' || selectedReport === 'product' || selectedReport === 'service' || selectedReport === 'customer') {
             if (!startDate || !endDate) {
                 Swal.fire({ icon: 'warning', title: 'Select Dates', text: 'Please select both a start and end date.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#06b6d4' });
                 return;
@@ -1602,8 +2023,10 @@ const ReportsAnalytics = () => {
                 res = await apiRequest('/admin/inventory-report');
             } else if (selectedReport === 'product') {
                 res = await apiRequest(`/admin/product-performance-report?start_date=${startDate}&end_date=${endDate}`);
-            } else {
+            } else if (selectedReport === 'service') {
                 res = await apiRequest(`/admin/service-bookings-report?start_date=${startDate}&end_date=${endDate}`);
+            } else {
+                res = await apiRequest(`/admin/customer-insights-report?start_date=${startDate}&end_date=${endDate}`);
             }
             setReportData(res.data);
             setIsGenerated(true);
@@ -1689,6 +2112,26 @@ const ReportsAnalytics = () => {
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
             }).from(svcPdfRef.current).save();
+            Swal.fire({ icon: 'success', title: 'Downloaded!', text: 'Your PDF report has been saved.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#06b6d4', timer: 2000, showConfirmButton: false });
+        } catch {
+            Swal.close();
+        }
+    };
+
+    /* ── Download customer insights PDF ────────────────── */
+    const downloadCustomerInsightsPDF = async () => {
+        if (!custPdfRef.current) return;
+        Swal.fire({ title: 'Generating PDF…', background: '#1a1f2e', color: '#fff', showConfirmButton: false, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        try {
+            const html2pdf = (await import('html2pdf.js')).default;
+            await html2pdf().set({
+                margin: [8, 10, 8, 10],
+                filename: `customer-insights-${startDate}-to-${endDate}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, letterRendering: true, backgroundColor: '#ffffff' },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+            }).from(custPdfRef.current).save();
             Swal.fire({ icon: 'success', title: 'Downloaded!', text: 'Your PDF report has been saved.', background: '#1a1f2e', color: '#fff', confirmButtonColor: '#06b6d4', timer: 2000, showConfirmButton: false });
         } catch {
             Swal.close();
@@ -2473,6 +2916,219 @@ const ReportsAnalytics = () => {
         );
     };
 
+    /* ── Customer Insights report UI ────────────────────── */
+    const renderCustomerInsightsReport = () => {
+        if (!reportData) return null;
+        const s               = reportData.summary;
+        const onlineCustomers = parseInt(s.total_online_customers) || 0;
+        const walkinCustomers = parseInt(s.total_walkin_customers) || 0;
+        const onlineOrders    = parseInt(s.total_online_orders)    || 0;
+        const walkinOrders    = parseInt(s.total_walkin_orders)    || 0;
+        const serviceBookings = parseInt(s.total_service_bookings) || 0;
+        const totalUnits      = reportData.categoryDistribution.reduce((acc, c) => acc + (parseInt(c.total_quantity) || 0), 0);
+        const totalSvcBk      = reportData.serviceTypeBreakdown.reduce((acc, sv) => acc + (parseInt(sv.total_bookings) || 0), 0);
+
+        const startLabel = new Date(startDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        const endLabel   = new Date(endDate).toLocaleDateString('en-US',   { month: 'long', day: 'numeric', year: 'numeric' });
+
+        return (
+            <div className="report-display-area">
+                {/* ── Header ── */}
+                <div className="report-header">
+                    <div className="rh-left">
+                        <h2 className="rh-title"><Users size={22} style={{ marginRight: 10 }} />Customer Insights &amp; Behavior Report</h2>
+                        <p className="rh-sub">Period: <strong>{startLabel}</strong> — <strong>{endLabel}</strong></p>
+                        <p className="rh-sub" style={{ marginTop: 2 }}>Generated: {new Date().toLocaleString()}</p>
+                    </div>
+                    <button className="btn-download" onClick={downloadCustomerInsightsPDF}>
+                        <Download size={16} /> Download PDF
+                    </button>
+                </div>
+
+                {/* ── KPI cards ── */}
+                <div className="kpi-grid">
+                    <div className="kpi-card" style={{ '--kc': '#a855f7' }}>
+                        <div className="kpi-icon-wrap"><Users size={18} /></div>
+                        <div className="kpi-label">ONLINE CUSTOMERS</div>
+                        <div className="kpi-val">{onlineCustomers.toLocaleString()}</div>
+                    </div>
+                    <div className="kpi-card" style={{ '--kc': '#3b82f6' }}>
+                        <div className="kpi-icon-wrap"><Store size={18} /></div>
+                        <div className="kpi-label">WALK-IN CUSTOMERS</div>
+                        <div className="kpi-val">{walkinCustomers.toLocaleString()}</div>
+                    </div>
+                    <div className="kpi-card" style={{ '--kc': '#06b6d4' }}>
+                        <div className="kpi-icon-wrap"><ShoppingCart size={18} /></div>
+                        <div className="kpi-label">ONLINE ORDERS</div>
+                        <div className="kpi-val">{onlineOrders.toLocaleString()}</div>
+                    </div>
+                    <div className="kpi-card" style={{ '--kc': '#10b981' }}>
+                        <div className="kpi-icon-wrap"><ShoppingCart size={18} /></div>
+                        <div className="kpi-label">WALK-IN ORDERS</div>
+                        <div className="kpi-val">{walkinOrders.toLocaleString()}</div>
+                    </div>
+                    <div className="kpi-card" style={{ '--kc': '#f59e0b' }}>
+                        <div className="kpi-icon-wrap"><Calendar size={18} /></div>
+                        <div className="kpi-label">SERVICE BOOKINGS</div>
+                        <div className="kpi-val">{serviceBookings.toLocaleString()}</div>
+                    </div>
+                </div>
+
+                {/* ── Section 1: What They Buy ── */}
+                <h3 className="section-label" style={{ marginTop: 0 }}>What They Buy</h3>
+
+                <div className="charts-2col">
+                    <div className="chart-col" style={{ flex: 2 }}>
+                        <h3 className="section-label">TOP 5 BEST-SELLING PRODUCTS</h3>
+                        <div className="chart-box chart-box-tall">
+                            {reportData.topProducts.length > 0
+                                ? <canvas ref={custTopProductsRef} />
+                                : <div className="no-data">No sales data for this period</div>}
+                        </div>
+                    </div>
+                    <div className="chart-col" style={{ flex: 1 }}>
+                        <h3 className="section-label">CATEGORY POPULARITY</h3>
+                        <div className="chart-box chart-box-tall">
+                            {reportData.categoryDistribution.length > 0
+                                ? <canvas ref={custCategoryRef} />
+                                : <div className="no-data">No data</div>}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Online vs Walk-in stacked bar */}
+                {reportData.channelCategoryPreference.length > 0 && (
+                    <div className="chart-section">
+                        <h3 className="section-label">ONLINE VS WALK-IN PREFERENCES BY CATEGORY</h3>
+                        <div className="chart-box" style={{ height: 220 }}>
+                            <canvas ref={custChannelRef} />
+                        </div>
+                    </div>
+                )}
+
+                {/* Top products table */}
+                {reportData.topProducts.length > 0 && (
+                    <div className="table-section">
+                        <h3 className="section-label">TOP PRODUCTS DETAIL</h3>
+                        <table className="data-table">
+                            <thead>
+                                <tr><th>#</th><th>Product</th><th>Category</th><th>Units Sold</th><th>% of Total Units</th></tr>
+                            </thead>
+                            <tbody>
+                                {reportData.topProducts.map((p, i) => (
+                                    <tr key={i}>
+                                        <td style={{ color: '#64748b' }}>{i + 1}</td>
+                                        <td><strong>{p.product_name}</strong></td>
+                                        <td><span className="badge-cat">{p.category}</span></td>
+                                        <td className="td-primary">{parseInt(p.total_quantity).toLocaleString()}</td>
+                                        <td style={{ color: '#94a3b8' }}>
+                                            {totalUnits > 0 ? ((parseInt(p.total_quantity) / totalUnits) * 100).toFixed(1) + '%' : '—'}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* Category distribution table */}
+                {reportData.categoryDistribution.length > 0 && (
+                    <div className="table-section">
+                        <h3 className="section-label">CATEGORY BREAKDOWN</h3>
+                        <table className="data-table">
+                            <thead>
+                                <tr><th>Category</th><th>Units Sold</th><th>Orders</th><th>% Share</th></tr>
+                            </thead>
+                            <tbody>
+                                {reportData.categoryDistribution.map((c, i) => (
+                                    <tr key={i}>
+                                        <td><span className="badge-cat">{c.category}</span></td>
+                                        <td className="td-primary">{parseInt(c.total_quantity).toLocaleString()}</td>
+                                        <td>{parseInt(c.total_orders).toLocaleString()}</td>
+                                        <td style={{ color: '#94a3b8' }}>
+                                            {totalUnits > 0 ? ((parseInt(c.total_quantity) / totalUnits) * 100).toFixed(1) + '%' : '—'}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* Channel preference table */}
+                {reportData.channelCategoryPreference.length > 0 && (
+                    <div className="table-section">
+                        <h3 className="section-label">ONLINE VS WALK-IN BY CATEGORY</h3>
+                        <table className="data-table">
+                            <thead>
+                                <tr><th>Category</th><th>Online Units</th><th>Walk-in Units</th><th>Dominant Channel</th></tr>
+                            </thead>
+                            <tbody>
+                                {reportData.channelCategoryPreference.map((c, i) => {
+                                    const online = parseInt(c.online_quantity) || 0;
+                                    const walkin = parseInt(c.walkin_quantity) || 0;
+                                    const dominant = online >= walkin ? 'Online' : 'Walk-in';
+                                    return (
+                                        <tr key={i}>
+                                            <td><span className="badge-cat">{c.category}</span></td>
+                                            <td style={{ color: '#3b82f6', fontWeight: 600 }}>{online.toLocaleString()}</td>
+                                            <td style={{ color: '#06b6d4', fontWeight: 600 }}>{walkin.toLocaleString()}</td>
+                                            <td style={{ color: dominant === 'Online' ? '#3b82f6' : '#06b6d4', fontWeight: 600 }}>{dominant}</td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── Section 2: What They Book ── */}
+                <h3 className="section-label">What They Book</h3>
+
+                <div className="charts-2col">
+                    <div className="chart-col" style={{ flex: 1 }}>
+                        <h3 className="section-label">SERVICE TYPE BREAKDOWN</h3>
+                        <div className="chart-box chart-box-tall">
+                            {reportData.serviceTypeBreakdown.length > 0
+                                ? <canvas ref={custServicesRef} />
+                                : <div className="no-data">No bookings in this period</div>}
+                        </div>
+                    </div>
+                    {reportData.serviceTypeBreakdown.length > 0 && (
+                        <div className="chart-col" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            <h3 className="section-label">SERVICE DETAILS</h3>
+                            <table className="data-table">
+                                <thead>
+                                    <tr><th>Service</th><th>Bookings</th><th>Completed</th><th>% Share</th></tr>
+                                </thead>
+                                <tbody>
+                                    {reportData.serviceTypeBreakdown.map((sv, i) => (
+                                        <tr key={i}>
+                                            <td style={{ color: '#a855f7', fontWeight: 600 }}>{sv.service_type}</td>
+                                            <td>{sv.total_bookings}</td>
+                                            <td style={{ color: '#10b981', fontWeight: 600 }}>{sv.completed_bookings}</td>
+                                            <td style={{ color: '#94a3b8' }}>
+                                                {totalSvcBk > 0 ? ((parseInt(sv.total_bookings) / totalSvcBk) * 100).toFixed(1) + '%' : '—'}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+
+                {/* ── Empty state ── */}
+                {reportData.topProducts.length === 0 && reportData.serviceTypeBreakdown.length === 0 && (
+                    <div className="empty-state">
+                        <Users size={48} color="#334155" />
+                        <p>No data found for the selected period.</p>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     /* ═══════════════════════════════════════════════════ */
     return (
         <div className="ra-wrap">
@@ -2586,6 +3242,7 @@ const ReportsAnalytics = () => {
             {isGenerated && !loading && selectedReport === 'inventory' && renderInventoryReport()}
             {isGenerated && !loading && selectedReport === 'product'   && renderProductReport()}
             {isGenerated && !loading && selectedReport === 'service'   && renderServiceReport()}
+            {isGenerated && !loading && selectedReport === 'customer'  && renderCustomerInsightsReport()}
 
             {/* ── Hidden white PDF templates (off-screen, captured by html2pdf) ── */}
             {isGenerated && selectedReport === 'sales' && (
@@ -2618,6 +3275,14 @@ const ReportsAnalytics = () => {
                     pdfRef={svcPdfRef}
                 />
             )}
+            {isGenerated && selectedReport === 'customer' && (
+                <CustomerInsightsReportPDF
+                    reportData={reportData}
+                    startDate={startDate}
+                    endDate={endDate}
+                    pdfRef={custPdfRef}
+                />
+            )}
 
             {/* ─────────────────── STYLES ─────────────────── */}
             <style>{`
@@ -2635,11 +3300,12 @@ const ReportsAnalytics = () => {
                 /* ── Category cards ── */
                 .cat-grid {
                     display: grid;
-                    grid-template-columns: repeat(4, 1fr);
+                    grid-template-columns: repeat(5, 1fr);
                     gap: 1rem;
                 }
-                @media (max-width: 900px) { .cat-grid { grid-template-columns: repeat(2, 1fr); } }
-                @media (max-width: 560px) { .cat-grid { grid-template-columns: 1fr; } }
+                @media (max-width: 1100px) { .cat-grid { grid-template-columns: repeat(3, 1fr); } }
+                @media (max-width: 700px)  { .cat-grid { grid-template-columns: repeat(2, 1fr); } }
+                @media (max-width: 480px)  { .cat-grid { grid-template-columns: 1fr; } }
 
                 .cat-card {
                     background: rgba(255,255,255,0.02);

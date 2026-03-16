@@ -5,6 +5,7 @@ const salesReportController = require('../controllers/salesReportController');
 const inventoryReportController = require('../controllers/inventoryReportController');
 const productPerformanceReportController = require('../controllers/productPerformanceReportController');
 const serviceBookingsReportController    = require('../controllers/serviceBookingsReportController');
+const customerInsightsController         = require('../controllers/customerInsightsController');
 const systemSettingsController = require('../controllers/systemSettingsController');
 const { authenticate, adminOnly } = require('../middleware/authMiddleware');
 
@@ -46,6 +47,14 @@ router.get(
     authenticate,
     adminOnly,
     serviceBookingsReportController.getServiceBookingsReport
+);
+
+// GET /api/admin/customer-insights-report?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD
+router.get(
+    '/customer-insights-report',
+    authenticate,
+    adminOnly,
+    customerInsightsController.getCustomerInsightsReport
 );
 
 // GET /api/admin/settings — Get all system settings
