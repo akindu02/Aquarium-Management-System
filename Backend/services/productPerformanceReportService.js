@@ -6,14 +6,16 @@ const getProductPerformanceReport = async (startDate, endDate) => {
         SELECT
             COUNT(DISTINCT oi.product_id)                                       AS products_sold,
             COALESCE(SUM(oi.quantity), 0)                                       AS total_units_sold,
-            COALESCE(SUM(oi.subtotal), 0)                                       AS total_revenue,
+            (SELECT COALESCE(SUM(o2.total_amount), 0) FROM orders o2
+             WHERE o2.order_date >= $1 AND o2.order_date <= $2
+               AND o2.status NOT IN ('Cancelled', 'Returned'))               AS total_revenue,
             COALESCE(AVG(oi.subtotal / NULLIF(oi.quantity, 0)), 0)              AS avg_unit_price,
             COUNT(DISTINCT o.order_id)                                          AS total_orders
         FROM order_items oi
         JOIN orders o ON o.order_id = oi.order_id
         WHERE o.order_date >= $1
           AND o.order_date <= $2
-          AND o.status NOT IN ('Cancelled')
+          AND o.status NOT IN ('Cancelled', 'Returned')
     `;
 
     // Returns summary in the same period
@@ -41,7 +43,7 @@ const getProductPerformanceReport = async (startDate, endDate) => {
         JOIN orders o   ON o.order_id   = oi.order_id
         WHERE o.order_date >= $1
           AND o.order_date <= $2
-          AND o.status NOT IN ('Cancelled')
+          AND o.status NOT IN ('Cancelled', 'Returned')
         GROUP BY p.product_id, p.name, p.category, p.price
         ORDER BY revenue DESC
         LIMIT 15
@@ -59,7 +61,7 @@ const getProductPerformanceReport = async (startDate, endDate) => {
         JOIN orders o   ON o.order_id   = oi.order_id
         WHERE o.order_date >= $1
           AND o.order_date <= $2
-          AND o.status NOT IN ('Cancelled')
+          AND o.status NOT IN ('Cancelled', 'Returned')
         GROUP BY p.category
         ORDER BY revenue DESC
     `;
@@ -110,7 +112,7 @@ const getProductPerformanceReport = async (startDate, endDate) => {
             JOIN orders o ON o.order_id = oi.order_id
             WHERE o.order_date >= $1
               AND o.order_date <= $2
-              AND o.status NOT IN ('Cancelled')
+              AND o.status NOT IN ('Cancelled', 'Returned')
             GROUP BY oi.product_id
         ) sold ON sold.product_id = p.product_id
         WHERE COALESCE(sold.units_sold, 0) = 0

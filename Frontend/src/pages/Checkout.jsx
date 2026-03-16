@@ -91,7 +91,7 @@ const Checkout = () => {
                         totalAmount: result.totalAmount,
                         subtotal,
                         shippingFee: result.shippingFee,
-                        discountAmount: result.discountAmount,
+                        discountAmount: discountAmount,
                         shippingData: { ...formData, shippingAddress },
                         cartItems,
                     }

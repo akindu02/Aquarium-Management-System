@@ -406,3 +406,17 @@ CREATE TRIGGER trg_on_restock_received
 AFTER UPDATE ON restock_requests
 FOR EACH ROW EXECUTE FUNCTION update_stock_after_restock();
 
+
+
+-- ── System Settings ───────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS system_settings (
+    key        VARCHAR(100) PRIMARY KEY,
+    value      TEXT NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO system_settings (key, value) VALUES
+    ('shipping_fee',           '0.00'),
+    ('online_discount_type',   'percentage'),
+    ('online_discount_value',  '0.00')
+ON CONFLICT (key) DO NOTHING;

@@ -15,14 +15,16 @@ const Payment = () => {
         totalAmount: locationTotal,
         subtotal: locationSubtotal,
         shippingFee: locationShippingFee,
+        discountAmount: locationDiscount,
         cartItems = [],
         cartTotal = 0,
         shippingData = {}
     } = location.state || {};
 
     const SHIPPING_FEE = locationShippingFee || 0;
+    const discountAmount = locationDiscount || 0;
     const subtotal = locationSubtotal || cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
-    const currentTotal = locationTotal || subtotal + SHIPPING_FEE;
+    const currentTotal = locationTotal || subtotal - discountAmount + SHIPPING_FEE;
 
     const [cardData, setCardData] = useState({
         cardNumber: '',
@@ -130,6 +132,7 @@ const Payment = () => {
                                 cartItems,
                                 currentTotal,
                                 shippingFee: SHIPPING_FEE,
+                                discountAmount,
                                 cardType: cardData.cardType === 'visa' ? 'Visa Card' : 'Mastercard',
                                 paymentDate: new Date(),
                             }}
@@ -329,13 +332,19 @@ const Payment = () => {
                                     <span>Subtotal</span>
                                     <span>LKR {subtotal.toLocaleString()}</span>
                                 </div>
+                                {discountAmount > 0 && (
+                                    <div className="total-row" style={{ color: '#10b981' }}>
+                                        <span>Discount</span>
+                                        <span>- LKR {discountAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                    </div>
+                                )}
                                 <div className="total-row">
                                     <span>Shipping</span>
-                                    <span>LKR {SHIPPING_FEE.toLocaleString()}</span>
+                                    <span>{SHIPPING_FEE === 0 ? 'Free' : `LKR ${SHIPPING_FEE.toLocaleString()}`}</span>
                                 </div>
                                 <div className="total-row final-total">
                                     <span>Total Pay</span>
-                                    <span>LKR {currentTotal.toLocaleString()}</span>
+                                    <span>LKR {currentTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                 </div>
                             </div>
 
