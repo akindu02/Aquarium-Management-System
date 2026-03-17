@@ -114,6 +114,9 @@ app.use('/api/bookings', bookingRoutes);
 // Online sales settings (any authenticated user — used by checkout)
 app.get('/api/settings/online-sales', authenticate, systemSettingsController.getOnlineSalesSettings);
 
+// Contact info settings (public — used by Footer)
+app.get('/api/settings/contact', systemSettingsController.getContactSettings);
+
 // Suppliers list (for dropdowns)
 app.get('/api/suppliers', async (req, res) => {
     try {

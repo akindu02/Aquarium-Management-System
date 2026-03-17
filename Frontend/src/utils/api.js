@@ -487,3 +487,11 @@ export const getOnlineSalesSettingsAPI = async () => {
     return apiRequest('/settings/online-sales', { method: 'GET' });
 };
 
+/**
+ * Public - Get contact info settings (used by Footer, no auth required)
+ */
+export const getContactSettingsAPI = async () => {
+    const res = await fetch('http://localhost:5001/api/settings/contact');
+    return res.json();
+};
+

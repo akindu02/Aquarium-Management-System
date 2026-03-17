@@ -1,9 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import '../index.css';
 import { MapPin, Phone, Mail } from 'lucide-react';
+import { getContactSettingsAPI } from '../utils/api';
 
+const DEFAULT_CONTACT = {
+  address: 'No 50, Kumaradasa Mawatha, Matara',
+  phone:   '041-2236848 / 074-3143109',
+  email:   'methuaquarium@gmail.com',
+};
 
 const CTA = () => {
+  const [contact, setContact] = useState(DEFAULT_CONTACT);
+
+  useEffect(() => {
+    getContactSettingsAPI()
+      .then(res => {
+        if (res.success && res.data) {
+          setContact({
+            address: res.data.contact_address || DEFAULT_CONTACT.address,
+            phone:   res.data.contact_phone   || DEFAULT_CONTACT.phone,
+            email:   res.data.contact_email   || DEFAULT_CONTACT.email,
+          });
+        }
+      })
+      .catch(() => { /* keep defaults */ });
+  }, []);
+
   return (
     <section id="about" className="cta-section">
       <div className="container">
@@ -29,15 +51,15 @@ const CTA = () => {
               <div className="contact-info">
                 <div className="contact-row">
                   <MapPin className="contact-icon" size={20} />
-                  <p>No 50, Kumaradasa Mawatha, Matara</p>
+                  <p>{contact.address}</p>
                 </div>
                 <div className="contact-row">
                   <Phone className="contact-icon" size={20} />
-                  <p>041-2236848 / 074-3133109</p>
+                  <p>{contact.phone}</p>
                 </div>
                 <div className="contact-row">
                   <Mail className="contact-icon" size={20} />
-                  <p>methuaquarium@gmail.com</p>
+                  <p>{contact.email}</p>
                 </div>
               </div>
             </div>

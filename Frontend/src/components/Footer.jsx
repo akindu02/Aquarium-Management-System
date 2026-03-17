@@ -1,7 +1,31 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../index.css';
+import { getContactSettingsAPI } from '../utils/api';
+
+const DEFAULT_CONTACT = {
+  address: 'No 50, Kumaradasa Mawatha, Matara',
+  phone:   '041-2236848 / 074-3143109',
+  email:   'methuaquarium@gmail.com',
+};
 
 const Footer = () => {
+  const [contact, setContact] = useState(DEFAULT_CONTACT);
+
+  useEffect(() => {
+    getContactSettingsAPI()
+      .then(res => {
+        if (res.success && res.data) {
+          setContact({
+            address: res.data.contact_address || DEFAULT_CONTACT.address,
+            phone:   res.data.contact_phone   || DEFAULT_CONTACT.phone,
+            email:   res.data.contact_email   || DEFAULT_CONTACT.email,
+          });
+        }
+      })
+      .catch(() => { /* keep defaults */ });
+  }, []);
+
   return (
     <footer className="footer">
       <div className="container">
@@ -37,9 +61,9 @@ const Footer = () => {
 
           <div className="footer-social">
             <h4 className="footer-title">Contact Us</h4>
-            <p className="footer-text"> No 50, Kumaradasa Mawatha, Matara</p>
-            <p className="footer-text"> 041-2236848 / 074-3143109</p>
-            <p className="footer-text"> methuaquarium@gmail.com</p>
+            <p className="footer-text">{contact.address}</p>
+            <p className="footer-text">{contact.phone}</p>
+            <p className="footer-text">{contact.email}</p>
           </div>
         </div>
 
