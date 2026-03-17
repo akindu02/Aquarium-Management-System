@@ -1,22 +1,25 @@
 const pool = require('../config/db');
 
 const getCustomerInsightsReport = async (startDate, endDate) => {
-    // Summary: online customers, walk-in customers, orders, service bookings
+    // Summary: online customers, walk-in customers, orders
     const summaryQuery = `
         SELECT
             COUNT(DISTINCT CASE WHEN o.customer_id     IS NOT NULL THEN o.customer_id     END) AS total_online_customers,
             COUNT(DISTINCT CASE WHEN o.pos_customer_id IS NOT NULL THEN o.pos_customer_id END) AS total_walkin_customers,
             COUNT(CASE WHEN o.customer_id     IS NOT NULL THEN 1 END)                          AS total_online_orders,
-            COUNT(CASE WHEN o.pos_customer_id IS NOT NULL THEN 1 END)                          AS total_walkin_orders,
-            (
-                SELECT COUNT(*)
-                FROM service_bookings
-                WHERE booking_date::date BETWEEN $1::date AND $2::date
-            )                                                                                  AS total_service_bookings
+            COUNT(CASE WHEN o.pos_customer_id IS NOT NULL THEN 1 END)                          AS total_walkin_orders
         FROM orders o
         WHERE o.order_date >= $1
           AND o.order_date <= $2
           AND o.status NOT IN ('Cancelled', 'Returned')
+    `;
+
+    // Service bookings count — kept separate to avoid parameter type inference
+    // conflict between the timestamp comparison above and the ::date casts here
+    const serviceBookingsCountQuery = `
+        SELECT COUNT(*) AS total_service_bookings
+        FROM service_bookings
+        WHERE booking_date::date BETWEEN $1::date AND $2::date
     `;
 
     // Top 5 products by units sold (online + POS combined)
@@ -120,10 +123,11 @@ const getCustomerInsightsReport = async (startDate, endDate) => {
         LIMIT 10
     `;
 
-    const [summary, topProducts, categoryDistribution, channelCategory, serviceTypeBreakdown,
-           topCustomersByPurchase, topCustomersByBookings] =
+    const [summary, serviceBookingsCount, topProducts, categoryDistribution, channelCategory,
+           serviceTypeBreakdown, topCustomersByPurchase, topCustomersByBookings] =
         await Promise.all([
             pool.query(summaryQuery,                [startDate, endDate]),
+            pool.query(serviceBookingsCountQuery,   [startDate, endDate]),
             pool.query(topProductsQuery,            [startDate, endDate]),
             pool.query(categoryDistributionQuery,   [startDate, endDate]),
             pool.query(channelCategoryQuery,        [startDate, endDate]),
@@ -133,7 +137,10 @@ const getCustomerInsightsReport = async (startDate, endDate) => {
         ]);
 
     return {
-        summary:                   summary.rows[0],
+        summary: {
+            ...summary.rows[0],
+            total_service_bookings: serviceBookingsCount.rows[0].total_service_bookings,
+        },
         topProducts:               topProducts.rows,
         categoryDistribution:      categoryDistribution.rows,
         channelCategoryPreference: channelCategory.rows,

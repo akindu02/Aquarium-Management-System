@@ -218,15 +218,23 @@ async function createBooking(req, res) {
             return res.status(409).json({ success: false, message: 'This slot is no longer available. Please choose another slot.' });
         }
 
-        // 2. Verify user is a registered customer
+        // 2. Verify user is a registered customer (check users table by role)
         const customerCheck = await client.query(
-            'SELECT user_id FROM customers WHERE user_id = $1',
+            `SELECT id FROM users WHERE id = $1 AND role = 'customer' AND is_active = TRUE`,
             [customerId]
         );
         if (customerCheck.rows.length === 0) {
             await client.query('ROLLBACK');
             return res.status(403).json({ success: false, message: 'Only registered customers can book services.' });
         }
+
+        // Upsert customer profile so the customers table stays in sync
+        await client.query(
+            `INSERT INTO customers (user_id, phone, address)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (user_id) DO UPDATE SET phone = $2, address = $3`,
+            [customerId, phone.trim(), address.trim()]
+        );
 
         // 3. Create the booking — service_id is NOT stored here; derive it via slot_id JOIN
         const bookingResult = await client.query(
