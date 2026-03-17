@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { isAuthenticated, getUserData, clearAuthData, getDashboardRoute } from '../utils/auth';
 import '../index.css';
 
@@ -7,10 +7,20 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const loggedIn = isAuthenticated();
   const user = loggedIn ? getUserData() : null;
   const dashboardRoute = user ? getDashboardRoute(user.role) : '/';
+
+  const handleSectionNav = (sectionId) => {
+    setMobileMenuOpen(false);
+    if (location.pathname === '/') {
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      navigate('/', { state: { scrollTo: sectionId } });
+    }
+  };
 
   const handleLogout = () => {
     clearAuthData();
@@ -41,8 +51,8 @@ const Navbar = () => {
           <Link to="/" className="nav-link">Home</Link>
           <Link to="/store" className="nav-link">Store</Link>
           <Link to="/services" className="nav-link">Services</Link>
-          <a href="#about" className="nav-link">About</a>
-          <a href="#about" className="nav-link">Contact</a>
+          <a href="#about" className="nav-link" onClick={(e) => { e.preventDefault(); handleSectionNav('about'); }}>About</a>
+          <a href="#contact" className="nav-link" onClick={(e) => { e.preventDefault(); handleSectionNav('contact'); }}>Contact</a>
           <div className="mobile-auth">
             {loggedIn ? (
               <>

@@ -42,7 +42,7 @@ const CTA = () => {
             </div>
           </div>
 
-          <div className="cta-card icon-bg">
+          <div id="contact" className="cta-card icon-bg">
             <div className="cta-content">
               <h2 className="cta-title">Contact Us</h2>
               <p className="cta-desc">

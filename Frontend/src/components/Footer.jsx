@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import '../index.css';
 import { getContactSettingsAPI } from '../utils/api';
 
@@ -11,6 +11,17 @@ const DEFAULT_CONTACT = {
 
 const Footer = () => {
   const [contact, setContact] = useState(DEFAULT_CONTACT);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleSectionNav = (e, sectionId) => {
+    e.preventDefault();
+    if (location.pathname === '/') {
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      navigate('/', { state: { scrollTo: sectionId } });
+    }
+  };
 
   useEffect(() => {
     getContactSettingsAPI()
@@ -43,9 +54,9 @@ const Footer = () => {
             <h4 className="footer-title">Quick Links</h4>
             <ul className="link-list">
               <li><Link to="/">Home</Link></li>
-              <li><a href="#about">About Us</a></li>
-              <li><a href="#">Store</a></li>
-              <li><a href="#">Contact</a></li>
+              <li><a href="#about" onClick={(e) => handleSectionNav(e, 'about')}>About Us</a></li>
+              <li><Link to="/store">Store</Link></li>
+              <li><a href="#contact" onClick={(e) => handleSectionNav(e, 'contact')}>Contact</a></li>
             </ul>
           </div>
 
