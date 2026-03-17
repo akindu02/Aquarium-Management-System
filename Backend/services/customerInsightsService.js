@@ -84,21 +84,62 @@ const getCustomerInsightsReport = async (startDate, endDate) => {
         ORDER BY total_bookings DESC
     `;
 
-    const [summary, topProducts, categoryDistribution, channelCategory, serviceTypeBreakdown] =
+    // Top 10 registered customers by total purchase amount
+    const topCustomersByPurchaseQuery = `
+        SELECT
+            u.name                     AS customer_name,
+            u.email,
+            COUNT(DISTINCT o.order_id) AS total_orders,
+            SUM(oi.quantity)           AS total_units,
+            SUM(o.total_amount)        AS total_spent
+        FROM orders o
+        JOIN users u        ON u.id          = o.customer_id
+        JOIN order_items oi ON oi.order_id   = o.order_id
+        WHERE o.order_date >= $1
+          AND o.order_date <= $2
+          AND o.customer_id IS NOT NULL
+          AND o.status NOT IN ('Cancelled', 'Returned')
+        GROUP BY u.id, u.name, u.email
+        ORDER BY total_spent DESC
+        LIMIT 10
+    `;
+
+    // Top 10 registered customers by number of service bookings
+    const topCustomersByBookingsQuery = `
+        SELECT
+            u.name                                                  AS customer_name,
+            u.email,
+            COUNT(sb.booking_id)                                    AS total_bookings,
+            COUNT(*) FILTER (WHERE sb.status = 'Completed')        AS completed_bookings
+        FROM service_bookings sb
+        JOIN users u ON u.id = sb.customer_id
+        WHERE sb.booking_date::date BETWEEN $1::date AND $2::date
+          AND sb.customer_id IS NOT NULL
+        GROUP BY u.id, u.name, u.email
+        ORDER BY total_bookings DESC
+        LIMIT 10
+    `;
+
+    const [summary, topProducts, categoryDistribution, channelCategory, serviceTypeBreakdown,
+           topCustomersByPurchase, topCustomersByBookings] =
         await Promise.all([
-            pool.query(summaryQuery,              [startDate, endDate]),
-            pool.query(topProductsQuery,          [startDate, endDate]),
-            pool.query(categoryDistributionQuery, [startDate, endDate]),
-            pool.query(channelCategoryQuery,      [startDate, endDate]),
-            pool.query(serviceTypeQuery,          [startDate, endDate]),
+            pool.query(summaryQuery,                [startDate, endDate]),
+            pool.query(topProductsQuery,            [startDate, endDate]),
+            pool.query(categoryDistributionQuery,   [startDate, endDate]),
+            pool.query(channelCategoryQuery,        [startDate, endDate]),
+            pool.query(serviceTypeQuery,            [startDate, endDate]),
+            pool.query(topCustomersByPurchaseQuery, [startDate, endDate]),
+            pool.query(topCustomersByBookingsQuery, [startDate, endDate]),
         ]);
 
     return {
-        summary:                  summary.rows[0],
-        topProducts:              topProducts.rows,
-        categoryDistribution:     categoryDistribution.rows,
+        summary:                   summary.rows[0],
+        topProducts:               topProducts.rows,
+        categoryDistribution:      categoryDistribution.rows,
         channelCategoryPreference: channelCategory.rows,
-        serviceTypeBreakdown:     serviceTypeBreakdown.rows,
+        serviceTypeBreakdown:      serviceTypeBreakdown.rows,
+        topCustomersByPurchase:    topCustomersByPurchase.rows,
+        topCustomersByBookings:    topCustomersByBookings.rows,
     };
 };
 

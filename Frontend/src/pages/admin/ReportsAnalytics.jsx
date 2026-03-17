@@ -1308,6 +1308,78 @@ const CustomerInsightsReportPDF = ({ reportData, startDate, endDate, pdfRef }) =
                     </div>
                 )}
 
+                {/* ── TOP CUSTOMERS BY PURCHASE ── */}
+                {reportData.topCustomersByPurchase && reportData.topCustomersByPurchase.length > 0 && (
+                    <div style={{ ...P.section, paddingTop: 0 }}>
+                        <p style={P.secTitle}>Top Customers — By Purchase Amount</p>
+                        <table style={P.table}>
+                            <colgroup>
+                                <col style={{ width: '5%' }} />
+                                <col style={{ width: '35%' }} />
+                                <col style={{ width: '35%' }} />
+                                <col style={{ width: '10%' }} />
+                                <col style={{ width: '15%' }} />
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th style={P.thC}>#</th>
+                                    <th style={P.th}>Customer</th>
+                                    <th style={P.th}>Email</th>
+                                    <th style={P.thC}>Orders</th>
+                                    <th style={P.thR}>Total Spent</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {reportData.topCustomersByPurchase.map((c, i) => (
+                                    <tr key={i}>
+                                        <td style={{ ...P.tdC, background: i % 2 === 0 ? '#ffffff' : '#f9fafb', color: '#9ca3af' }}>{i + 1}</td>
+                                        <td style={i % 2 === 0 ? P.tdE : P.tdO}><strong>{c.customer_name}</strong></td>
+                                        <td style={{ ...P.tdE, background: i % 2 === 0 ? '#ffffff' : '#f9fafb', color: '#6b7280' }}>{c.email}</td>
+                                        <td style={{ ...P.tdC, background: i % 2 === 0 ? '#ffffff' : '#f9fafb', color: '#3b82f6', fontWeight: '700' }}>{parseInt(c.total_orders).toLocaleString()}</td>
+                                        <td style={{ ...P.tdPri, background: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>{'LKR ' + (parseFloat(c.total_spent) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* ── TOP CUSTOMERS BY SERVICE BOOKINGS ── */}
+                {reportData.topCustomersByBookings && reportData.topCustomersByBookings.length > 0 && (
+                    <div style={{ ...P.section, paddingTop: 0 }}>
+                        <p style={P.secTitle}>Top Customers — By Service Bookings</p>
+                        <table style={P.table}>
+                            <colgroup>
+                                <col style={{ width: '5%' }} />
+                                <col style={{ width: '35%' }} />
+                                <col style={{ width: '35%' }} />
+                                <col style={{ width: '12%' }} />
+                                <col style={{ width: '13%' }} />
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th style={P.thC}>#</th>
+                                    <th style={P.th}>Customer</th>
+                                    <th style={P.th}>Email</th>
+                                    <th style={P.thC}>Bookings</th>
+                                    <th style={P.thC}>Completed</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {reportData.topCustomersByBookings.map((c, i) => (
+                                    <tr key={i}>
+                                        <td style={{ ...P.tdC, background: i % 2 === 0 ? '#ffffff' : '#f9fafb', color: '#9ca3af' }}>{i + 1}</td>
+                                        <td style={i % 2 === 0 ? P.tdE : P.tdO}><strong>{c.customer_name}</strong></td>
+                                        <td style={{ ...P.tdE, background: i % 2 === 0 ? '#ffffff' : '#f9fafb', color: '#6b7280' }}>{c.email}</td>
+                                        <td style={{ ...P.tdPri, background: i % 2 === 0 ? '#ffffff' : '#f9fafb' }}>{parseInt(c.total_bookings).toLocaleString()}</td>
+                                        <td style={{ ...P.tdC, background: i % 2 === 0 ? '#ffffff' : '#f9fafb', color: '#10b981', fontWeight: '700' }}>{parseInt(c.completed_bookings).toLocaleString()}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
                 {/* ── INSIGHTS ── */}
                 <div style={{ ...P.section, paddingTop: 0 }}>
                     <p style={P.secTitle}>Insights</p>
@@ -3089,6 +3161,78 @@ const ReportsAnalytics = () => {
                         </div>
                     )}
                 </div>
+
+                {/* ── Section 3: Top Customers ── */}
+                {(reportData.topCustomersByPurchase.length > 0 || reportData.topCustomersByBookings.length > 0) && (
+                    <>
+                        <h3 className="section-label">Top Customers</h3>
+                        <div className="charts-2col">
+                            {/* Top customers by purchase */}
+                            <div className="chart-col" style={{ flex: 1 }}>
+                                <h3 className="section-label">TOP BUYERS (BY SPEND)</h3>
+                                {reportData.topCustomersByPurchase.length > 0 ? (
+                                    <table className="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Customer</th>
+                                                <th>Orders</th>
+                                                <th>Total Spent</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {reportData.topCustomersByPurchase.map((c, i) => (
+                                                <tr key={i}>
+                                                    <td style={{ color: '#64748b' }}>{i + 1}</td>
+                                                    <td>
+                                                        <strong>{c.customer_name}</strong>
+                                                        <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{c.email}</div>
+                                                    </td>
+                                                    <td style={{ color: '#3b82f6', fontWeight: 600 }}>{parseInt(c.total_orders).toLocaleString()}</td>
+                                                    <td className="td-primary">{fmt(c.total_spent)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                ) : (
+                                    <div className="no-data">No purchase data for this period</div>
+                                )}
+                            </div>
+
+                            {/* Top customers by service bookings */}
+                            <div className="chart-col" style={{ flex: 1 }}>
+                                <h3 className="section-label">TOP SERVICE BOOKERS</h3>
+                                {reportData.topCustomersByBookings.length > 0 ? (
+                                    <table className="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Customer</th>
+                                                <th>Bookings</th>
+                                                <th>Completed</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {reportData.topCustomersByBookings.map((c, i) => (
+                                                <tr key={i}>
+                                                    <td style={{ color: '#64748b' }}>{i + 1}</td>
+                                                    <td>
+                                                        <strong>{c.customer_name}</strong>
+                                                        <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{c.email}</div>
+                                                    </td>
+                                                    <td className="td-primary">{parseInt(c.total_bookings).toLocaleString()}</td>
+                                                    <td style={{ color: '#10b981', fontWeight: 600 }}>{parseInt(c.completed_bookings).toLocaleString()}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                ) : (
+                                    <div className="no-data">No booking data for this period</div>
+                                )}
+                            </div>
+                        </div>
+                    </>
+                )}
 
                 {/* ── Empty state ── */}
                 {reportData.topProducts.length === 0 && reportData.serviceTypeBreakdown.length === 0 && (
