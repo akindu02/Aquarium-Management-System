@@ -27,7 +27,7 @@ const Hero = () => {
           display: flex;
           align-items: center;
           padding-top: var(--header-height);
-          background-image: url('/images/home main.jpg');
+          background-image: url('/images/home-main.jpg');
           background-size: cover;
           background-position: center;
           background-attachment: fixed;
