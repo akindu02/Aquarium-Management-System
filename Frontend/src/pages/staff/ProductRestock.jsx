@@ -11,7 +11,8 @@ const API = 'http://localhost:5001/api';
 const getStockStyle = (qty) => {
     if (qty === 0) return { color: '#ef4444', bg: 'rgba(239,68,68,0.12)', label: 'Out of Stock' };
     if (qty <= 5) return { color: '#ef4444', bg: 'rgba(239,68,68,0.12)', label: 'Critical' };
-    return { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', label: 'Low Stock' };
+    if (qty <= 10) return { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', label: 'Low Stock' };
+    return { color: '#10b981', bg: 'rgba(16,185,129,0.12)', label: 'In Stock' };
 };
 
 const EMPTY_MODAL = {
@@ -26,6 +27,7 @@ const ProductRestock = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [activeTab, setActiveTab] = useState('attention');
 
     // Modal state
     const [showModal, setShowModal] = useState(false);
@@ -38,23 +40,23 @@ const ProductRestock = () => {
 
     const token = () => localStorage.getItem('auth_token');
 
-    // ── Fetch low-stock products ──────────────────────────────────
-    const fetchLowStock = async () => {
+    // ── Fetch all products for inventory overview ─────────────────
+    const fetchProducts = async () => {
         try {
             setLoading(true);
-            const res = await fetch(`${API}/products/low-stock`, {
+            const res = await fetch(`${API}/products/inventory-summary`, {
                 headers: { Authorization: `Bearer ${token()}` },
             });
             const json = await res.json();
             if (json.success) setProducts(json.data);
         } catch (err) {
-            console.error('Failed to fetch low-stock products:', err);
+            console.error('Failed to fetch inventory summary:', err);
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => { fetchLowStock(); }, []);
+    useEffect(() => { fetchProducts(); }, []);
 
     // ── Fetch suppliers for a specific product (with fallback) ─────
     const fetchProductSuppliers = async (product) => {
@@ -156,7 +158,7 @@ const ProductRestock = () => {
                 confirmButtonColor: '#4ecdc4',
                 timer: 3000, showConfirmButton: false,
             });
-            fetchLowStock();
+            fetchProducts();
         } catch (err) {
             Swal.fire({ icon: 'error', title: 'Error', text: err.message, background: '#1a1f2e', color: '#fff', confirmButtonColor: '#ef4444' });
         } finally {
@@ -164,7 +166,11 @@ const ProductRestock = () => {
         }
     };
 
-    const filtered = products.filter(p =>
+    const attentionItems = products.filter(p => p.stock_quantity <= 10);
+    const inStockItems = products.filter(p => p.stock_quantity > 10);
+    const tabProducts = activeTab === 'attention' ? attentionItems : inStockItems;
+
+    const filtered = tabProducts.filter(p =>
         p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.category.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -175,14 +181,34 @@ const ProductRestock = () => {
             <div className="pr-header">
                 <div>
                     <h2 className="pr-title">
-                        <AlertTriangle size={22} style={{ color: '#f59e0b', marginRight: 8 }} />
+                        <Package size={22} style={{ color: '#4ecdc4', marginRight: 8 }} />
                         Product Restock
                     </h2>
-                    <p className="pr-subtitle">Low-stock products that need restocking from suppliers</p>
+                    <p className="pr-subtitle">Manage restocking for all products — request stock anytime</p>
                 </div>
-                <button className="pr-refresh-btn" onClick={fetchLowStock} title="Refresh">
+                <button className="pr-refresh-btn" onClick={fetchProducts} title="Refresh">
                     <RefreshCw size={16} />
                     Refresh
+                </button>
+            </div>
+
+            {/* ── Tabs ── */}
+            <div className="pr-tabs">
+                <button
+                    className={`pr-tab ${activeTab === 'attention' ? 'pr-tab-active pr-tab-attention' : ''}`}
+                    onClick={() => { setActiveTab('attention'); setSearchTerm(''); }}
+                >
+                    <AlertTriangle size={15} />
+                    Items Need Attention
+                    <span className="pr-tab-count">{attentionItems.length}</span>
+                </button>
+                <button
+                    className={`pr-tab ${activeTab === 'instock' ? 'pr-tab-active pr-tab-instock' : ''}`}
+                    onClick={() => { setActiveTab('instock'); setSearchTerm(''); }}
+                >
+                    <CheckCircle size={15} />
+                    In Stock
+                    <span className="pr-tab-count pr-tab-count-green">{inStockItems.length}</span>
                 </button>
             </div>
 
@@ -197,9 +223,11 @@ const ProductRestock = () => {
                         onChange={e => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <div className="pr-count-badge">
-                    <AlertTriangle size={14} />
-                    {products.length} items need attention
+                <div className={`pr-count-badge ${activeTab === 'instock' ? 'pr-count-badge-green' : ''}`}>
+                    {activeTab === 'attention'
+                        ? <><AlertTriangle size={14} />{attentionItems.length} need attention</>
+                        : <><CheckCircle size={14} />{inStockItems.length} in stock</>
+                    }
                 </div>
             </div>
 
@@ -208,12 +236,12 @@ const ProductRestock = () => {
                 {loading ? (
                     <div className="pr-loading">
                         <span className="pr-spinner" />
-                        Loading low-stock products…
+                        Loading products…
                     </div>
                 ) : filtered.length === 0 ? (
                     <div className="pr-empty">
                         <CheckCircle size={48} style={{ color: '#10b981', marginBottom: 12 }} />
-                        <p>{searchTerm ? 'No products match your search.' : 'All products are well-stocked!'}</p>
+                        <p>{searchTerm ? 'No products match your search.' : activeTab === 'attention' ? 'All products are well-stocked!' : 'No in-stock products found.'}</p>
                     </div>
                 ) : (
                     <table className="pr-table">
@@ -253,7 +281,7 @@ const ProductRestock = () => {
                                         </td>
                                         <td>
                                             <span className="pr-status-badge" style={{ color: style.color, background: style.bg }}>
-                                                {p.stock_quantity === 0 ? <XCircle size={13} /> : <AlertTriangle size={13} />}
+                                                {p.stock_quantity === 0 ? <XCircle size={13} /> : p.stock_quantity > 10 ? <CheckCircle size={13} /> : <AlertTriangle size={13} />}
                                                 {style.label}
                                             </span>
                                         </td>
@@ -459,6 +487,28 @@ const ProductRestock = () => {
                 }
                 .pr-refresh-btn:hover { background: rgba(255,255,255,0.1); color: var(--text-main); }
 
+                /* Tabs */
+                .pr-tabs {
+                    display: flex; gap: 0.5rem; margin-bottom: 1rem;
+                    border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0;
+                }
+                .pr-tab {
+                    display: flex; align-items: center; gap: 0.45rem;
+                    background: none; border: none; border-bottom: 2px solid transparent;
+                    color: var(--text-muted); padding: 0.6rem 1.1rem 0.75rem;
+                    font-size: 0.9rem; font-weight: 600; cursor: pointer;
+                    transition: all 0.2s; margin-bottom: -1px;
+                }
+                .pr-tab:hover { color: var(--text-main); }
+                .pr-tab-active.pr-tab-attention { color: #f59e0b; border-bottom-color: #f59e0b; }
+                .pr-tab-active.pr-tab-instock { color: #10b981; border-bottom-color: #10b981; }
+                .pr-tab-count {
+                    background: rgba(245,158,11,0.15); color: #f59e0b;
+                    border-radius: 50px; padding: 0.1rem 0.5rem;
+                    font-size: 0.75rem; font-weight: 700;
+                }
+                .pr-tab-count-green { background: rgba(16,185,129,0.15); color: #10b981; }
+
                 /* Toolbar */
                 .pr-toolbar {
                     display: flex; align-items: center; gap: 1rem;
@@ -480,6 +530,9 @@ const ProductRestock = () => {
                     background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3);
                     color: #f59e0b; padding: 0.4rem 0.875rem; border-radius: 50px;
                     font-size: 0.82rem; font-weight: 600; margin-left: auto;
+                }
+                .pr-count-badge-green {
+                    background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.3); color: #10b981;
                 }
 
                 /* Table */

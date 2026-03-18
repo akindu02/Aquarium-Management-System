@@ -219,6 +219,27 @@ const deleteProduct = async (productId) => {
 };
 
 /**
+ * Get all products for inventory/restock overview with supplier info and computed stock status
+ */
+const getInventorySummary = async () => {
+    const { rows } = await pool.query(`
+        SELECT
+            p.product_id,
+            p.name,
+            p.category,
+            p.price,
+            p.stock_quantity,
+            p.image_url,
+            p.supplier_id,
+            s.company_name AS supplier_name
+        FROM products p
+        LEFT JOIN suppliers s ON p.supplier_id = s.user_id
+        ORDER BY p.stock_quantity ASC, p.name ASC
+    `);
+    return rows.map(r => ({ ...r, stock_status: getStockStatus(r.stock_quantity) }));
+};
+
+/**
  * Get low-stock products (stock_quantity <= 10) with their linked suppliers
  */
 const getLowStockProducts = async () => {
@@ -284,4 +305,4 @@ const getProductSuppliers = async (productId) => {
     return rows;
 };
 
-module.exports = { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct, getLowStockProducts, getExpiringProducts, getProductSuppliers };
+module.exports = { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct, getLowStockProducts, getExpiringProducts, getProductSuppliers, getInventorySummary };

@@ -11,6 +11,9 @@ router.get('/', productController.getAllProducts);
 // GET low-stock products (must be before /:id to avoid route conflict)
 router.get('/low-stock', authenticate, authorize('admin', 'staff'), productController.getLowStockProducts);
 
+// GET all products with stock status for restock overview (must be before /:id)
+router.get('/inventory-summary', authenticate, authorize('admin', 'staff'), productController.getInventorySummary);
+
 // GET expiring products
 router.get('/expiring', authenticate, authorize('admin', 'staff'), productController.getExpiringProducts);
 

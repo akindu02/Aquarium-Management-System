@@ -152,6 +152,20 @@ const getExpiringProducts = async (req, res) => {
 };
 
 /**
+ * GET /api/products/inventory-summary
+ * Staff / Admin – all products with stock status for restock overview
+ */
+const getInventorySummary = async (req, res) => {
+    try {
+        const products = await productService.getInventorySummary();
+        res.json({ success: true, data: products });
+    } catch (err) {
+        console.error('getInventorySummary error:', err);
+        res.status(500).json({ success: false, message: 'Failed to fetch inventory summary.' });
+    }
+};
+
+/**
  * GET /api/products/:id/suppliers
  * Staff / Admin – suppliers linked to a product
  */
@@ -165,4 +179,4 @@ const getProductSuppliers = async (req, res) => {
     }
 };
 
-module.exports = { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct, getLowStockProducts, getExpiringProducts, getProductSuppliers };
+module.exports = { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct, getLowStockProducts, getExpiringProducts, getProductSuppliers, getInventorySummary };
