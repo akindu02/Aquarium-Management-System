@@ -1,6 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, CreditCard, Truck, CheckCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, CreditCard, Truck, CheckCircle, Loader2, ChevronDown } from 'lucide-react';
+
+const SRI_LANKA_CITIES = [
+    'Akkaraipattu', 'Akurana', 'Alawwa', 'Aluthgama', 'Ambalangoda', 'Ambalantota',
+    'Ampara', 'Anuradhapura', 'Arugam Bay', 'Avissawella', 'Badulla', 'Balapitiya',
+    'Balangoda', 'Bandaragama', 'Bandarawela', 'Batticaloa', 'Beruwala', 'Boralesgamuwa',
+    'Chilaw', 'Colombo', 'Dambulla', 'Dehiwala', 'Dehiwala-Mount Lavinia', 'Delgoda',
+    'Dematagoda', 'Digana', 'Dikwella', 'Divulapitiya', 'Elpitiya', 'Embilipitiya',
+    'Eravur', 'Galle', 'Gampaha', 'Gampola', 'Hambantota', 'Haputale', 'Hatton',
+    'Hikkaduwa', 'Homagama', 'Horana', 'Ja-Ela', 'Jaffna', 'Kadawatha', 'Kaduruwela',
+    'Kaduwela', 'Kalawana', 'Kalutara', 'Kandy', 'Kankesanturai', 'Kattankudy',
+    'Katunayake', 'Kelaniya', 'Kegalle', 'Kilinochchi', 'Kolonnawa', 'Kotikawatta',
+    'Kotte', 'Kurunegala', 'Lautoka', 'Lunugala', 'Maharagama', 'Mahiyanganaya',
+    'Mannar', 'Matale', 'Matara', 'Mawanella', 'Mawathagama', 'Minuwangoda',
+    'Mirissa', 'Moratuwa', 'Mount Lavinia', 'Mullaitivu', 'Mundalama', 'Nawalapitiya',
+    'Negombo', 'Nikaweratiya', 'Nuwara Eliya', 'Pelmadulla', 'Peliyagoda', 'Peradeniya',
+    'Piliyandala', 'Point Pedro', 'Polonnaruwa', 'Pottuvil', 'Puttalam', 'Ragama',
+    'Ratmalana', 'Ratnapura', 'Seeduwa', 'Sigiriya', 'Sri Jayawardenepura Kotte',
+    'Tangalle', 'Tissamaharama', 'Trincomalee', 'Unawatuna', 'Vavuniya', 'Wattala',
+    'Weligama', 'Welimada', 'Welisara', 'Wennappuwa',
+];
 import Swal from 'sweetalert2';
 import { createOrderAPI, getOnlineSalesSettingsAPI } from '../utils/api';
 import '../index.css';
@@ -200,14 +220,21 @@ const Checkout = () => {
                             <div className="form-row">
                                 <div className="form-group">
                                     <label>City</label>
-                                    <input
-                                        type="text"
-                                        name="city"
-                                        required
-                                        value={formData.city}
-                                        onChange={handleInputChange}
-                                        placeholder="Colombo"
-                                    />
+                                    <div className="city-select-wrap">
+                                        <select
+                                            name="city"
+                                            required
+                                            value={formData.city}
+                                            onChange={handleInputChange}
+                                            className="city-select"
+                                        >
+                                            <option value="">Select your city</option>
+                                            {SRI_LANKA_CITIES.map(city => (
+                                                <option key={city} value={city}>{city}</option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown size={16} className="city-select-icon" />
+                                    </div>
                                 </div>
                                 <div className="form-group">
                                     <label>Postal Code</label>
@@ -609,6 +636,69 @@ const Checkout = () => {
             margin-top: 1rem;
             font-size: 0.85rem;
             color: var(--text-muted);
+        }
+
+        /* City Dropdown */
+        .city-select-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .city-select {
+            width: 100%;
+            padding: 0.75rem 2.5rem 0.75rem 0.75rem;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            font-family: inherit;
+            appearance: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .city-select:focus {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+        }
+
+        .city-select option {
+            background: #1a1f2e;
+            color: #fff;
+        }
+
+        .city-select-icon {
+            position: absolute;
+            right: 0.75rem;
+            color: rgba(255, 255, 255, 0.4);
+            pointer-events: none;
+            flex-shrink: 0;
+        }
+
+        /* White theme overrides for city select */
+        .white-theme .city-select {
+            background: #f9fafb;
+            border-color: #d1d5db;
+            color: #1f2937;
+        }
+
+        .white-theme .city-select:focus {
+            background: #ffffff;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+        }
+
+        .white-theme .city-select option {
+            background: #ffffff;
+            color: #1f2937;
+        }
+
+        .white-theme .city-select-icon {
+            color: #9ca3af;
         }
 
         @media (max-width: 968px) {
