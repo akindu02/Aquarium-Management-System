@@ -82,8 +82,8 @@ const ProfileModal = ({ show, onClose, user, setUser, accentColor = '#06b6d4', a
       setPwMsg({ type: 'error', text: 'Passwords do not match' });
       return;
     }
-    if (pwForm.newPw.length < 6) {
-      setPwMsg({ type: 'error', text: 'Password must be at least 6 characters' });
+    if (pwForm.newPw.length < 8) {
+      setPwMsg({ type: 'error', text: 'Password must be at least 8 characters' });
       return;
     }
     setPwSaving(true);
@@ -109,8 +109,8 @@ const ProfileModal = ({ show, onClose, user, setUser, accentColor = '#06b6d4', a
   const getStrength = () => {
     const len = pwForm.newPw.length;
     if (len === 0) return { width: '0%', color: '#333', label: '' };
-    if (len < 6) return { width: '25%', color: '#FF6B6B', label: 'Weak' };
-    if (len < 8) return { width: '55%', color: '#f59e0b', label: 'Fair' };
+    if (len < 8) return { width: '25%', color: '#FF6B6B', label: 'Weak' };
+    if (len < 10) return { width: '55%', color: '#f59e0b', label: 'Fair' };
     const hasUpper = /[A-Z]/.test(pwForm.newPw);
     const hasNum = /[0-9]/.test(pwForm.newPw);
     const hasSpecial = /[^A-Za-z0-9]/.test(pwForm.newPw);
@@ -200,7 +200,7 @@ const ProfileModal = ({ show, onClose, user, setUser, accentColor = '#06b6d4', a
               <div className="pm-section">
                 {[
                   { key: 'current', label: 'Current Password', placeholder: 'Current password' },
-                  { key: 'newPw',   label: 'New Password',     placeholder: 'New password (min. 6)' },
+                  { key: 'newPw',   label: 'New Password',     placeholder: 'New password (min. 8)' },
                   { key: 'confirm', label: 'Confirm Password', placeholder: 'Repeat new password' },
                 ].map(({ key, label, placeholder }) => (
                   <div className="pm-field" key={key}>

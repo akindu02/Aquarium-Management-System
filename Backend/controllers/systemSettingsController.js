@@ -32,6 +32,24 @@ const updateSettings = async (req, res) => {
             return res.status(400).json({ success: false, message: 'online_discount_type must be "percentage" or "amount"' });
         }
 
+        if (shipping_fee !== undefined) {
+            const fee = parseFloat(shipping_fee);
+            if (isNaN(fee) || fee < 0) {
+                return res.status(400).json({ success: false, message: 'shipping_fee must be a number >= 0' });
+            }
+        }
+
+        if (online_discount_value !== undefined) {
+            const discVal = parseFloat(online_discount_value);
+            if (isNaN(discVal) || discVal < 0) {
+                return res.status(400).json({ success: false, message: 'online_discount_value must be a number >= 0' });
+            }
+            const discType = online_discount_type ?? 'percentage';
+            if (discType === 'percentage' && discVal > 100) {
+                return res.status(400).json({ success: false, message: 'online_discount_value cannot exceed 100 for percentage type' });
+            }
+        }
+
         const updates = {};
         if (shipping_fee !== undefined)          updates.shipping_fee           = shipping_fee;
         if (online_discount_type !== undefined)  updates.online_discount_type   = online_discount_type;

@@ -1,6 +1,14 @@
 const { pool } = require('../config/db');
 const notificationService = require('../services/notificationService');
 
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
+function isNotPastDate(dateStr) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return new Date(dateStr) >= today;
+}
+
 // =============================================
 // TIME SLOT MANAGEMENT (Staff / Admin)
 // =============================================
@@ -9,12 +17,25 @@ const notificationService = require('../services/notificationService');
 const createTimeSlot = async (req, res) => {
     try {
         const { service, date, start, end } = req.body;
-        
+
         // Ensure user is authenticated (staff/admin)
         if (!req.user || !req.user.id) {
             return res.status(401).json({ success: false, message: 'Unauthorized' });
         }
-        
+
+        if (!service || !service.trim())
+            return res.status(400).json({ success: false, message: 'Service type is required.' });
+        if (!date || !DATE_REGEX.test(date) || isNaN(new Date(date).getTime()))
+            return res.status(400).json({ success: false, message: 'A valid date is required (YYYY-MM-DD).' });
+        if (!isNotPastDate(date))
+            return res.status(400).json({ success: false, message: 'Time slot date cannot be in the past.' });
+        if (!start || !TIME_REGEX.test(start))
+            return res.status(400).json({ success: false, message: 'Start time must be in HH:MM format.' });
+        if (!end || !TIME_REGEX.test(end))
+            return res.status(400).json({ success: false, message: 'End time must be in HH:MM format.' });
+        if (start >= end)
+            return res.status(400).json({ success: false, message: 'End time must be after start time.' });
+
         const staff_id = req.user.id;
 
         // 1. Find or create the service
@@ -88,6 +109,19 @@ const updateTimeSlot = async (req, res) => {
     try {
         const { id } = req.params;
         const { service, date, start, end, status } = req.body;
+
+        if (!service || !service.trim())
+            return res.status(400).json({ success: false, message: 'Service type is required.' });
+        if (!date || !DATE_REGEX.test(date) || isNaN(new Date(date).getTime()))
+            return res.status(400).json({ success: false, message: 'A valid date is required (YYYY-MM-DD).' });
+        if (!isNotPastDate(date))
+            return res.status(400).json({ success: false, message: 'Time slot date cannot be in the past.' });
+        if (!start || !TIME_REGEX.test(start))
+            return res.status(400).json({ success: false, message: 'Start time must be in HH:MM format.' });
+        if (!end || !TIME_REGEX.test(end))
+            return res.status(400).json({ success: false, message: 'End time must be in HH:MM format.' });
+        if (start >= end)
+            return res.status(400).json({ success: false, message: 'End time must be after start time.' });
 
         // Find or create service
         let serviceResult = await pool.query(

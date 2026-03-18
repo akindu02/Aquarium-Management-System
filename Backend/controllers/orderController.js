@@ -20,6 +20,12 @@ const createOrder = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Phone number is required' });
         }
 
+        const SL_PHONE_REGEX = /^(?:(?:\+|00)94|0)[0-9]{9}$/;
+        const cleanPhone = phone.trim().replace(/\s/g, '');
+        if (!SL_PHONE_REGEX.test(cleanPhone)) {
+            return res.status(400).json({ success: false, message: 'Please provide a valid Sri Lankan phone number (e.g. 0771234567 or +94771234567).' });
+        }
+
         const result = await orderService.createOrder({
             customerId,
             items,

@@ -2,6 +2,13 @@ const productService = require('../services/productService');
 const path = require('path');
 const fs = require('fs');
 
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+function isNotPastDate(dateStr) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return new Date(dateStr) >= today;
+}
+
 /**
  * GET /api/products
  * Public – get all products (with optional ?search=&category= filters)
@@ -47,6 +54,18 @@ const createProduct = async (req, res) => {
         if (stock_quantity === undefined || stock_quantity < 0)
             return res.status(400).json({ success: false, message: 'Valid stock quantity is required.' });
 
+        if (discount_percent !== undefined && discount_percent !== '') {
+            const disc = parseFloat(discount_percent);
+            if (isNaN(disc) || disc < 0 || disc > 100)
+                return res.status(400).json({ success: false, message: 'Discount percent must be between 0 and 100.' });
+        }
+        if (expiry_date && expiry_date !== '') {
+            if (!DATE_REGEX.test(expiry_date) || isNaN(new Date(expiry_date).getTime()))
+                return res.status(400).json({ success: false, message: 'Expiry date must be a valid date (YYYY-MM-DD).' });
+            if (!isNotPastDate(expiry_date))
+                return res.status(400).json({ success: false, message: 'Expiry date cannot be a past date.' });
+        }
+
         // Build image URL if file was uploaded
         let image_url = null;
         if (req.file) {
@@ -84,6 +103,18 @@ const updateProduct = async (req, res) => {
         let image_url = undefined;
         if (req.file) {
             image_url = `/uploads/products/${req.file.filename}`;
+        }
+
+        if (discount_percent !== undefined && discount_percent !== '') {
+            const disc = parseFloat(discount_percent);
+            if (isNaN(disc) || disc < 0 || disc > 100)
+                return res.status(400).json({ success: false, message: 'Discount percent must be between 0 and 100.' });
+        }
+        if (expiry_date && expiry_date !== '') {
+            if (!DATE_REGEX.test(expiry_date) || isNaN(new Date(expiry_date).getTime()))
+                return res.status(400).json({ success: false, message: 'Expiry date must be a valid date (YYYY-MM-DD).' });
+            if (!isNotPastDate(expiry_date))
+                return res.status(400).json({ success: false, message: 'Expiry date cannot be a past date.' });
         }
 
         const product = await productService.updateProduct(req.params.id, {

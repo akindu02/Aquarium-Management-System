@@ -41,8 +41,8 @@ const SupplierMyDetails = () => {
     const validate = () => {
         const e = {};
         if (!form.phone.trim())   e.phone   = 'Phone number is required.';
-        else if (!/^[\d\s\+\-\(\)]{7,20}$/.test(form.phone.trim()))
-                                  e.phone   = 'Enter a valid phone number.';
+        else if (!/^(?:(?:\+|00)94|0)[0-9]{9}$/.test(form.phone.trim().replace(/\s/g, '')))
+                                  e.phone   = 'Enter a valid Sri Lankan phone number (e.g. 0712345678 or +94712345678).';
         if (!form.address.trim()) e.address = 'Address is required.';
         setErrors(e);
         return Object.keys(e).length === 0;
@@ -201,7 +201,7 @@ const SupplierMyDetails = () => {
                                     type="tel"
                                     name="phone"
                                     className={`smd-input ${errors.phone ? 'smd-input-error' : ''}`}
-                                    placeholder="e.g. +94 71 234 5678"
+                                    placeholder="e.g. 0712345678 or +94712345678"
                                     value={form.phone}
                                     onChange={handleChange}
                                 />

@@ -1,6 +1,13 @@
 const restockService = require('../services/restockService');
 const notificationService = require('../services/notificationService');
 
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+function isNotPastDate(dateStr) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return new Date(dateStr) >= today;
+}
+
 /**
  * POST /api/restock
  * Staff creates a restock request for a low-stock product.
@@ -16,6 +23,13 @@ const createRestockRequest = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Quantity must be at least 1.' });
         if (unit_cost === undefined || unit_cost === '' || Number(unit_cost) < 0)
             return res.status(400).json({ success: false, message: 'Unit cost must be 0 or greater.' });
+
+        if (expected_date && expected_date !== '') {
+            if (!DATE_REGEX.test(expected_date) || isNaN(new Date(expected_date).getTime()))
+                return res.status(400).json({ success: false, message: 'Expected date must be a valid date (YYYY-MM-DD).' });
+            if (!isNotPastDate(expected_date))
+                return res.status(400).json({ success: false, message: 'Expected date cannot be a past date.' });
+        }
 
         const result = await restockService.createRestockRequest({
             staffId: req.user.id,
