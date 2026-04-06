@@ -167,6 +167,25 @@ const BookingManagement = () => {
             return;
         }
 
+        // Check for duplicate slot locally before hitting the API
+        const isDuplicate = managedSlots.some(slot =>
+            slot.service === newSlot.service &&
+            slot.date === newSlot.date &&
+            slot.start === newSlot.start &&
+            slot.end === newSlot.end
+        );
+        if (isDuplicate) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Duplicate Time Slot',
+                text: `A time slot for "${newSlot.service}" already exists on ${newSlot.date} from ${newSlot.start} to ${newSlot.end}. Please choose a different time.`,
+                background: '#1a1f2e',
+                color: '#fff',
+                confirmButtonColor: '#f71a1a'
+            });
+            return;
+        }
+
         try {
             const data = await apiRequest('/bookings/slots', {
                 method: 'POST',

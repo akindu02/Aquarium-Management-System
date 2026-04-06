@@ -59,6 +59,19 @@ const createTimeSlot = async (req, res) => {
         const start_time = `${date} ${start}:00`;
         const end_time = `${date} ${end}:00`;
 
+        // Check for duplicate: same service, same exact time period
+        const duplicate = await pool.query(
+            `SELECT slot_id FROM service_time_slots
+             WHERE service_id = $1 AND start_time = $2 AND end_time = $3`,
+            [service_id, start_time, end_time]
+        );
+        if (duplicate.rows.length > 0) {
+            return res.status(409).json({
+                success: false,
+                message: `A time slot for "${service}" already exists on ${date} from ${start} to ${end}. Please choose a different time.`
+            });
+        }
+
         // Insert the slot
         const newSlot = await pool.query(
             `INSERT INTO service_time_slots 
