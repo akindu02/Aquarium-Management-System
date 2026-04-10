@@ -58,8 +58,8 @@ const OrderManagement = () => {
                 setOrders(res.data.map(o => ({
                     _orderId: o.order_id,
                     id: o.order_ref,
-                    customer: o.customer_name,
-                    email: o.customer_email,
+                    customer: o.customer_name || 'Deleted User',
+                    email: o.customer_email || 'N/A',
                     items: Array.isArray(o.items) ? o.items.map(i => `${i.name} (x${i.quantity})`).join(', ') : '',
                     date: o.order_date ? o.order_date.split('T')[0] : '',
                     total: parseFloat(o.total_amount),
@@ -195,7 +195,8 @@ const OrderManagement = () => {
 
     // ─── Orders Logic ─────────────────────────────────────────────
     const filteredOrders = orders.filter(o => {
-        const matchesSearch = o.customer.toLowerCase().includes(searchTerm.toLowerCase()) || o.id.toLowerCase().includes(searchTerm.toLowerCase());
+        const customerName = (o.customer || '').toLowerCase();
+        const matchesSearch = customerName.includes(searchTerm.toLowerCase()) || o.id.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = filterStatus === 'All' || o.status === filterStatus;
         return matchesSearch && matchesStatus;
     });
