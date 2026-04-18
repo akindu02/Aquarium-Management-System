@@ -531,7 +531,8 @@ const UserManagement = () => {
                                         type={showPassword ? 'text' : 'password'}
                                         id="password"
                                         name="password"
-                                        placeholder="Minimum 6 characters"
+                                        placeholder="Minimum 8 characters"
+                                        minLength={8}
                                         value={formData.password}
                                         onChange={handleInputChange}
                                         onBlur={handleBlur}
